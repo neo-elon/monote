@@ -222,10 +222,9 @@ function renderChapterList() {
 // Add New Chapter
 function addNewChapter() {
     const newId = Date.now().toString();
-    const newIndex = (project.chapters || []).length + 1;
     const newChapter = {
         id: newId,
-        title: `제목 없는 챕터 ${newIndex}`,
+        title: '',
         content: ''
     };
     
@@ -258,6 +257,11 @@ function openChapterEditor(chapterId) {
     
     // Switch Screen View
     showWritingScreen();
+
+    // Focus on the chapter title input so user can type immediately
+    setTimeout(() => {
+        chapterTitleInput.focus();
+    }, 350);
 }
 
 // Update Editor Counts (With Space, No Space, Word Count)
