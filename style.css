@@ -665,9 +665,11 @@ body {
     z-index: 2;
 }
 
-.book-card:hover .book-cover {
-    transform: translateY(-8px) rotate(-1deg);
-    box-shadow: 8px 12px 25px rgba(0, 0, 0, 0.22), inset 6px 0 8px rgba(0, 0, 0, 0.15);
+@media (hover: hover) {
+    .book-card:hover .book-cover {
+        transform: translateY(-8px) rotate(-1deg);
+        box-shadow: 8px 12px 25px rgba(0, 0, 0, 0.22), inset 6px 0 8px rgba(0, 0, 0, 0.15);
+    }
 }
 
 /* Minimalist Cover Layout */
@@ -771,12 +773,19 @@ body {
     z-index: 10;
 }
 
-.book-card:hover .delete-book-btn {
-    opacity: 1;
+@media (hover: hover) {
+    .book-card:hover .delete-book-btn {
+        opacity: 1;
+    }
+    .delete-book-btn:hover {
+        background: #ff4d4d;
+    }
 }
 
-.delete-book-btn:hover {
-    background: #ff4d4d;
+@media (hover: none) {
+    .delete-book-btn {
+        opacity: 0.8;
+    }
 }
 
 /* Book Creation Dialog */
