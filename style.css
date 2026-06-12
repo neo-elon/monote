@@ -604,6 +604,274 @@ body {
     color: var(--text-secondary);
 }
 
+/* Bookshelf styles */
+.bookshelf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.bookshelf-title {
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.books-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 3.5rem 2rem;
+    padding: 1rem 0;
+    align-items: end;
+}
+
+/* Book Card Cover Styling */
+.book-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    transition: transform var(--transition-speed);
+}
+
+.book-cover {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border-radius: 4px 12px 12px 4px; /* thick book spine look */
+    box-shadow: 4px 6px 15px rgba(0, 0, 0, 0.15), inset 6px 0 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    padding: 1.25rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Simulated spine edge */
+.book-cover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 12px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.15);
+    box-shadow: inset -1px 0 2px rgba(255, 255, 255, 0.1);
+    z-index: 2;
+}
+
+.book-card:hover .book-cover {
+    transform: translateY(-8px) rotate(-1deg);
+    box-shadow: 8px 12px 25px rgba(0, 0, 0, 0.22), inset 6px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Minimalist Cover Layout */
+.book-cover-title {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.4;
+    word-break: keep-all;
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-left: 8px; /* offset for spine */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.book-cover-author {
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0.7;
+    padding-left: 8px;
+}
+
+.book-card-title-under {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+/* Cover Color Schemes */
+.book-cover.cover-charcoal {
+    background: #2b2b2a;
+    color: #f4f4f0;
+}
+.book-cover.cover-charcoal .book-cover-title {
+    color: #f4f4f0;
+}
+
+.book-cover.cover-linen {
+    background: #e1dacb;
+    color: #3e3b32;
+}
+.book-cover.cover-linen .book-cover-title {
+    color: #3e3b32;
+}
+
+.book-cover.cover-ivory {
+    background: #f7f3e9;
+    color: #4c4a45;
+    border: 1px solid #e2ded5;
+}
+.book-cover.cover-ivory .book-cover-title {
+    color: #4c4a45;
+}
+
+.book-cover.cover-slate {
+    background: #5d6770;
+    color: #fbfbf9;
+}
+.book-cover.cover-slate .book-cover-title {
+    color: #fbfbf9;
+}
+
+.book-cover.cover-terracotta {
+    background: #b56b57;
+    color: #fbfbf9;
+}
+.book-cover.cover-terracotta .book-cover-title {
+    color: #fbfbf9;
+}
+
+/* Delete Book Button on Hover */
+.delete-book-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+    z-index: 10;
+}
+
+.book-card:hover .delete-book-btn {
+    opacity: 1;
+}
+
+.delete-book-btn:hover {
+    background: #ff4d4d;
+}
+
+/* Book Creation Dialog */
+.book-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog-content {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.dialog-content h3 {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.dialog-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dialog-field label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cover-color-picker {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+.color-option {
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+}
+
+.color-option input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.color-option span {
+    display: block;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.color-option.charcoal span { background-color: #2b2b2a; }
+.color-option.linen span { background-color: #e1dacb; }
+.color-option.ivory span { background-color: #f7f3e9; border-color: #e2ded5; }
+.color-option.slate span { background-color: #5d6770; }
+.color-option.terracotta span { background-color: #b56b57; }
+
+.color-option.active span,
+.color-option:hover span {
+    transform: scale(1.1);
+    border-color: var(--accent-color);
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
 /* Writing Screen Split Layout */
 .writing-container-layout {
     display: grid;

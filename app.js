@@ -1,13 +1,12 @@
 // State Management
-let project = {
-    title: '',
-    synopsis: '',
-    chapters: []
-};
+let projects = [];
+let activeProjectId = null;
+let project = null; // Active project reference
 let activeChapterId = null;
 let saveTimeout = null;
 
 // DOM Elements
+const bookshelfScreen = document.getElementById('bookshelf-screen');
 const overviewScreen = document.getElementById('overview-screen');
 const writingScreen = document.getElementById('writing-screen');
 const themeToggle = document.getElementById('theme-toggle');
@@ -16,6 +15,7 @@ const moonIcon = document.querySelector('.moon-icon');
 const exportProjectBtn = document.getElementById('export-project');
 const importProjectTrigger = document.getElementById('import-project-trigger');
 const importProjectFile = document.getElementById('import-project-file');
+const goToBookshelfBtn = document.getElementById('go-to-bookshelf');
 
 // Overview Elements
 const projectTitleInput = document.getElementById('project-title');
@@ -40,9 +40,9 @@ const saveStatus = document.getElementById('save-status');
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     loadTheme();
-    loadData();
+    loadProjects();
     setupEventListeners();
-    renderOverview();
+    renderBookshelf();
 });
 
 // Load Theme from LocalStorage
@@ -63,34 +63,64 @@ function updateThemeIcons(theme) {
     }
 }
 
-// Load Data from LocalStorage
-function loadData() {
-    const savedData = localStorage.getItem('monote-project');
-    if (savedData) {
+// Load Projects and handle Migration
+function loadProjects() {
+    const savedProjects = localStorage.getItem('monote-projects');
+    if (savedProjects) {
         try {
-            project = JSON.parse(savedData);
+            projects = JSON.parse(savedProjects);
         } catch (e) {
-            console.error("Failed to parse project data:", e);
+            console.error("Failed to parse projects data:", e);
+            projects = [];
         }
     } else {
-        // Default structure
-        project = {
-            title: '',
-            synopsis: '',
-            chapters: []
-        };
+        projects = [];
+    }
+
+    // Migration from old single-project structure
+    const savedOldProject = localStorage.getItem('monote-project');
+    if (savedOldProject) {
+        try {
+            const oldProject = JSON.parse(savedOldProject);
+            if (oldProject && (oldProject.title || (oldProject.chapters && oldProject.chapters.length > 0))) {
+                // Migrate to new structure
+                const migrated = {
+                    id: Date.now().toString(),
+                    title: oldProject.title || '임시 작품',
+                    synopsis: oldProject.synopsis || '',
+                    chapters: oldProject.chapters || [],
+                    coverColor: 'charcoal',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                projects.push(migrated);
+                localStorage.setItem('monote-projects', JSON.stringify(projects));
+            }
+        } catch (e) {
+            console.error("Failed to migrate old project:", e);
+        }
+        // Remove old key so we don't migrate again
+        localStorage.removeItem('monote-project');
     }
 }
 
 // Save Data to LocalStorage with Debounce
 function triggerSave() {
+    if (!activeProjectId) return;
+    
     saveStatus.textContent = "저장 중...";
     saveStatus.style.opacity = "1";
     
     if (saveTimeout) clearTimeout(saveTimeout);
     
     saveTimeout = setTimeout(() => {
-        localStorage.setItem('monote-project', JSON.stringify(project));
+        // Find index of current project
+        const idx = projects.findIndex(p => p.id === activeProjectId);
+        if (idx !== -1) {
+            project.updatedAt = new Date().toISOString();
+            projects[idx] = project;
+            localStorage.setItem('monote-projects', JSON.stringify(projects));
+        }
         saveStatus.textContent = "저장 완료";
         setTimeout(() => {
             saveStatus.style.opacity = "0.7";
@@ -184,6 +214,23 @@ function setupEventListeners() {
         if (e.target.files.length > 0) {
             importProject(e.target.files[0]);
         }
+    });
+
+    // Bookshelf Navigation & Event Listeners
+    goToBookshelfBtn.addEventListener('click', showBookshelfScreen);
+    
+    document.getElementById('create-project-btn').addEventListener('click', showNewBookDialog);
+    document.getElementById('cancel-new-book').addEventListener('click', hideNewBookDialog);
+    document.getElementById('confirm-new-book').addEventListener('click', createNewProject);
+    
+    // Color picker active state toggle
+    document.querySelectorAll('.cover-color-picker input[name="cover-color"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            document.querySelectorAll('.cover-color-picker .color-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            e.target.closest('.color-option').classList.add('active');
+        });
     });
 }
 
@@ -615,8 +662,10 @@ function showWritingScreen() {
     }
 
     overviewScreen.classList.remove('active');
+    bookshelfScreen.classList.remove('active');
     setTimeout(() => {
         overviewScreen.style.display = 'none';
+        bookshelfScreen.style.display = 'none';
         writingScreen.style.display = 'block';
         setTimeout(() => {
             writingScreen.classList.add('active');
@@ -636,13 +685,180 @@ function showOverviewScreen() {
     renderOverview();
     
     writingScreen.classList.remove('active');
+    bookshelfScreen.classList.remove('active');
     setTimeout(() => {
         writingScreen.style.display = 'none';
+        bookshelfScreen.style.display = 'none';
         overviewScreen.style.display = 'block';
         setTimeout(() => {
             overviewScreen.classList.add('active');
         }, 50);
     }, 300);
+}
+
+function showBookshelfScreen() {
+    activeProjectId = null;
+    project = null;
+    goToBookshelfBtn.style.display = 'none';
+    
+    overviewScreen.classList.remove('active');
+    writingScreen.classList.remove('active');
+    setTimeout(() => {
+        overviewScreen.style.display = 'none';
+        writingScreen.style.display = 'none';
+        bookshelfScreen.style.display = 'block';
+        setTimeout(() => {
+            bookshelfScreen.classList.add('active');
+            renderBookshelf();
+        }, 50);
+    }, 300);
+}
+
+// Render the Bookshelf View
+function renderBookshelf() {
+    const booksGrid = document.getElementById('books-grid');
+    if (!booksGrid) return;
+    
+    booksGrid.innerHTML = '';
+    
+    // Add new project card
+    const addCard = document.createElement('div');
+    addCard.className = 'book-card';
+    addCard.innerHTML = `
+        <div class="book-cover" style="background: var(--bg-secondary); border: 1.5px dashed var(--border-color); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); box-shadow: none;">
+            <div style="font-size: 2rem; font-weight: 300;">+</div>
+            <div style="font-size: 0.8rem; margin-top: 0.5rem;">새 작품 쓰기</div>
+        </div>
+        <div class="book-card-title-under" style="color: var(--text-secondary);">새 작품 추가</div>
+    `;
+    addCard.addEventListener('click', () => {
+        showNewBookDialog();
+    });
+    booksGrid.appendChild(addCard);
+    
+    projects.forEach((proj) => {
+        const bookCard = document.createElement('div');
+        bookCard.className = 'book-card';
+        bookCard.dataset.id = proj.id;
+        
+        const coverColor = proj.coverColor || 'charcoal';
+        
+        bookCard.innerHTML = `
+            <button class="delete-book-btn" title="작품 삭제">×</button>
+            <div class="book-cover cover-${coverColor}">
+                <div class="book-cover-title">${proj.title || '제목 없음'}</div>
+                <div class="book-cover-author">Monote</div>
+            </div>
+            <div class="book-card-title-under">${proj.title || '제목 없음'}</div>
+        `;
+        
+        // Open project on click
+        bookCard.addEventListener('click', (e) => {
+            // If click was on delete button, do not open
+            if (e.target.classList.contains('delete-book-btn')) {
+                e.stopPropagation();
+                if (confirm(`"${proj.title || '제목 없음'}" 작품을 완전히 삭제하시겠습니까?\n작성한 원고가 모두 삭제되며 되돌릴 수 없습니다.`)) {
+                    deleteProject(proj.id);
+                }
+                return;
+            }
+            openProject(proj.id);
+        });
+        
+        booksGrid.appendChild(bookCard);
+    });
+}
+
+// Dialog elements references helper
+const newBookDialog = document.getElementById('new-book-dialog');
+const newBookTitleInput = document.getElementById('new-book-title');
+
+// Show dialog
+function showNewBookDialog() {
+    newBookTitleInput.value = '';
+    
+    // Reset color option active class
+    document.querySelectorAll('.cover-color-picker .color-option').forEach(opt => {
+        opt.classList.remove('active');
+    });
+    const charcoalOpt = document.querySelector('.cover-color-picker .color-option.charcoal');
+    if (charcoalOpt) charcoalOpt.classList.add('active');
+    
+    const defaultRadio = document.querySelector('input[name="cover-color"][value="charcoal"]');
+    if (defaultRadio) defaultRadio.checked = true;
+
+    newBookDialog.style.display = 'flex';
+    setTimeout(() => {
+        newBookTitleInput.focus();
+    }, 100);
+}
+
+// Hide dialog
+function hideNewBookDialog() {
+    newBookDialog.style.display = 'none';
+}
+
+// Create new project
+function createNewProject() {
+    const title = newBookTitleInput.value.trim();
+    if (!title) {
+        alert("작품 제목을 입력해 주세요.");
+        newBookTitleInput.focus();
+        return;
+    }
+    
+    const selectedColorRadio = document.querySelector('input[name="cover-color"]:checked');
+    const coverColor = selectedColorRadio ? selectedColorRadio.value : 'charcoal';
+    
+    const newProj = {
+        id: Date.now().toString(),
+        title: title,
+        synopsis: '',
+        chapters: [],
+        coverColor: coverColor,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    projects.push(newProj);
+    localStorage.setItem('monote-projects', JSON.stringify(projects));
+    hideNewBookDialog();
+    renderBookshelf();
+    
+    // Open immediately
+    openProject(newProj.id);
+}
+
+// Open selected project
+function openProject(projectId) {
+    const proj = projects.find(p => p.id === projectId);
+    if (!proj) return;
+    
+    activeProjectId = projectId;
+    project = JSON.parse(JSON.stringify(proj)); // Deep copy to edit
+    activeChapterId = null;
+    
+    // Show Bookshelf button in header
+    goToBookshelfBtn.style.display = 'flex';
+    
+    // Render and switch to Overview
+    renderOverview();
+    showOverviewScreen();
+}
+
+// Delete project
+function deleteProject(projectId) {
+    projects = projects.filter(p => p.id !== projectId);
+    localStorage.setItem('monote-projects', JSON.stringify(projects));
+    
+    if (activeProjectId === projectId) {
+        activeProjectId = null;
+        project = null;
+        goToBookshelfBtn.style.display = 'none';
+        showBookshelfScreen();
+    } else {
+        renderBookshelf();
+    }
 }
 
 // Export Chapter to text file

@@ -25,6 +25,12 @@
                 <span class="logo-sub">for writers</span>
             </div>
             <div class="header-actions">
+                <button id="go-to-bookshelf" class="btn-icon" title="책장으로 돌아가기" aria-label="Go to Bookshelf" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                </button>
                 <button id="export-project" class="btn-icon" title="전체 백업 다운로드 (.json)" aria-label="Backup Project">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -68,8 +74,47 @@
 
         <!-- Main Workspace -->
         <main class="app-main">
+            <!-- VIEW 0: BOOKSHELF SCREEN -->
+            <section id="bookshelf-screen" class="view-section active">
+                <div class="bookshelf-header">
+                    <h2 class="bookshelf-title">내 책장</h2>
+                    <button id="create-project-btn" class="btn-flat btn-sm">
+                        <span class="plus-icon">+</span> 새 작품 추가
+                    </button>
+                </div>
+                
+                <!-- Book Cover Creation Modal / Form Dialog (Hidden by default) -->
+                <div id="new-book-dialog" class="book-dialog" style="display: none;">
+                    <div class="dialog-content">
+                        <h3>새 작품 추가</h3>
+                        <div class="dialog-field">
+                            <label for="new-book-title">작품 제목</label>
+                            <input type="text" id="new-book-title" class="input-flat" placeholder="제목을 입력하세요..." autocomplete="off">
+                        </div>
+                        <div class="dialog-field">
+                            <label>표지 색상</label>
+                            <div class="cover-color-picker">
+                                <label class="color-option charcoal active"><input type="radio" name="cover-color" value="charcoal" checked><span></span></label>
+                                <label class="color-option linen"><input type="radio" name="cover-color" value="linen"><span></span></label>
+                                <label class="color-option ivory"><input type="radio" name="cover-color" value="ivory"><span></span></label>
+                                <label class="color-option slate"><input type="radio" name="cover-color" value="slate"><span></span></label>
+                                <label class="color-option terracotta"><input type="radio" name="cover-color" value="terracotta"><span></span></label>
+                            </div>
+                        </div>
+                        <div class="dialog-actions">
+                            <button id="cancel-new-book" class="btn-flat btn-sm btn-danger">취소</button>
+                            <button id="confirm-new-book" class="btn-flat btn-sm">생성</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="books-grid" class="books-grid">
+                    <!-- Book covers will be generated dynamically -->
+                </div>
+            </section>
+
             <!-- VIEW 1: OVERVIEW SCREEN -->
-            <section id="overview-screen" class="view-section active">
+            <section id="overview-screen" class="view-section">
                 <div class="overview-grid">
                     <!-- Left Column: Novel Info & Synopsis -->
                     <div class="project-info-panel">
