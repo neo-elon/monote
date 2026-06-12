@@ -400,70 +400,88 @@ function renderChapterList() {
             e.preventDefault();
         });
 
+        let touchStartY = 0;
+        let hasMovedThreshold = false;
+
         // Touch Drag & Drop event handlers (Mobile / Finger)
         card.addEventListener('touchstart', (e) => {
             touchStartCard = card;
             dragStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
             lastTouchX = e.touches[0].clientX;
             dragStartLevel = chapter.level || 0;
             touchStartIndex = Array.from(chaptersList.children).indexOf(card);
-            card.classList.add('dragging');
+            hasMovedThreshold = false;
+            isDragging = false;
             // Clear text selection
             window.getSelection().removeAllRanges();
         }, { passive: true });
 
         card.addEventListener('touchmove', (e) => {
             if (!touchStartCard) return;
-            isDragging = true;
-            
-            // Prevent text selection highlight on move
-            window.getSelection().removeAllRanges();
             
             const touch = e.touches[0];
             const currentY = touch.clientY;
             lastTouchX = touch.clientX;
             
-            // Horizontal shift calculation for live touch feedback
             const deltaX = touch.clientX - dragStartX;
-            const levelShift = Math.round(deltaX / 24);
-            const tempLevel = Math.max(0, Math.min(2, dragStartLevel + levelShift));
-            card.className = `chapter-card level-${tempLevel} dragging`;
+            const deltaY = touch.clientY - touchStartY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             
-            // Find element under current finger position
-            const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (!elementUnder) return;
+            // Apply threshold (e.g. 6px) to distinguish drag from tap
+            if (!hasMovedThreshold && distance > 6) {
+                hasMovedThreshold = true;
+                isDragging = true;
+                card.classList.add('dragging');
+            }
             
-            // Find target card container
-            const targetCard = elementUnder.closest('.chapter-card');
-            if (targetCard && targetCard !== card) {
-                // Prevent standard screen scroll while reordering
-                if (e.cancelable) e.preventDefault();
+            if (isDragging) {
+                // Prevent text selection highlight on move
+                window.getSelection().removeAllRanges();
                 
-                const rect = targetCard.getBoundingClientRect();
-                const next = (currentY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                // Horizontal shift calculation for live touch feedback
+                const levelShift = Math.round(deltaX / 24);
+                const tempLevel = Math.max(0, Math.min(2, dragStartLevel + levelShift));
+                card.className = `chapter-card level-${tempLevel} dragging`;
                 
-                chaptersList.insertBefore(card, next ? targetCard.nextSibling : targetCard);
+                // Find element under current finger position
+                const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (elementUnder) {
+                    const targetCard = elementUnder.closest('.chapter-card');
+                    if (targetCard && targetCard !== card) {
+                        // Prevent standard screen scroll while reordering
+                        if (e.cancelable) e.preventDefault();
+                        
+                        const rect = targetCard.getBoundingClientRect();
+                        const next = (currentY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                        
+                        chaptersList.insertBefore(card, next ? targetCard.nextSibling : targetCard);
+                    }
+                }
             }
         }, { passive: false });
 
-        card.addEventListener('touchend', () => {
+        card.addEventListener('touchend', (e) => {
             if (!touchStartCard) return;
+            
             card.classList.remove('dragging');
             touchStartCard = null;
             
-            const touchEndIndex = Array.from(chaptersList.children).indexOf(card);
-            
-            // Save final touch level shift
-            const deltaX = lastTouchX - dragStartX;
-            const levelShift = Math.round(deltaX / 24);
-            chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
-            
-            saveAndRefreshOrder();
-            
-            // Clear dragging status after a tiny delay
-            setTimeout(() => {
-                isDragging = false;
-            }, 100);
+            if (isDragging) {
+                // Save final touch level shift
+                const deltaX = lastTouchX - dragStartX;
+                const levelShift = Math.round(deltaX / 24);
+                chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
+                
+                saveAndRefreshOrder();
+                
+                setTimeout(() => {
+                    isDragging = false;
+                }, 100);
+            } else {
+                // It was a simple tap, open the editor immediately
+                openChapterEditor(chapter.id);
+            }
         });
         
         chaptersList.appendChild(card);
