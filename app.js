@@ -187,7 +187,10 @@ function renderOverview() {
 // Update Synopsis Character Count
 function updateSynopsisCount() {
     const len = project.synopsis ? project.synopsis.length : 0;
-    synops// Helper to get prefix dynamically for any chapter based on its level
+    synopsisWordCount.textContent = `${len.toLocaleString()}자`;
+}
+
+// Helper to get prefix dynamically for any chapter based on its level
 function getChapterPrefix(chapterId) {
     let partCount = 0;
     let chapterCount = 0;
