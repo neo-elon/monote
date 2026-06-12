@@ -596,6 +596,13 @@ function updateEditorCounts(text) {
 
 // View Switches
 function showWritingScreen() {
+    // Move chapters-panel to editor sidebar
+    const chaptersPanel = document.getElementById('chapters-panel');
+    const editorSidebar = document.getElementById('editor-sidebar');
+    if (chaptersPanel && editorSidebar) {
+        editorSidebar.appendChild(chaptersPanel);
+    }
+
     overviewScreen.classList.remove('active');
     setTimeout(() => {
         overviewScreen.style.display = 'none';
@@ -607,6 +614,13 @@ function showWritingScreen() {
 }
 
 function showOverviewScreen() {
+    // Move chapters-panel back to overview grid
+    const chaptersPanel = document.getElementById('chapters-panel');
+    const overviewGrid = document.querySelector('.overview-grid');
+    if (chaptersPanel && overviewGrid) {
+        overviewGrid.appendChild(chaptersPanel);
+    }
+
     activeChapterId = null;
     renderOverview();
     

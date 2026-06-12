@@ -634,3 +634,37 @@ body {
 .chapter-card.level-2 .chapter-card-title {
     color: var(--text-secondary);
 }
+
+/* Writing Screen Split Layout */
+.writing-container-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+}
+
+.editor-main-content {
+    min-width: 0;
+}
+
+.editor-sidebar {
+    position: sticky;
+    top: 1rem;
+    align-self: start;
+}
+
+/* Make chapters list taller when in the sidebar */
+.editor-sidebar .chapters-list {
+    max-height: calc(100vh - 200px);
+}
+
+@media (max-width: 900px) {
+    .writing-container-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .editor-sidebar {
+        display: none; /* Hide sidebar on mobile in writing mode */
+    }
+}

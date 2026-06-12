@@ -86,7 +86,7 @@
                     </div>
 
                     <!-- Right Column: Chapters List -->
-                    <div class="chapters-panel">
+                    <div id="chapters-panel" class="chapters-panel">
                         <div class="panel-header">
                             <h2 class="panel-title">목차 및 챕터</h2>
                             <button id="add-chapter-btn" class="btn-flat btn-sm">
@@ -102,53 +102,61 @@
 
             <!-- VIEW 2: WRITING SCREEN -->
             <section id="writing-screen" class="view-section">
-                <div class="editor-header">
-                    <button id="back-to-overview" class="btn-flat btn-sm back-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" class="arrow-icon">
-                            <line x1="19" y1="12" x2="5" y2="12"></line>
-                            <polyline points="12 19 5 12 12 5"></polyline>
-                        </svg>
-                        개요로 돌아가기
-                    </button>
-                    <div class="editor-actions">
-                        <button id="export-chapter" class="btn-flat btn-sm" title="텍스트 파일로 내보내기">
-                            내보내기 (.txt)
-                        </button>
-                        <button id="delete-chapter" class="btn-flat btn-sm btn-danger" title="챕터 삭제">
-                            삭제
-                        </button>
-                    </div>
-                </div>
+                <div class="writing-container-layout">
+                    <!-- Left Sidebar (Chapters Panel will be dynamically moved here in JS) -->
+                    <div id="editor-sidebar" class="editor-sidebar"></div>
 
-                <div class="editor-container">
-                    <div class="editor-meta">
-                        <input type="text" id="chapter-title" class="input-flat chapter-title-input"
-                            placeholder="챕터 제목을 입력하세요..." autocomplete="off">
-                        <div class="chapter-badge" id="chapter-number-badge">CHAPTER 01</div>
-                    </div>
+                    <!-- Right Main Editor -->
+                    <div class="editor-main-content">
+                        <div class="editor-header">
+                            <button id="back-to-overview" class="btn-flat btn-sm back-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="arrow-icon">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                </svg>
+                                개요로 돌아가기
+                            </button>
+                            <div class="editor-actions">
+                                <button id="export-chapter" class="btn-flat btn-sm" title="텍스트 파일로 내보내기">
+                                    내보내기 (.txt)
+                                </button>
+                                <button id="delete-chapter" class="btn-flat btn-sm btn-danger" title="챕터 삭제">
+                                    삭제
+                                </button>
+                            </div>
+                        </div>
 
-                    <div class="textarea-wrapper">
-                        <textarea id="chapter-content" class="editor-textarea"
-                            placeholder="이곳에 이야기를 펼쳐나가세요..."></textarea>
-                    </div>
+                        <div class="editor-container">
+                            <div class="editor-meta">
+                                <input type="text" id="chapter-title" class="input-flat chapter-title-input"
+                                    placeholder="챕터 제목을 입력하세요..." autocomplete="off">
+                                <div class="chapter-badge" id="chapter-number-badge">CHAPTER 01</div>
+                            </div>
 
-                    <div class="editor-footer">
-                        <div class="stat-group">
-                            <span class="stat-label">공백 포함:</span>
-                            <span id="char-count-with-spaces" class="stat-val">0자</span>
+                            <div class="textarea-wrapper">
+                                <textarea id="chapter-content" class="editor-textarea"
+                                    placeholder="이곳에 이야기를 펼쳐나가세요..."></textarea>
+                            </div>
+
+                            <div class="editor-footer">
+                                <div class="stat-group">
+                                    <span class="stat-label">공백 포함:</span>
+                                    <span id="char-count-with-spaces" class="stat-val">0자</span>
+                                </div>
+                                <div class="stat-divider">|</div>
+                                <div class="stat-group">
+                                    <span class="stat-label">공백 제외:</span>
+                                    <span id="char-count-no-spaces" class="stat-val">0자</span>
+                                </div>
+                                <div class="stat-divider">|</div>
+                                <div class="stat-group">
+                                    <span class="stat-label">단어 수:</span>
+                                    <span id="word-count" class="stat-val">0</span>
+                                </div>
+                                <div class="save-status" id="save-status">저장 완료</div>
+                            </div>
                         </div>
-                        <div class="stat-divider">|</div>
-                        <div class="stat-group">
-                            <span class="stat-label">공백 제외:</span>
-                            <span id="char-count-no-spaces" class="stat-val">0자</span>
-                        </div>
-                        <div class="stat-divider">|</div>
-                        <div class="stat-group">
-                            <span class="stat-label">단어 수:</span>
-                            <span id="word-count" class="stat-val">0</span>
-                        </div>
-                        <div class="save-status" id="save-status">저장 완료</div>
                     </div>
                 </div>
             </section>
