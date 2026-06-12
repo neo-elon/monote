@@ -89,6 +89,12 @@ body {
     margin-bottom: 1rem;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .logo-area {
     display: flex;
     align-items: baseline;
