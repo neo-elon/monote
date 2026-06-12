@@ -513,3 +513,72 @@ body {
     border: 1px dashed var(--border-color);
     font-style: italic;
 }
+
+/* Tree Outline & Indentation Styling */
+.tree-indent-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.tree-controls {
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0.15;
+    transition: opacity var(--transition-speed);
+}
+
+.chapter-card:hover .tree-controls {
+    opacity: 1;
+}
+
+.btn-tree-lvl {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.55rem;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: all var(--transition-speed);
+    line-height: 1;
+}
+
+.btn-tree-lvl:hover {
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+/* Indentation levels */
+.chapter-card.level-0 {
+    font-weight: 600;
+}
+
+.chapter-card.level-0 .chapter-num-badge {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.chapter-card.level-1 {
+    padding-left: 1.5rem;
+}
+
+.chapter-card.level-2 {
+    padding-left: 3rem;
+}
+
+.chapter-card.level-3 {
+    padding-left: 4.5rem;
+    font-style: italic;
+}
+
+.chapter-card.level-3 .chapter-card-title {
+    color: var(--text-secondary);
+}

@@ -187,7 +187,40 @@ function renderOverview() {
 // Update Synopsis Character Count
 function updateSynopsisCount() {
     const len = project.synopsis ? project.synopsis.length : 0;
-    synopsisWordCount.textContent = `${len.toLocaleString()}자`;
+    synops// Helper to get prefix dynamically for any chapter based on its level
+function getChapterPrefix(chapterId) {
+    let partCount = 0;
+    let chapterCount = 0;
+    let sceneCount = 0;
+    let sectionCount = 0;
+    
+    for (let i = 0; i < (project.chapters || []).length; i++) {
+        const ch = project.chapters[i];
+        const lvl = ch.level || 0;
+        
+        let prefix = '';
+        if (lvl === 0) {
+            partCount++;
+            chapterCount = 0; sceneCount = 0; sectionCount = 0;
+            prefix = `PART ${String(partCount).padStart(2, '0')}`;
+        } else if (lvl === 1) {
+            chapterCount++;
+            sceneCount = 0; sectionCount = 0;
+            prefix = `CH ${String(chapterCount).padStart(2, '0')}`;
+        } else if (lvl === 2) {
+            sceneCount++;
+            sectionCount = 0;
+            prefix = `SCENE ${String(sceneCount).padStart(2, '0')}`;
+        } else if (lvl === 3) {
+            sectionCount++;
+            prefix = `SEC ${String(sectionCount).padStart(2, '0')}`;
+        }
+        
+        if (ch.id === chapterId) {
+            return prefix;
+        }
+    }
+    return '';
 }
 
 // Render the Chapter List Cards
@@ -205,27 +238,61 @@ function renderChapterList() {
 
     project.chapters.forEach((chapter, index) => {
         const card = document.createElement('div');
-        card.className = 'chapter-card';
+        // Fallback for missing level
+        if (chapter.level === undefined) {
+            chapter.level = 0;
+        }
+        
+        card.className = `chapter-card level-${chapter.level}`;
         card.dataset.id = chapter.id;
         card.setAttribute('draggable', 'true');
         
         // Calculate length details
         const charCount = chapter.content ? chapter.content.length : 0;
+        const prefix = getChapterPrefix(chapter.id);
         
         card.innerHTML = `
-            <span class="chapter-num-badge">CH ${String(index + 1).padStart(2, '0')}</span>
-            <span class="chapter-card-title">${chapter.title || '제목 없음'}</span>
+            <div class="tree-indent-wrapper">
+                <div class="tree-controls">
+                    <button class="btn-tree-lvl outdent-btn" title="들여쓰기 축소">◀</button>
+                    <button class="btn-tree-lvl indent-btn" title="들여쓰기 확대">▶</button>
+                </div>
+                <span class="chapter-num-badge">${prefix}</span>
+                <span class="chapter-card-title">${chapter.title || '제목 없음'}</span>
+            </div>
             <span class="char-counter">${charCount.toLocaleString()}자</span>
         `;
         
         let isDragging = false;
         let touchStartCard = null;
         let touchStartIndex = index;
-
+ 
         // Click to open editor (only if not dragging)
         card.addEventListener('click', (e) => {
             if (isDragging) return;
             openChapterEditor(chapter.id);
+        });
+
+        // Outdent & Indent Button Event Listeners
+        const outdentBtn = card.querySelector('.outdent-btn');
+        const indentBtn = card.querySelector('.indent-btn');
+
+        outdentBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card click
+            if (chapter.level > 0) {
+                chapter.level--;
+                triggerSave();
+                renderChapterList();
+            }
+        });
+
+        indentBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card click
+            if (chapter.level < 3) {
+                chapter.level++;
+                triggerSave();
+                renderChapterList();
+            }
         });
 
         // Drag & Drop event handlers (Mouse / Desktop)
@@ -346,7 +413,8 @@ function addNewChapter() {
     const newChapter = {
         id: newId,
         title: '',
-        content: ''
+        content: '',
+        level: 0
     };
     
     if (!project.chapters) {
@@ -368,8 +436,7 @@ function openChapterEditor(chapterId) {
     activeChapterId = chapterId;
     
     // Set UI Values
-    const chIndex = project.chapters.indexOf(chapter) + 1;
-    chapterNumberBadge.textContent = `CHAPTER ${String(chIndex).padStart(2, '0')}`;
+    chapterNumberBadge.textContent = getChapterPrefix(chapterId);
     chapterTitleInput.value = chapter.title || '';
     chapterContentTextarea.value = chapter.content || '';
     
