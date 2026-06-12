@@ -641,10 +641,13 @@ function getChapterPrefixForLvl(chapterId, tempLevel) {
 
 // Add New Chapter
 function addNewChapter() {
+    const title = prompt("새 챕터의 제목을 입력하세요:", "");
+    if (title === null) return; // Cancelled
+    
     const newId = Date.now().toString();
     const newChapter = {
         id: newId,
-        title: '',
+        title: title.trim() || '제목 없음',
         content: '',
         level: 0
     };
@@ -656,8 +659,8 @@ function addNewChapter() {
     project.chapters.push(newChapter);
     triggerSave();
     
-    // Instantly open editor for the newly created chapter
-    openChapterEditor(newId);
+    // Refresh the list to display the new card
+    renderChapterList();
 }
 
 // Open Chapter Editor
