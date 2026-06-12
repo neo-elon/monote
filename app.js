@@ -227,6 +227,8 @@ function renderChapterList() {
         `;
         
         let isDragging = false;
+        let touchStartCard = null;
+        let touchStartIndex = index;
 
         // Click to open editor (only if not dragging)
         card.addEventListener('click', (e) => {
@@ -234,7 +236,7 @@ function renderChapterList() {
             openChapterEditor(chapter.id);
         });
 
-        // Drag & Drop event handlers
+        // Drag & Drop event handlers (Mouse / Desktop)
         card.addEventListener('dragstart', (e) => {
             isDragging = true;
             card.classList.add('dragging');
@@ -280,6 +282,66 @@ function renderChapterList() {
             project.chapters = newChaptersOrder;
             triggerSave();
             renderChapterList(); // Re-render to refresh chapter numbers
+        });
+
+        // Touch Drag & Drop event handlers (Mobile / Finger)
+        card.addEventListener('touchstart', (e) => {
+            touchStartCard = card;
+            touchStartIndex = Array.from(chaptersList.children).indexOf(card);
+            card.classList.add('dragging');
+        }, { passive: true });
+
+        card.addEventListener('touchmove', (e) => {
+            if (!touchStartCard) return;
+            isDragging = true;
+            
+            const touch = e.touches[0];
+            const currentY = touch.clientY;
+            
+            // Find element under current finger position
+            const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!elementUnder) return;
+            
+            // Find target card container
+            const targetCard = elementUnder.closest('.chapter-card');
+            if (targetCard && targetCard !== card) {
+                // Prevent standard screen scroll while reordering
+                if (e.cancelable) e.preventDefault();
+                
+                const rect = targetCard.getBoundingClientRect();
+                const next = (currentY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                
+                chaptersList.insertBefore(card, next ? targetCard.nextSibling : targetCard);
+            }
+        }, { passive: false });
+
+        card.addEventListener('touchend', () => {
+            if (!touchStartCard) return;
+            card.classList.remove('dragging');
+            touchStartCard = null;
+            
+            const touchEndIndex = Array.from(chaptersList.children).indexOf(card);
+            
+            if (touchStartIndex !== touchEndIndex) {
+                // Only save and re-render if order actually changed
+                const newChaptersOrder = [];
+                const renderedCards = chaptersList.querySelectorAll('.chapter-card');
+                renderedCards.forEach(cardEl => {
+                    const id = cardEl.dataset.id;
+                    const ch = project.chapters.find(c => c.id === id);
+                    if (ch) {
+                        newChaptersOrder.push(ch);
+                    }
+                });
+                project.chapters = newChaptersOrder;
+                triggerSave();
+                renderChapterList(); // Re-render to update numbers
+            }
+            
+            // Clear dragging status after a tiny delay
+            setTimeout(() => {
+                isDragging = false;
+            }, 100);
         });
         
         chaptersList.appendChild(card);
