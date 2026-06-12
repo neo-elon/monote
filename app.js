@@ -1,3 +1,32 @@
+// Safe localStorage wrapper for environments where localStorage is restricted (e.g., in-app browsers, private modes)
+const storage = {
+    _data: {},
+    getItem(key) {
+        try {
+            return window.localStorage.getItem(key);
+        } catch (e) {
+            console.warn(`localStorage.getItem failed for "${key}":`, e);
+            return this._data[key] || null;
+        }
+    },
+    setItem(key, value) {
+        try {
+            window.localStorage.setItem(key, value);
+        } catch (e) {
+            console.warn(`localStorage.setItem failed for "${key}":`, e);
+            this._data[key] = String(value);
+        }
+    },
+    removeItem(key) {
+        try {
+            window.localStorage.removeItem(key);
+        } catch (e) {
+            console.warn(`localStorage.removeItem failed for "${key}":`, e);
+            delete this._data[key];
+        }
+    }
+};
+
 // State Management
 let projects = [];
 let activeProjectId = null;
@@ -47,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Load Theme from LocalStorage
 function loadTheme() {
-    const savedTheme = localStorage.getItem('monote-theme') || 'light-mode';
+    const savedTheme = storage.getItem('monote-theme') || 'light-mode';
     document.body.className = savedTheme;
     updateThemeIcons(savedTheme);
 }
@@ -65,7 +94,7 @@ function updateThemeIcons(theme) {
 
 // Load Projects and handle Migration
 function loadProjects() {
-    const savedProjects = localStorage.getItem('monote-projects');
+    const savedProjects = storage.getItem('monote-projects');
     if (savedProjects) {
         try {
             projects = JSON.parse(savedProjects);
@@ -78,7 +107,7 @@ function loadProjects() {
     }
 
     // Migration from old single-project structure
-    const savedOldProject = localStorage.getItem('monote-project');
+    const savedOldProject = storage.getItem('monote-project');
     if (savedOldProject) {
         try {
             const oldProject = JSON.parse(savedOldProject);
@@ -94,13 +123,13 @@ function loadProjects() {
                     updatedAt: new Date().toISOString()
                 };
                 projects.push(migrated);
-                localStorage.setItem('monote-projects', JSON.stringify(projects));
+                storage.setItem('monote-projects', JSON.stringify(projects));
             }
         } catch (e) {
             console.error("Failed to migrate old project:", e);
         }
         // Remove old key so we don't migrate again
-        localStorage.removeItem('monote-project');
+        storage.removeItem('monote-project');
     }
 }
 
@@ -119,7 +148,7 @@ function triggerSave() {
         if (idx !== -1) {
             project.updatedAt = new Date().toISOString();
             projects[idx] = project;
-            localStorage.setItem('monote-projects', JSON.stringify(projects));
+            storage.setItem('monote-projects', JSON.stringify(projects));
         }
         saveStatus.textContent = "저장 완료";
         setTimeout(() => {
@@ -134,11 +163,11 @@ function setupEventListeners() {
     themeToggle.addEventListener('click', () => {
         if (document.body.classList.contains('light-mode')) {
             document.body.classList.replace('light-mode', 'dark-mode');
-            localStorage.setItem('monote-theme', 'dark-mode');
+            storage.setItem('monote-theme', 'dark-mode');
             updateThemeIcons('dark-mode');
         } else {
             document.body.classList.replace('dark-mode', 'light-mode');
-            localStorage.setItem('monote-theme', 'light-mode');
+            storage.setItem('monote-theme', 'light-mode');
             updateThemeIcons('light-mode');
         }
     });
@@ -821,7 +850,7 @@ function createNewProject() {
     };
     
     projects.push(newProj);
-    localStorage.setItem('monote-projects', JSON.stringify(projects));
+    storage.setItem('monote-projects', JSON.stringify(projects));
     hideNewBookDialog();
     renderBookshelf();
     
@@ -848,7 +877,7 @@ function openProject(projectId) {
 // Delete project
 function deleteProject(projectId) {
     projects = projects.filter(p => p.id !== projectId);
-    localStorage.setItem('monote-projects', JSON.stringify(projects));
+    storage.setItem('monote-projects', JSON.stringify(projects));
     
     if (activeProjectId === projectId) {
         activeProjectId = null;
