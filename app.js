@@ -226,13 +226,17 @@ function renderChapterList() {
             </div>
         `;
         
+        let isDragging = false;
+
         // Click to open editor (only if not dragging)
         card.addEventListener('click', (e) => {
+            if (isDragging) return;
             openChapterEditor(chapter.id);
         });
 
         // Drag & Drop event handlers
         card.addEventListener('dragstart', (e) => {
+            isDragging = true;
             card.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', chapter.id);
@@ -240,6 +244,10 @@ function renderChapterList() {
 
         card.addEventListener('dragend', () => {
             card.classList.remove('dragging');
+            // Prevent trailing click event from opening the editor immediately after drag
+            setTimeout(() => {
+                isDragging = false;
+            }, 100);
         });
 
         card.addEventListener('dragover', (e) => {
