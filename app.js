@@ -50,6 +50,8 @@ const goToBookshelfBtn = document.getElementById('logo-area');
 const projectTitleInput = document.getElementById('project-title');
 const projectSynopsisTextarea = document.getElementById('project-synopsis');
 const synopsisWordCount = document.getElementById('synopsis-word-count');
+const projectIdeasTextarea = document.getElementById('project-ideas');
+const ideasWordCount = document.getElementById('ideas-word-count');
 const addChapterBtn = document.getElementById('add-chapter-btn');
 const chaptersList = document.getElementById('chapters-list');
 
@@ -117,6 +119,7 @@ function loadProjects() {
                     id: Date.now().toString(),
                     title: oldProject.title || '임시 작품',
                     synopsis: oldProject.synopsis || '',
+                    ideas: oldProject.ideas || '',
                     chapters: oldProject.chapters || [],
                     coverColor: 'charcoal',
                     createdAt: new Date().toISOString(),
@@ -181,6 +184,12 @@ function setupEventListeners() {
     projectSynopsisTextarea.addEventListener('input', (e) => {
         project.synopsis = e.target.value;
         updateSynopsisCount();
+        triggerSave();
+    });
+
+    projectIdeasTextarea.addEventListener('input', (e) => {
+        project.ideas = e.target.value;
+        updateIdeasCount();
         triggerSave();
     });
 
@@ -267,7 +276,9 @@ function setupEventListeners() {
 function renderOverview() {
     projectTitleInput.value = project.title || '';
     projectSynopsisTextarea.value = project.synopsis || '';
+    projectIdeasTextarea.value = project.ideas || '';
     updateSynopsisCount();
+    updateIdeasCount();
     renderChapterList();
 }
 
@@ -275,6 +286,12 @@ function renderOverview() {
 function updateSynopsisCount() {
     const len = project.synopsis ? project.synopsis.length : 0;
     synopsisWordCount.textContent = `${len.toLocaleString()}자`;
+}
+
+// Update Ideas Character Count
+function updateIdeasCount() {
+    const len = project.ideas ? project.ideas.length : 0;
+    ideasWordCount.textContent = `${len.toLocaleString()}자`;
 }
 
 // Helper to get prefix dynamically for any chapter based on its level
@@ -843,6 +860,7 @@ function createNewProject() {
         id: Date.now().toString(),
         title: title,
         synopsis: '',
+        ideas: '',
         chapters: [],
         coverColor: coverColor,
         createdAt: new Date().toISOString(),
