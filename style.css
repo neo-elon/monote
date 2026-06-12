@@ -602,16 +602,6 @@ body {
     opacity: 0.35;
 }
 
-.tree-line-corner::after {
-    content: '';
-    position: absolute;
-    left: 11px;
-    top: 50%;
-    width: 13px;
-    border-top: 1.5px dashed var(--text-secondary);
-    opacity: 0.35;
-}
-
 /* Branch connector: T-shape */
 .tree-line-branch::before {
     content: '';
@@ -620,16 +610,6 @@ body {
     top: -15px;
     bottom: -15px;
     border-left: 1.5px dashed var(--text-secondary);
-    opacity: 0.35;
-}
-
-.tree-line-branch::after {
-    content: '';
-    position: absolute;
-    left: 11px;
-    top: 50%;
-    width: 13px;
-    border-top: 1.5px dashed var(--text-secondary);
     opacity: 0.35;
 }
 
