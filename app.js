@@ -266,7 +266,10 @@ function renderChapterList() {
         let isDragging = false;
         let touchStartCard = null;
         let touchStartIndex = index;
- 
+        let dragStartX = 0;
+        let dragStartLevel = chapter.level || 0;
+        let lastTouchX = 0;
+
         // Click to open editor (only if not dragging)
         card.addEventListener('click', (e) => {
             if (isDragging) return;
@@ -298,14 +301,38 @@ function renderChapterList() {
         // Drag & Drop event handlers (Mouse / Desktop)
         card.addEventListener('dragstart', (e) => {
             isDragging = true;
+            dragStartX = e.clientX;
+            dragStartLevel = chapter.level || 0;
             card.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', chapter.id);
         });
 
-        card.addEventListener('dragend', () => {
+        card.addEventListener('drag', (e) => {
+            if (e.clientX === 0) return; // Ignore dragend boundary coordinate
+            const deltaX = e.clientX - dragStartX;
+            const levelShift = Math.round(deltaX / 24);
+            const tempLevel = Math.max(0, Math.min(3, dragStartLevel + levelShift));
+            
+            // Instantly update UI class to show dynamic indent and numbering styling
+            card.className = `chapter-card level-${tempLevel} dragging`;
+            const tempPrefix = getChapterPrefixForLvl(chapter.id, tempLevel);
+            const badge = card.querySelector('.chapter-num-badge');
+            if (badge) badge.textContent = tempPrefix;
+        });
+
+        card.addEventListener('dragend', (e) => {
             card.classList.remove('dragging');
-            // Prevent trailing click event from opening the editor immediately after drag
+            
+            // Save final level shift based on end coordinate
+            if (e.clientX !== 0) {
+                const deltaX = e.clientX - dragStartX;
+                const levelShift = Math.round(deltaX / 24);
+                chapter.level = Math.max(0, Math.min(3, dragStartLevel + levelShift));
+            }
+            
+            saveAndRefreshOrder();
+            
             setTimeout(() => {
                 isDragging = false;
             }, 100);
@@ -326,26 +353,14 @@ function renderChapterList() {
 
         card.addEventListener('drop', (e) => {
             e.preventDefault();
-            
-            // Re-order project.chapters array based on visual DOM elements
-            const newChaptersOrder = [];
-            const renderedCards = chaptersList.querySelectorAll('.chapter-card');
-            renderedCards.forEach(cardEl => {
-                const id = cardEl.dataset.id;
-                const ch = project.chapters.find(c => c.id === id);
-                if (ch) {
-                    newChaptersOrder.push(ch);
-                }
-            });
-            
-            project.chapters = newChaptersOrder;
-            triggerSave();
-            renderChapterList(); // Re-render to refresh chapter numbers
         });
 
         // Touch Drag & Drop event handlers (Mobile / Finger)
         card.addEventListener('touchstart', (e) => {
             touchStartCard = card;
+            dragStartX = e.touches[0].clientX;
+            lastTouchX = e.touches[0].clientX;
+            dragStartLevel = chapter.level || 0;
             touchStartIndex = Array.from(chaptersList.children).indexOf(card);
             card.classList.add('dragging');
         }, { passive: true });
@@ -356,6 +371,13 @@ function renderChapterList() {
             
             const touch = e.touches[0];
             const currentY = touch.clientY;
+            lastTouchX = touch.clientX;
+            
+            // Horizontal shift calculation for live touch feedback
+            const deltaX = touch.clientX - dragStartX;
+            const levelShift = Math.round(deltaX / 24);
+            const tempLevel = Math.max(0, Math.min(3, dragStartLevel + levelShift));
+            card.className = `chapter-card level-${tempLevel} dragging`;
             
             // Find element under current finger position
             const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -381,21 +403,12 @@ function renderChapterList() {
             
             const touchEndIndex = Array.from(chaptersList.children).indexOf(card);
             
-            if (touchStartIndex !== touchEndIndex) {
-                // Only save and re-render if order actually changed
-                const newChaptersOrder = [];
-                const renderedCards = chaptersList.querySelectorAll('.chapter-card');
-                renderedCards.forEach(cardEl => {
-                    const id = cardEl.dataset.id;
-                    const ch = project.chapters.find(c => c.id === id);
-                    if (ch) {
-                        newChaptersOrder.push(ch);
-                    }
-                });
-                project.chapters = newChaptersOrder;
-                triggerSave();
-                renderChapterList(); // Re-render to update numbers
-            }
+            // Save final touch level shift
+            const deltaX = lastTouchX - dragStartX;
+            const levelShift = Math.round(deltaX / 24);
+            chapter.level = Math.max(0, Math.min(3, dragStartLevel + levelShift));
+            
+            saveAndRefreshOrder();
             
             // Clear dragging status after a tiny delay
             setTimeout(() => {
@@ -405,6 +418,58 @@ function renderChapterList() {
         
         chaptersList.appendChild(card);
     });
+}
+
+// Helper to save order and refresh
+function saveAndRefreshOrder() {
+    const newChaptersOrder = [];
+    const renderedCards = chaptersList.querySelectorAll('.chapter-card');
+    renderedCards.forEach(cardEl => {
+        const id = cardEl.dataset.id;
+        const ch = project.chapters.find(c => c.id === id);
+        if (ch) {
+            newChaptersOrder.push(ch);
+        }
+    });
+    project.chapters = newChaptersOrder;
+    triggerSave();
+    renderChapterList();
+}
+
+// Temporary prefix helper for live drag preview
+function getChapterPrefixForLvl(chapterId, tempLevel) {
+    let partCount = 0;
+    let chapterCount = 0;
+    let sceneCount = 0;
+    let sectionCount = 0;
+    
+    for (let i = 0; i < (project.chapters || []).length; i++) {
+        const ch = project.chapters[i];
+        const lvl = ch.id === chapterId ? tempLevel : (ch.level || 0);
+        
+        let prefix = '';
+        if (lvl === 0) {
+            partCount++;
+            chapterCount = 0; sceneCount = 0; sectionCount = 0;
+            prefix = `PART ${String(partCount).padStart(2, '0')}`;
+        } else if (lvl === 1) {
+            chapterCount++;
+            sceneCount = 0; sectionCount = 0;
+            prefix = `CH ${String(chapterCount).padStart(2, '0')}`;
+        } else if (lvl === 2) {
+            sceneCount++;
+            sectionCount = 0;
+            prefix = `SCENE ${String(sceneCount).padStart(2, '0')}`;
+        } else if (lvl === 3) {
+            sectionCount++;
+            prefix = `SEC ${String(sectionCount).padStart(2, '0')}`;
+        }
+        
+        if (ch.id === chapterId) {
+            return prefix;
+        }
+    }
+    return '';
 }
 
 // Add New Chapter
