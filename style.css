@@ -309,13 +309,19 @@ body {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     padding: 1rem;
-    cursor: pointer;
+    cursor: grab;
     transition: all var(--transition-speed);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     position: relative;
     overflow: hidden;
+}
+
+.chapter-card.dragging {
+    opacity: 0.4;
+    border: 1px dashed var(--accent-color);
+    cursor: grabbing;
 }
 
 .chapter-card::before {

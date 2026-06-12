@@ -207,6 +207,7 @@ function renderChapterList() {
         const card = document.createElement('div');
         card.className = 'chapter-card';
         card.dataset.id = chapter.id;
+        card.setAttribute('draggable', 'true');
         
         // Calculate length details
         const charCount = chapter.content ? chapter.content.length : 0;
@@ -225,8 +226,52 @@ function renderChapterList() {
             </div>
         `;
         
-        card.addEventListener('click', () => {
+        // Click to open editor (only if not dragging)
+        card.addEventListener('click', (e) => {
             openChapterEditor(chapter.id);
+        });
+
+        // Drag & Drop event handlers
+        card.addEventListener('dragstart', (e) => {
+            card.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', chapter.id);
+        });
+
+        card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+        });
+
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingCard = document.querySelector('.dragging');
+            if (!draggingCard || draggingCard === card) return;
+            
+            // Determine vertical position
+            const rect = card.getBoundingClientRect();
+            const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+            
+            // Insert visual preview
+            chaptersList.insertBefore(draggingCard, next ? card.nextSibling : card);
+        });
+
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            
+            // Re-order project.chapters array based on visual DOM elements
+            const newChaptersOrder = [];
+            const renderedCards = chaptersList.querySelectorAll('.chapter-card');
+            renderedCards.forEach(cardEl => {
+                const id = cardEl.dataset.id;
+                const ch = project.chapters.find(c => c.id === id);
+                if (ch) {
+                    newChaptersOrder.push(ch);
+                }
+            });
+            
+            project.chapters = newChaptersOrder;
+            triggerSave();
+            renderChapterList(); // Re-render to refresh chapter numbers
         });
         
         chaptersList.appendChild(card);
