@@ -99,6 +99,13 @@ body {
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+}
+
+.logo-area:hover {
+    opacity: 0.85;
 }
 
 .logo {

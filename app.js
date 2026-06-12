@@ -15,7 +15,7 @@ const moonIcon = document.querySelector('.moon-icon');
 const exportProjectBtn = document.getElementById('export-project');
 const importProjectTrigger = document.getElementById('import-project-trigger');
 const importProjectFile = document.getElementById('import-project-file');
-const goToBookshelfBtn = document.getElementById('go-to-bookshelf');
+const goToBookshelfBtn = document.getElementById('logo-area');
 
 // Overview Elements
 const projectTitleInput = document.getElementById('project-title');
@@ -699,7 +699,7 @@ function showOverviewScreen() {
 function showBookshelfScreen() {
     activeProjectId = null;
     project = null;
-    goToBookshelfBtn.style.display = 'none';
+    
     
     overviewScreen.classList.remove('active');
     writingScreen.classList.remove('active');
@@ -838,8 +838,7 @@ function openProject(projectId) {
     project = JSON.parse(JSON.stringify(proj)); // Deep copy to edit
     activeChapterId = null;
     
-    // Show Bookshelf button in header
-    goToBookshelfBtn.style.display = 'flex';
+    
     
     // Render and switch to Overview
     renderOverview();
@@ -854,7 +853,7 @@ function deleteProject(projectId) {
     if (activeProjectId === projectId) {
         activeProjectId = null;
         project = null;
-        goToBookshelfBtn.style.display = 'none';
+        
         showBookshelfScreen();
     } else {
         renderBookshelf();
