@@ -26,6 +26,7 @@ const chaptersList = document.getElementById('chapters-list');
 
 // Editor Elements
 const backToOverviewBtn = document.getElementById('back-to-overview');
+const spellCheckBtn = document.getElementById('spell-check-btn');
 const exportChapterBtn = document.getElementById('export-chapter');
 const deleteChapterBtn = document.getElementById('delete-chapter');
 const chapterTitleInput = document.getElementById('chapter-title');
@@ -153,6 +154,15 @@ function setupEventListeners() {
     exportChapterBtn.addEventListener('click', () => {
         if (activeChapterId !== null) {
             exportChapter(activeChapterId);
+        }
+    });
+
+    spellCheckBtn.addEventListener('click', () => {
+        if (activeChapterId !== null) {
+            const ch = project.chapters.find(c => c.id === activeChapterId);
+            if (ch) {
+                runSpellCheck(ch.content || '');
+            }
         }
     });
 
@@ -742,4 +752,22 @@ function importProject(file) {
         importProjectFile.value = '';
     };
     reader.readAsText(file);
+}
+
+// Copy content to clipboard and open external spellchecker (Daum Grammar Checker)
+function runSpellCheck(text) {
+    if (!text.trim()) {
+        alert("검사할 본문 내용이 없습니다.");
+        return;
+    }
+    
+    navigator.clipboard.writeText(text).then(() => {
+        alert("본문 내용이 클립보드에 복사되었습니다!\n\n확인 버튼을 누르면 맞춤법 검사기 페이지로 이동합니다. 입력창에 붙여넣기(Ctrl + V)하여 검사해 보세요.");
+        window.open('https://dic.daum.net/grammar_checker.do', '_blank');
+    }).catch(err => {
+        console.error("Failed to copy text: ", err);
+        // Fallback if clipboard API fails
+        alert("맞춤법 검사기 페이지로 이동합니다. 본문을 직접 복사(Ctrl + C)하여 검사기 창에 붙여넣기(Ctrl + V) 하세요.");
+        window.open('https://dic.daum.net/grammar_checker.do', '_blank');
+    });
 }
