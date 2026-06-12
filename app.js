@@ -211,19 +211,11 @@ function renderChapterList() {
         
         // Calculate length details
         const charCount = chapter.content ? chapter.content.length : 0;
-        const previewText = chapter.content ? chapter.content.substring(0, 150) : '비어 있는 챕터입니다. 내용을 작성해 주세요.';
         
         card.innerHTML = `
-            <div class="card-header">
-                <span class="chapter-num">CHAPTER ${String(index + 1).padStart(2, '0')}</span>
-                <span class="char-counter">${charCount.toLocaleString()}자</span>
-            </div>
-            <h3 class="chapter-card-title">${chapter.title || '제목 없음'}</h3>
-            <p class="chapter-preview">${previewText}</p>
-            <div class="card-footer">
-                <span>최근 편집됨</span>
-                <span>공백 포함</span>
-            </div>
+            <span class="chapter-num-badge">CH ${String(index + 1).padStart(2, '0')}</span>
+            <span class="chapter-card-title">${chapter.title || '제목 없음'}</span>
+            <span class="char-counter">${charCount.toLocaleString()}자</span>
         `;
         
         let isDragging = false;
