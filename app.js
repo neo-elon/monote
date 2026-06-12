@@ -166,6 +166,7 @@ function setupEventListeners() {
 
     // Project Backup & Restore Listeners
     exportProjectBtn.addEventListener('click', exportProject);
+    document.getElementById('export-project-txt').addEventListener('click', exportProjectTxt);
     importProjectTrigger.addEventListener('click', () => {
         importProjectFile.click();
     });
@@ -664,6 +665,48 @@ function exportProject() {
     const filename = `${project.title || 'monote-backup'}-${new Date().toISOString().slice(0,10)}.json`;
     const jsonStr = JSON.stringify(project, null, 4);
     const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// Export entire project to single TXT file (all chapters compiled)
+function exportProjectTxt() {
+    if (!project.chapters || project.chapters.length === 0) {
+        alert("내보낼 챕터가 없습니다.");
+        return;
+    }
+    
+    let fullText = '';
+    
+    // Add Project Title & Synopsis at the top
+    fullText += `=========================================\n`;
+    fullText += `작품 제목: ${project.title || '제목 없음'}\n`;
+    if (project.synopsis) {
+        fullText += `전체 시놉시스:\n${project.synopsis}\n`;
+    }
+    fullText += `=========================================\n\n\n`;
+    
+    // Iterate through chapters in order
+    project.chapters.forEach((chapter) => {
+        const prefix = getChapterPrefix(chapter.id);
+        const titleText = chapter.title || '제목 없음';
+        
+        // Add chapter header
+        fullText += `[ ${prefix} — ${titleText} ]\n`;
+        fullText += `-----------------------------------------\n`;
+        fullText += `${chapter.content || ''}\n\n`;
+        fullText += `\n`;
+    });
+    
+    const filename = `${project.title || 'untitled-story'}-${new Date().toISOString().slice(0,10)}.txt`;
+    const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement('a');
