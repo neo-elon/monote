@@ -460,7 +460,9 @@ function renderChapterList() {
         card.addEventListener('drag', (e) => {
             if (e.clientX === 0) return; // Ignore dragend boundary coordinate
             const deltaX = e.clientX - dragStartX;
-            const levelShift = Math.round(deltaX / 24);
+            let levelShift = Math.round(deltaX / 24);
+            if (levelShift > 1) levelShift = 1;
+            if (levelShift < -1) levelShift = -1;
             const tempLevel = Math.max(0, Math.min(2, dragStartLevel + levelShift));
             
             // Instantly update UI class to show dynamic indent and numbering styling
@@ -476,7 +478,9 @@ function renderChapterList() {
             // Save final level shift based on end coordinate
             if (e.clientX !== 0) {
                 const deltaX = e.clientX - dragStartX;
-                const levelShift = Math.round(deltaX / 24);
+                let levelShift = Math.round(deltaX / 24);
+                if (levelShift > 1) levelShift = 1;
+                if (levelShift < -1) levelShift = -1;
                 chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
             }
             
@@ -544,7 +548,9 @@ function renderChapterList() {
                 window.getSelection().removeAllRanges();
                 
                 // Horizontal shift calculation for live touch feedback
-                const levelShift = Math.round(deltaX / 24);
+                let levelShift = Math.round(deltaX / 24);
+                if (levelShift > 1) levelShift = 1;
+                if (levelShift < -1) levelShift = -1;
                 const tempLevel = Math.max(0, Math.min(2, dragStartLevel + levelShift));
                 card.className = `chapter-card level-${tempLevel} dragging`;
                 
@@ -574,7 +580,9 @@ function renderChapterList() {
             if (isDragging) {
                 // Save final touch level shift
                 const deltaX = lastTouchX - dragStartX;
-                const levelShift = Math.round(deltaX / 24);
+                let levelShift = Math.round(deltaX / 24);
+                if (levelShift > 1) levelShift = 1;
+                if (levelShift < -1) levelShift = -1;
                 chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
                 
                 saveAndRefreshOrder();
