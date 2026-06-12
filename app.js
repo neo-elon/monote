@@ -195,7 +195,6 @@ function getChapterPrefix(chapterId) {
     let partCount = 0;
     let chapterCount = 0;
     let sceneCount = 0;
-    let sectionCount = 0;
     
     for (let i = 0; i < (project.chapters || []).length; i++) {
         const ch = project.chapters[i];
@@ -204,19 +203,15 @@ function getChapterPrefix(chapterId) {
         let prefix = '';
         if (lvl === 0) {
             partCount++;
-            chapterCount = 0; sceneCount = 0; sectionCount = 0;
+            chapterCount = 0; sceneCount = 0;
             prefix = `PART ${String(partCount).padStart(2, '0')}`;
         } else if (lvl === 1) {
             chapterCount++;
-            sceneCount = 0; sectionCount = 0;
+            sceneCount = 0;
             prefix = `CH ${String(chapterCount).padStart(2, '0')}`;
         } else if (lvl === 2) {
             sceneCount++;
-            sectionCount = 0;
             prefix = `SCENE ${String(sceneCount).padStart(2, '0')}`;
-        } else if (lvl === 3) {
-            sectionCount++;
-            prefix = `SEC ${String(sectionCount).padStart(2, '0')}`;
         }
         
         if (ch.id === chapterId) {
@@ -245,6 +240,10 @@ function renderChapterList() {
         if (chapter.level === undefined) {
             chapter.level = 0;
         }
+        // Force clamp to max level 2 (3 steps: 0, 1, 2)
+        if (chapter.level > 2) {
+            chapter.level = 2;
+        }
         
         card.className = `chapter-card level-${chapter.level}`;
         card.dataset.id = chapter.id;
@@ -254,8 +253,51 @@ function renderChapterList() {
         const charCount = chapter.content ? chapter.content.length : 0;
         const prefix = getChapterPrefix(chapter.id);
         
+        // Generate tree dotted guide lines
+        let treeLinesHtml = '<div class="tree-lines">';
+        for (let l = 1; l <= chapter.level; l++) {
+            const isConnector = (l === chapter.level);
+            
+            // Check if there is another chapter of level >= l below
+            let hasSiblingBelow = false;
+            for (let j = index + 1; j < project.chapters.length; j++) {
+                const nextCh = project.chapters[j];
+                if (nextCh.level < l) {
+                    break;
+                }
+                if (nextCh.level >= l) {
+                    hasSiblingBelow = true;
+                    break;
+                }
+            }
+            
+            if (isConnector) {
+                const connClass = hasSiblingBelow ? 'tree-line-branch' : 'tree-line-corner';
+                treeLinesHtml += `<div class="tree-line ${connClass}"></div>`;
+            } else {
+                let needLine = false;
+                for (let j = index + 1; j < project.chapters.length; j++) {
+                    const nextCh = project.chapters[j];
+                    if (nextCh.level < l) {
+                        break;
+                    }
+                    if (nextCh.level >= l) {
+                        needLine = true;
+                        break;
+                    }
+                }
+                if (needLine) {
+                    treeLinesHtml += `<div class="tree-line tree-line-vertical"></div>`;
+                } else {
+                    treeLinesHtml += `<div class="tree-line tree-line-empty"></div>`;
+                }
+            }
+        }
+        treeLinesHtml += '</div>';
+        
         card.innerHTML = `
             <div class="tree-indent-wrapper">
+                ${treeLinesHtml}
                 <div class="tree-controls">
                     <button class="btn-tree-lvl outdent-btn" title="들여쓰기 축소">◀</button>
                     <button class="btn-tree-lvl indent-btn" title="들여쓰기 확대">▶</button>
@@ -294,7 +336,7 @@ function renderChapterList() {
 
         indentBtn.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent card click
-            if (chapter.level < 3) {
+            if (chapter.level < 2) {
                 chapter.level++;
                 triggerSave();
                 renderChapterList();
@@ -315,7 +357,7 @@ function renderChapterList() {
             if (e.clientX === 0) return; // Ignore dragend boundary coordinate
             const deltaX = e.clientX - dragStartX;
             const levelShift = Math.round(deltaX / 24);
-            const tempLevel = Math.max(0, Math.min(3, dragStartLevel + levelShift));
+            const tempLevel = Math.max(0, Math.min(2, dragStartLevel + levelShift));
             
             // Instantly update UI class to show dynamic indent and numbering styling
             card.className = `chapter-card level-${tempLevel} dragging`;
@@ -331,7 +373,7 @@ function renderChapterList() {
             if (e.clientX !== 0) {
                 const deltaX = e.clientX - dragStartX;
                 const levelShift = Math.round(deltaX / 24);
-                chapter.level = Math.max(0, Math.min(3, dragStartLevel + levelShift));
+                chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
             }
             
             saveAndRefreshOrder();
@@ -384,7 +426,7 @@ function renderChapterList() {
             // Horizontal shift calculation for live touch feedback
             const deltaX = touch.clientX - dragStartX;
             const levelShift = Math.round(deltaX / 24);
-            const tempLevel = Math.max(0, Math.min(3, dragStartLevel + levelShift));
+            const tempLevel = Math.max(0, Math.min(2, dragStartLevel + levelShift));
             card.className = `chapter-card level-${tempLevel} dragging`;
             
             // Find element under current finger position
@@ -414,7 +456,7 @@ function renderChapterList() {
             // Save final touch level shift
             const deltaX = lastTouchX - dragStartX;
             const levelShift = Math.round(deltaX / 24);
-            chapter.level = Math.max(0, Math.min(3, dragStartLevel + levelShift));
+            chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
             
             saveAndRefreshOrder();
             
@@ -449,7 +491,6 @@ function getChapterPrefixForLvl(chapterId, tempLevel) {
     let partCount = 0;
     let chapterCount = 0;
     let sceneCount = 0;
-    let sectionCount = 0;
     
     for (let i = 0; i < (project.chapters || []).length; i++) {
         const ch = project.chapters[i];
@@ -458,19 +499,15 @@ function getChapterPrefixForLvl(chapterId, tempLevel) {
         let prefix = '';
         if (lvl === 0) {
             partCount++;
-            chapterCount = 0; sceneCount = 0; sectionCount = 0;
+            chapterCount = 0; sceneCount = 0;
             prefix = `PART ${String(partCount).padStart(2, '0')}`;
         } else if (lvl === 1) {
             chapterCount++;
-            sceneCount = 0; sectionCount = 0;
+            sceneCount = 0;
             prefix = `CH ${String(chapterCount).padStart(2, '0')}`;
         } else if (lvl === 2) {
             sceneCount++;
-            sectionCount = 0;
             prefix = `SCENE ${String(sceneCount).padStart(2, '0')}`;
-        } else if (lvl === 3) {
-            sectionCount++;
-            prefix = `SEC ${String(sectionCount).padStart(2, '0')}`;
         }
         
         if (ch.id === chapterId) {

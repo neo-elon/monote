@@ -530,7 +530,7 @@ body {
     align-items: center;
     gap: 0.5rem;
     flex-grow: 1;
-    overflow: hidden;
+    min-width: 0;
 }
 
 .tree-controls {
@@ -566,7 +566,73 @@ body {
     background-color: var(--bg-secondary);
 }
 
-/* Indentation levels */
+/* Indentation levels & Tree Lines */
+.tree-lines {
+    display: flex;
+    align-self: stretch;
+    margin-right: 0.5rem;
+}
+
+.tree-line {
+    width: 24px;
+    position: relative;
+    flex-shrink: 0;
+    align-self: stretch;
+}
+
+/* Vertical dashed line */
+.tree-line-vertical::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: -15px;
+    bottom: -15px;
+    border-left: 1.5px dashed var(--text-secondary);
+    opacity: 0.35;
+}
+
+/* Corner connector: L-shape */
+.tree-line-corner::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: -15px;
+    height: calc(50% + 15px);
+    border-left: 1.5px dashed var(--text-secondary);
+    opacity: 0.35;
+}
+
+.tree-line-corner::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    width: 13px;
+    border-top: 1.5px dashed var(--text-secondary);
+    opacity: 0.35;
+}
+
+/* Branch connector: T-shape */
+.tree-line-branch::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: -15px;
+    bottom: -15px;
+    border-left: 1.5px dashed var(--text-secondary);
+    opacity: 0.35;
+}
+
+.tree-line-branch::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    width: 13px;
+    border-top: 1.5px dashed var(--text-secondary);
+    opacity: 0.35;
+}
+
 .chapter-card.level-0 {
     font-weight: 600;
 }
@@ -577,18 +643,14 @@ body {
 }
 
 .chapter-card.level-1 {
-    padding-left: 1.5rem;
+    font-weight: 500;
 }
 
 .chapter-card.level-2 {
-    padding-left: 3rem;
-}
-
-.chapter-card.level-3 {
-    padding-left: 4.5rem;
+    font-weight: 400;
     font-style: italic;
 }
 
-.chapter-card.level-3 .chapter-card-title {
+.chapter-card.level-2 .chapter-card-title {
     color: var(--text-secondary);
 }
