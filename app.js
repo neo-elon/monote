@@ -208,10 +208,10 @@ function getChapterPrefix(chapterId) {
         } else if (lvl === 1) {
             chapterCount++;
             sceneCount = 0;
-            prefix = `CH ${String(chapterCount).padStart(2, '0')}`;
+            prefix = `${Math.max(1, partCount)}.${chapterCount}`;
         } else if (lvl === 2) {
             sceneCount++;
-            prefix = `SCENE ${String(sceneCount).padStart(2, '0')}`;
+            prefix = `${Math.max(1, partCount)}.${Math.max(1, chapterCount)}.${sceneCount}`;
         }
         
         if (ch.id === chapterId) {
@@ -522,10 +522,10 @@ function getChapterPrefixForLvl(chapterId, tempLevel) {
         } else if (lvl === 1) {
             chapterCount++;
             sceneCount = 0;
-            prefix = `CH ${String(chapterCount).padStart(2, '0')}`;
+            prefix = `${Math.max(1, partCount)}.${chapterCount}`;
         } else if (lvl === 2) {
             sceneCount++;
-            prefix = `SCENE ${String(sceneCount).padStart(2, '0')}`;
+            prefix = `${Math.max(1, partCount)}.${Math.max(1, chapterCount)}.${sceneCount}`;
         }
         
         if (ch.id === chapterId) {
