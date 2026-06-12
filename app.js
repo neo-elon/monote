@@ -958,23 +958,20 @@ function exportProjectTxt() {
     let fullText = '';
     
     // Add Project Title & Synopsis at the top
-    fullText += `=========================================\n`;
-    fullText += `작품 제목: ${project.title || '제목 없음'}\n`;
+    fullText += `${project.title || '제목 없음'}\n\n`;
     if (project.synopsis) {
-        fullText += `전체 시놉시스:\n${project.synopsis}\n`;
+        fullText += `시놉시스:\n${project.synopsis}\n\n`;
     }
-    fullText += `=========================================\n\n\n`;
+    fullText += `\n`;
     
     // Iterate through chapters in order
     project.chapters.forEach((chapter) => {
         const prefix = getChapterPrefix(chapter.id);
         const titleText = chapter.title || '제목 없음';
         
-        // Add chapter header
-        fullText += `[ ${prefix} — ${titleText} ]\n`;
-        fullText += `-----------------------------------------\n`;
-        fullText += `${chapter.content || ''}\n\n`;
-        fullText += `\n`;
+        // Add chapter header without decorators
+        fullText += `${prefix} ${titleText}\n\n`;
+        fullText += `${chapter.content || ''}\n\n\n`;
     });
     
     const filename = `${project.title || 'untitled-story'}-${new Date().toISOString().slice(0,10)}.txt`;
