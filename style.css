@@ -580,38 +580,7 @@ body {
     align-self: stretch;
 }
 
-/* Vertical dashed line */
-.tree-line-vertical::before {
-    content: '';
-    position: absolute;
-    left: 11px;
-    top: -15px;
-    bottom: -15px;
-    border-left: 1.5px dashed var(--text-secondary);
-    opacity: 0.35;
-}
-
-/* Corner connector: L-shape */
-.tree-line-corner::before {
-    content: '';
-    position: absolute;
-    left: 11px;
-    top: -15px;
-    height: calc(50% + 15px);
-    border-left: 1.5px dashed var(--text-secondary);
-    opacity: 0.35;
-}
-
-/* Branch connector: T-shape */
-.tree-line-branch::before {
-    content: '';
-    position: absolute;
-    left: 11px;
-    top: -15px;
-    bottom: -15px;
-    border-left: 1.5px dashed var(--text-secondary);
-    opacity: 0.35;
-}
+/* Vertical lines removed (kept empty classes for spacing) */
 
 .chapter-card.level-0 {
     font-weight: 600;
