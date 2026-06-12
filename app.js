@@ -363,11 +363,16 @@ function renderChapterList() {
             dragStartLevel = chapter.level || 0;
             touchStartIndex = Array.from(chaptersList.children).indexOf(card);
             card.classList.add('dragging');
+            // Clear text selection
+            window.getSelection().removeAllRanges();
         }, { passive: true });
 
         card.addEventListener('touchmove', (e) => {
             if (!touchStartCard) return;
             isDragging = true;
+            
+            // Prevent text selection highlight on move
+            window.getSelection().removeAllRanges();
             
             const touch = e.touches[0];
             const currentY = touch.clientY;
