@@ -204,7 +204,7 @@ function getChapterPrefix(chapterId) {
         if (lvl === 0) {
             partCount++;
             chapterCount = 0; sceneCount = 0;
-            prefix = `PART ${String(partCount).padStart(2, '0')}`;
+            prefix = `${partCount}`;
         } else if (lvl === 1) {
             chapterCount++;
             sceneCount = 0;
@@ -518,7 +518,7 @@ function getChapterPrefixForLvl(chapterId, tempLevel) {
         if (lvl === 0) {
             partCount++;
             chapterCount = 0; sceneCount = 0;
-            prefix = `PART ${String(partCount).padStart(2, '0')}`;
+            prefix = `${partCount}`;
         } else if (lvl === 1) {
             chapterCount++;
             sceneCount = 0;
