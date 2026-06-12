@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monote — 작가를 위한 모노톤 메모장</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231a1a1a'/><text y='70' x='22' font-size='70' font-family='Outfit, sans-serif' font-weight='700' fill='%23fbfbf9'>m</text></svg>">
     <!-- Google Fonts: Nanum Myeongjo for Literary Serif, Outfit for Sans-serif -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Outfit:wght@200;300;400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="light-mode">
     <div class="app-container">
         <!-- Header -->
@@ -20,15 +26,39 @@
             </div>
             <div class="header-actions">
                 <button id="export-project" class="btn-icon" title="전체 백업 다운로드" aria-label="Backup Project">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
                 </button>
                 <button id="import-project-trigger" class="btn-icon" title="백업 파일 불러오기" aria-label="Import Project">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
                 </button>
                 <input type="file" id="import-project-file" accept=".json" style="display: none;">
                 <button id="theme-toggle" class="btn-icon" title="테마 변경" aria-label="Toggle Theme">
-                    <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                    <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
                 </button>
             </div>
         </header>
@@ -42,14 +72,16 @@
                     <div class="project-info-panel">
                         <div class="panel-section">
                             <label for="project-title" class="section-label">작품 제목</label>
-                            <input type="text" id="project-title" class="input-flat title-input" placeholder="작품의 이름을 지어주세요..." autocomplete="off">
+                            <input type="text" id="project-title" class="input-flat title-input"
+                                placeholder="작품의 이름을 지어주세요..." autocomplete="off">
                         </div>
                         <div class="panel-section">
                             <div class="label-row">
                                 <label for="project-synopsis" class="section-label">전체 시놉시스 / 개요</label>
                                 <span id="synopsis-word-count" class="char-counter">0자</span>
                             </div>
-                            <textarea id="project-synopsis" class="textarea-flat synopsis-textarea" placeholder="여기에 이야기의 시작과 끝, 핵심 줄거리를 기록하세요..."></textarea>
+                            <textarea id="project-synopsis" class="textarea-flat synopsis-textarea"
+                                placeholder="여기에 이야기의 시작과 끝, 핵심 줄거리를 기록하세요..."></textarea>
                         </div>
                     </div>
 
@@ -72,7 +104,11 @@
             <section id="writing-screen" class="view-section">
                 <div class="editor-header">
                     <button id="back-to-overview" class="btn-flat btn-sm back-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="arrow-icon"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="arrow-icon">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
                         개요로 돌아가기
                     </button>
                     <div class="editor-actions">
@@ -87,12 +123,14 @@
 
                 <div class="editor-container">
                     <div class="editor-meta">
-                        <input type="text" id="chapter-title" class="input-flat chapter-title-input" placeholder="챕터 제목을 입력하세요..." autocomplete="off">
+                        <input type="text" id="chapter-title" class="input-flat chapter-title-input"
+                            placeholder="챕터 제목을 입력하세요..." autocomplete="off">
                         <div class="chapter-badge" id="chapter-number-badge">CHAPTER 01</div>
                     </div>
-                    
+
                     <div class="textarea-wrapper">
-                        <textarea id="chapter-content" class="editor-textarea" placeholder="이곳에 이야기를 펼쳐나가세요..."></textarea>
+                        <textarea id="chapter-content" class="editor-textarea"
+                            placeholder="이곳에 이야기를 펼쳐나가세요..."></textarea>
                     </div>
 
                     <div class="editor-footer">
@@ -119,4 +157,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>
