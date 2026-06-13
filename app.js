@@ -1995,58 +1995,6 @@ const simulatedLoungePosts = [
     { author: "정지용", content: "넓은 벌 동쪽 끝으로 옛이야기 지줄대는 실개천이 휘돌아 나가고, 얼룩백이 황소가 해설피 금빛 게으른 울음을 우는 곳이 그립습니다." }
 ];
 
-function showLoungeToast(author) {
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(8px);
-        border: 1px solid var(--border-color);
-        padding: 0.85rem 1.25rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        font-size: 0.85rem;
-        color: var(--text-primary);
-        font-family: var(--font-sans);
-        transform: translateY(20px);
-        opacity: 0;
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    `;
-    
-    const isDark = document.body.classList.contains('dark-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if (isDark) {
-        toast.style.background = 'rgba(30, 30, 30, 0.9)';
-    }
-
-    toast.innerHTML = `
-        <span style="font-size: 1.1rem;">💬</span>
-        <div style="text-align: left;">
-            <strong>${author}</strong> 작가의 새 글이 라운지에 등록되었습니다.
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.transform = 'translateY(0)';
-        toast.style.opacity = '1';
-    }, 10);
-    
-    setTimeout(() => {
-        toast.style.transform = 'translateY(20px)';
-        toast.style.opacity = '0';
-        setTimeout(() => {
-            toast.remove();
-        }, 400);
-    }, 4500);
-}
-
 function initLoungeSimulation() {
     let nextPostIndex = 0;
     
@@ -2079,8 +2027,6 @@ function initLoungeSimulation() {
             const badge = document.getElementById('lounge-new-badge');
             if (badge) badge.style.display = 'block';
         }
-        
-        showLoungeToast(postData.author);
         
         const nextInterval = 45000 + Math.random() * 45000;
         setTimeout(simulateNewPost, nextInterval);
