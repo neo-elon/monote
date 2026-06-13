@@ -413,6 +413,7 @@ function triggerSave() {
             updateSyncStatus('syncing', '동기화 중...');
             try {
                 await saveProjectToCloud(project);
+                await saveProfileToCloud(currentUser);
                 updateSyncStatus('success', '동기화 완료');
             } catch (err) {
                 console.error('Failed to save to cloud:', err);
@@ -1935,46 +1936,162 @@ function renderRanking() {
 
     const userAuthorName = currentUser?.user_metadata?.pen_name || (currentLang === 'en' ? "Me (Writer)" : "나 (작가)");
 
-    if (activeRankingTab === 'daily') {
-        const dailyRankingList = [
-            { author: userAuthorName, value: userDailyChars, isMe: true }
-        ].sort((a, b) => b.value - a.value);
+    // Show initial loading state
+    leaderboardEl.innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: var(--text-secondary); font-style: italic; font-size: 0.85rem;">
+            ${currentLang === 'en' ? 'Loading community ranking...' : '커뮤니티 랭킹을 불러오는 중입니다...'}
+        </div>
+    `;
 
-        renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "✍️ Today's Writing Volume Ranking" : "✍️ 오늘 하루 집필량 랭킹", dailyRankingList, currentLang === 'en' ? " chars" : "자", true);
-        
-    } else if (activeRankingTab === 'weekly') {
-        const weeklyRankingList = [
-            { author: userAuthorName, value: userWeeklyChars, isMe: true }
-        ].sort((a, b) => b.value - a.value);
+    (async () => {
+        let profiles = [];
+        let publicBooks = [];
+        if (supabaseClient) {
+            try {
+                // Fetch profiles (open_projects matching 'user-profile-%')
+                const { data: profileData, error: profileErr } = await supabaseClient
+                    .from('open_projects')
+                    .select('id, title, synopsis, user_id')
+                    .like('id', 'user-profile-%');
+                
+                if (!profileErr && profileData) {
+                    profiles = profileData;
+                }
 
-        renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "📅 Weekly Writing Volume Ranking (7 Days Total)" : "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, currentLang === 'en' ? " chars" : "자", true);
-        
-    } else if (activeRankingTab === 'cumulative') {
-        const userBooks = projects
-            .filter(proj => !proj.isPrivate && proj.id !== "monote-manual-guide")
-            .map(proj => {
-                const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
-                return {
-                    title: proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음'),
-                    author: userAuthorName,
-                    value: charCount,
-                    isMe: true
-                };
+                // Fetch public books for cumulative tab
+                if (activeRankingTab === 'cumulative') {
+                    const { data: bookData, error: bookErr } = await supabaseClient
+                        .from('open_projects')
+                        .select('id, title, chapters, user_id, cover_color')
+                        .order('updated_at', { ascending: false });
+
+                    if (!bookErr && bookData) {
+                        publicBooks = bookData.filter(p => {
+                            if (p.id === 'monote-manual-guide' || p.id.startsWith('user-profile-')) return false;
+                            const coverColor = p.cover_color || 'charcoal';
+                            const isPrivate = coverColor.split(':')[1] === 'private';
+                            return !isPrivate;
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load ranking data:", err);
+            }
+        }
+
+        // Process profiles stats
+        const rankingMap = new Map();
+        profiles.forEach(p => {
+            try {
+                const stats = JSON.parse(p.synopsis || '{}');
+                rankingMap.set(p.user_id, {
+                    author: p.title || (currentLang === 'en' ? "Anonymous Writer" : "익명의 작가"),
+                    daily: stats.daily || 0,
+                    weekly: stats.weekly || 0,
+                    streak: stats.streak || 0,
+                    cumulative: stats.cumulative || 0,
+                    user_id: p.user_id,
+                    isMe: currentUser && p.user_id === currentUser.id
+                });
+            } catch (e) {
+                console.error("Error parsing profile stats JSON:", e);
+            }
+        });
+
+        // Always ensure current user's local stats are merged/overwritten correctly
+        const myUserId = currentUser?.id || 'local-user';
+        const myStats = {
+            author: userAuthorName,
+            daily: userDailyChars,
+            weekly: userWeeklyChars,
+            streak: userStreak,
+            cumulative: userTotalCumulative,
+            user_id: myUserId,
+            isMe: true
+        };
+        rankingMap.set(myUserId, myStats);
+
+        leaderboardEl.innerHTML = '';
+
+        if (activeRankingTab === 'daily') {
+            const dailyRankingList = Array.from(rankingMap.values())
+                .filter(item => item.daily > 0 || item.isMe)
+                .sort((a, b) => b.daily - a.daily)
+                .map(item => ({ author: item.author, value: item.daily, isMe: item.isMe }));
+
+            renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "✍️ Today's Writing Volume Ranking" : "✍️ 오늘 하루 집필량 랭킹", dailyRankingList, currentLang === 'en' ? " chars" : "자", true);
+            
+        } else if (activeRankingTab === 'weekly') {
+            const weeklyRankingList = Array.from(rankingMap.values())
+                .filter(item => item.weekly > 0 || item.isMe)
+                .sort((a, b) => b.weekly - a.weekly)
+                .map(item => ({ author: item.author, value: item.weekly, isMe: item.isMe }));
+
+            renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "📅 Weekly Writing Volume Ranking (7 Days Total)" : "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, currentLang === 'en' ? " chars" : "자", true);
+            
+        } else if (activeRankingTab === 'cumulative') {
+            const bookList = [];
+            const processedBookIds = new Set();
+
+            // 1. Process public books from database
+            publicBooks.forEach(b => {
+                if (processedBookIds.has(b.id)) return;
+                processedBookIds.add(b.id);
+
+                const chapters = typeof b.chapters === 'string' ? JSON.parse(b.chapters) : (b.chapters || []);
+                const charCount = chapters.reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+                
+                if (charCount > 0) {
+                    const isMe = currentUser && b.user_id === currentUser.id;
+                    const authorProfile = rankingMap.get(b.user_id);
+                    const authorName = isMe ? userAuthorName : (authorProfile ? authorProfile.author : (currentLang === 'en' ? "Unknown Writer" : "작가 미상"));
+
+                    bookList.push({
+                        id: b.id,
+                        title: b.title || (currentLang === 'en' ? 'Untitled' : '제목 없음'),
+                        author: authorName,
+                        value: charCount,
+                        isMe: isMe
+                    });
+                }
             });
 
-        const allBooks = [...userBooks]
-            .filter(b => b.value > 0)
-            .sort((a, b) => b.value - a.value);
+            // 2. Process local unsynced books
+            projects
+                .filter(proj => !proj.isPrivate && proj.id !== "monote-manual-guide" && !proj.id.startsWith("user-profile-"))
+                .forEach(proj => {
+                    const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+                    if (charCount > 0) {
+                        const existingIdx = bookList.findIndex(b => b.id === proj.id);
+                        const bookItem = {
+                            id: proj.id,
+                            title: proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음'),
+                            author: userAuthorName,
+                            value: charCount,
+                            isMe: true
+                        };
+                        if (existingIdx !== -1) {
+                            bookList[existingIdx] = bookItem;
+                        } else {
+                            bookList.push(bookItem);
+                        }
+                    }
+                });
 
-        renderBookLeaderboardSection(leaderboardEl, currentLang === 'en' ? "🏆 Hall of Fame (Cumulative Character Count Ranking)" : "🏆 명예의 전당 (누적 글자수 랭킹)", allBooks);
-        
-    } else if (activeRankingTab === 'streak') {
-        const streakRankingList = [
-            { author: userAuthorName, value: userStreak, isMe: true }
-        ].sort((a, b) => b.value - a.value);
+            const allBooks = bookList
+                .sort((a, b) => b.value - a.value);
 
-        renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "🔥 Writing Streak Ranking" : "🔥 연속 집필 스트릭 랭킹", streakRankingList, currentLang === 'en' ? " days streak" : "일 연속", false);
-    }
+            renderBookLeaderboardSection(leaderboardEl, currentLang === 'en' ? "🏆 Hall of Fame (Cumulative Character Count Ranking)" : "🏆 명예의 전당 (누적 글자수 랭킹)", allBooks);
+            
+        } else if (activeRankingTab === 'streak') {
+            const streakRankingList = Array.from(rankingMap.values())
+                .filter(item => item.streak > 0 || item.isMe)
+                .sort((a, b) => b.streak - a.streak)
+                .map(item => ({ author: item.author, value: item.streak, isMe: item.isMe }));
+
+            renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "🔥 Writing Streak Ranking" : "🔥 연속 집필 스트릭 랭킹", streakRankingList, currentLang === 'en' ? " days streak" : "일 연속", false);
+        }
+    })();
 }
 
 function renderEnhancedLeaderboard(container, title, list, unit, showBar) {
@@ -3362,6 +3479,44 @@ async function saveProfileToCloud(user) {
                     .update({ ideas: updatedUsers })
                     .eq('id', 'monote-manual-guide');
             }
+        }
+
+        // Upsert the user-profile-${user.id} project with writing statistics
+        const penName = user.user_metadata?.pen_name || user.email?.split('@')[0] || (currentLang === 'en' ? "Anonymous Writer" : "익명의 작가");
+        
+        // Compute user stats
+        const userDailyChars = getUserDailyWritingCount();
+        const userWeeklyChars = getUserWeeklyWritingCount();
+        const userStreak = getUserStreak();
+        const userTotalCumulative = projects.reduce((total, proj) => {
+            if (proj.isPrivate || proj.id === "monote-manual-guide" || proj.id.startsWith("user-profile-")) return total;
+            return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+        }, 0);
+
+        const stats = {
+            daily: userDailyChars,
+            weekly: userWeeklyChars,
+            streak: userStreak,
+            cumulative: userTotalCumulative
+        };
+
+        const profileId = `user-profile-${user.id}`;
+        const { error: profileError } = await supabaseClient
+            .from('open_projects')
+            .upsert({
+                id: profileId,
+                title: penName,
+                synopsis: JSON.stringify(stats),
+                ideas: '',
+                chapters: [],
+                cover_color: 'charcoal:public',
+                updated_at: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                user_id: user.id
+            });
+        
+        if (profileError) {
+            console.error("Failed to upsert profile project:", profileError);
         }
     } catch (e) {
         console.error("Failed to save profile via manual guide project:", e);
