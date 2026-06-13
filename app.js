@@ -1864,7 +1864,8 @@ function renderBookshelf() {
                 ? `<div class="book-visibility-icon private" title="비공개 (로컬 저장)">🔒</div>`
                 : "");
 
-        const totalCharCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+        const dateObj = new Date(proj.updatedAt || proj.createdAt || Date.now());
+        const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')}`;
 
         bookCard.innerHTML = `
             ${deleteBtnHtml}
@@ -1877,6 +1878,7 @@ function renderBookshelf() {
                 </div>
             </div>
             <div class="book-card-title-under">${proj.title || '제목 없음'}</div>
+            <div class="book-card-date-under" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem; font-weight: 300;">마지막 집필: ${formattedDate}</div>
         `;
         
         let isDragging = false;
