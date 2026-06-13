@@ -35,6 +35,7 @@ let activeChapterId = null;
 let saveTimeout = null;
 let currentUser = null;
 let hideManual = false;
+let activeRankingTab = 'daily';
 
 // Supabase Config & Initialization
 const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
@@ -405,9 +406,12 @@ function setupEventListeners() {
         if (activeChapterId !== null) {
             const ch = project.chapters.find(c => c.id === activeChapterId);
             if (ch) {
-                ch.content = e.target.value;
-                updateEditorCounts(e.target.value);
+                const oldContent = ch.content || '';
+                const newContent = e.target.value;
+                ch.content = newContent;
+                updateEditorCounts(newContent);
                 triggerSave();
+                trackWritingProgress(oldContent, newContent);
             }
         }
     });
@@ -1193,127 +1197,329 @@ function renderRanking() {
     if (!rankingContainer) return;
     rankingContainer.innerHTML = '';
 
-    // 1. Calculate Novel Character Count Ranking
-    const userBooks = projects.map(proj => {
-        const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
-        const author = currentUser?.user_metadata?.pen_name || "나 (작가)";
-        return {
-            title: proj.title || '제목 없음',
-            author: author,
-            charCount: charCount
-        };
-    });
+    // Sub-tab Navigation
+    const subTabsEl = document.createElement('div');
+    subTabsEl.style.cssText = `
+        display: flex;
+        justify-content: center;
+        gap: 0.35rem;
+        margin-bottom: 1.5rem;
+        background: var(--bg-secondary);
+        padding: 0.25rem;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+    `;
 
-    const classicBooks = [
-        { title: "1984 (새벽의 기록)", author: "조지 오웰", charCount: 78420 },
-        { title: "자기만의 방", author: "버지니아 울프", charCount: 42150 },
-        { title: "노인과 바다 (낭독 에디션)", author: "어니스트 헤밍웨이", charCount: 35890 },
-        { title: "날개 (초판본)", author: "이상", charCount: 12450 }
+    const subTabConfigs = [
+        { key: 'daily', label: '일간 집필량' },
+        { key: 'weekly', label: '주간' },
+        { key: 'cumulative', label: '누적' },
+        { key: 'streak', label: '연속 집필일' }
     ];
 
-    const allBooks = [...userBooks, ...classicBooks]
-        .filter(b => b.charCount > 0)
-        .sort((a, b) => b.charCount - a.charCount);
-
-    // 2. Calculate Author Likes Ranking
-    const posts = getLoungePosts();
-    const authorLikesMap = {};
-    posts.forEach(post => {
-        const author = post.author || "익명의 작가";
-        authorLikesMap[author] = (authorLikesMap[author] || 0) + (post.likes || 0);
-    });
-    const authorRankings = Object.keys(authorLikesMap).map(author => {
-        return {
-            author: author,
-            likes: authorLikesMap[author]
+    subTabConfigs.forEach(config => {
+        const btn = document.createElement('button');
+        const isActive = activeRankingTab === config.key;
+        btn.style.cssText = `
+            flex: 1;
+            background: ${isActive ? 'var(--bg-primary)' : 'transparent'};
+            color: ${isActive ? 'var(--text-primary)' : 'var(--text-secondary)'};
+            border: none;
+            padding: 0.4rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: ${isActive ? '600' : '400'};
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            box-shadow: ${isActive ? '0 1px 3px rgba(0,0,0,0.05)' : 'none'};
+            white-space: nowrap;
+        `;
+        btn.textContent = config.label;
+        btn.onclick = () => {
+            activeRankingTab = config.key;
+            renderRanking();
         };
-    }).sort((a, b) => b.likes - a.likes);
+        subTabsEl.appendChild(btn);
+    });
 
-    // Build Book Ranking HTML
-    let bookRankingHtml = `
-        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 6px; box-shadow: var(--shadow-sm);">
-            <h3 style="font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700; margin: 0 0 1.2rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
-                ✍️ 실시간 집필량 랭킹 (명예의 전당)
-            </h3>
-            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+    rankingContainer.appendChild(subTabsEl);
+
+    // Leaderboard Container
+    const leaderboardEl = document.createElement('div');
+    leaderboardEl.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
     `;
+    rankingContainer.appendChild(leaderboardEl);
 
-    if (allBooks.length === 0) {
-        bookRankingHtml += `<div style="text-align: center; font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 1rem;">글을 작성한 작품이 아직 없습니다.</div>`;
-    } else {
-        const maxChar = allBooks[0].charCount;
-        allBooks.forEach((book, index) => {
-            let badge = `<span style="font-weight: 700; width: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">${index + 1}</span>`;
-            if (index === 0) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥇</span>`;
-            else if (index === 1) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥈</span>`;
-            else if (index === 2) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥉</span>`;
+    const userAuthorName = currentUser?.user_metadata?.pen_name || "나 (작가)";
 
-            const percentage = maxChar > 0 ? (book.charCount / maxChar) * 100 : 0;
+    if (activeRankingTab === 'daily') {
+        const userDailyChars = getUserDailyWritingCount();
+        const dailyRankingList = [
+            { author: userAuthorName, value: userDailyChars, isMe: true },
+            { author: "백석", value: 2450 },
+            { author: "윤동주", value: 1850 },
+            { author: "이상", value: 920 },
+            { author: "김유정", value: 450 }
+        ].sort((a, b) => b.value - a.value);
 
-            bookRankingHtml += `
-                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1;">
-                            ${badge}
-                            <div style="min-width: 0; flex: 1;">
-                                <div style="font-family: var(--font-serif); font-size: 0.9rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${book.title}</div>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.05rem;">${book.author}</div>
-                            </div>
-                        </div>
-                        <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-primary); white-space: nowrap;">
-                            ${book.charCount.toLocaleString()}자
-                        </div>
-                    </div>
-                    <div style="height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-left: 30px;">
-                        <div style="height: 100%; width: ${percentage}%; background: var(--text-primary); opacity: 0.25; border-radius: 3px; transition: width 0.5s ease-out;"></div>
-                    </div>
-                </div>
-            `;
+        renderLeaderboardSection(leaderboardEl, "✍️ 오늘 하루 집필량 랭킹", dailyRankingList, "자", true);
+        
+    } else if (activeRankingTab === 'weekly') {
+        const userWeeklyChars = getUserWeeklyWritingCount();
+        const weeklyRankingList = [
+            { author: userAuthorName, value: userWeeklyChars, isMe: true },
+            { author: "윤동주", value: 14850 },
+            { author: "백석", value: 12400 },
+            { author: "이상", value: 8750 },
+            { author: "김유정", value: 5200 }
+        ].sort((a, b) => b.value - a.value);
+
+        renderLeaderboardSection(leaderboardEl, "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, "자", true);
+        
+    } else if (activeRankingTab === 'cumulative') {
+        const userBooks = projects.map(proj => {
+            const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+            return {
+                title: proj.title || '제목 없음',
+                author: userAuthorName,
+                value: charCount,
+                isMe: true
+            };
         });
+
+        const classicBooks = [
+            { title: "1984 (새벽의 기록)", author: "조지 오웰", value: 78420 },
+            { title: "자기만의 방", author: "버지니아 울프", value: 42150 },
+            { title: "노인과 바다 (낭독 에디션)", author: "어니스트 헤밍웨이", value: 35890 },
+            { title: "날개 (초판본)", author: "이상", value: 12450 }
+        ];
+
+        const allBooks = [...userBooks, ...classicBooks]
+            .filter(b => b.value > 0)
+            .sort((a, b) => b.value - a.value);
+
+        renderBookLeaderboardSection(leaderboardEl, "🏆 명예의 전당 (누적 글자수 랭킹)", allBooks);
+        
+    } else if (activeRankingTab === 'streak') {
+        const userStreak = getUserStreak();
+        const streakRankingList = [
+            { author: userAuthorName, value: userStreak, isMe: true },
+            { author: "윤동주", value: 18 },
+            { author: "백석", value: 11 },
+            { author: "김유정", value: 6 },
+            { author: "이상", value: 3 }
+        ].sort((a, b) => b.value - a.value);
+
+        renderLeaderboardSection(leaderboardEl, "🔥 연속 집필 스트릭 랭킹", streakRankingList, "일 연속", false);
     }
-    bookRankingHtml += `
-            </div>
-        </div>
+}
+
+function renderLeaderboardSection(container, title, list, unit, showBar) {
+    const section = document.createElement('div');
+    section.style.cssText = `
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        border-radius: 6px;
+        box-shadow: var(--shadow-sm);
     `;
 
-    // Build Author Likes Ranking HTML
-    let authorRankingHtml = `
-        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 6px; box-shadow: var(--shadow-sm); margin-top: 1.5rem;">
-            <h3 style="font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700; margin: 0 0 1.2rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
-                ❤️ 인기 작가 랭킹 (라운지 추천 수)
-            </h3>
-            <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+    let html = `
+        <h3 style="font-family: var(--font-serif); font-size: 1rem; font-weight: 700; margin: 0 0 1.2rem 0; color: var(--text-primary);">
+            ${title}
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 0.9rem;">
     `;
 
-    if (authorRankings.length === 0) {
-        authorRankingHtml += `<div style="text-align: center; font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 1rem;">라운지에 활성화된 작가가 없습니다.</div>`;
-    } else {
-        authorRankings.forEach((author, index) => {
-            let badge = `<span style="font-weight: 700; width: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">${index + 1}</span>`;
-            if (index === 0) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥇</span>`;
-            else if (index === 1) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥈</span>`;
-            else if (index === 2) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥉</span>`;
+    const maxValue = list.length > 0 ? list[0].value : 0;
 
-            authorRankingHtml += `
+    list.forEach((item, index) => {
+        let badge = `<span style="font-weight: 700; width: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">${index + 1}</span>`;
+        if (index === 0) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥇</span>`;
+        else if (index === 1) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥈</span>`;
+        else if (index === 2) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥉</span>`;
+
+        const itemBg = item.isMe ? 'rgba(0,0,0,0.02)' : 'transparent';
+        const borderStyle = item.isMe ? '1px dashed var(--border-color)' : 'none';
+        const paddingStyle = item.isMe ? '0.4rem 0.5rem' : '0';
+        const borderRadiusStyle = item.isMe ? '4px' : '0';
+
+        html += `
+            <div style="display: flex; flex-direction: column; gap: 0.35rem; background: ${itemBg}; border: ${borderStyle}; padding: ${paddingStyle}; border-radius: ${borderRadiusStyle};">
                 <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: space-between;">
                     <div style="display: flex; align-items: center; gap: 0.6rem;">
                         ${badge}
-                        <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${author.author}</span>
+                        <span style="font-size: 0.9rem; font-weight: ${item.isMe ? '700' : '600'}; color: var(--text-primary);">${item.author} ${item.isMe ? '<span style="font-size: 0.7rem; font-weight:normal; color:var(--text-secondary);">(나)</span>' : ''}</span>
                     </div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.2rem;">
-                        <span>추천</span>
-                        <strong style="color: var(--accent-color); font-weight: 600;">${author.likes}</strong>개
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">
+                        ${item.value.toLocaleString()}${unit}
                     </div>
                 </div>
+        `;
+
+        if (showBar && maxValue > 0) {
+            const percentage = (item.value / maxValue) * 100;
+            html += `
+                <div style="height: 5px; background: var(--bg-secondary); border-radius: 2.5px; overflow: hidden; margin-left: 30px;">
+                    <div style="height: 100%; width: ${percentage}%; background: var(--text-primary); opacity: 0.25; border-radius: 2.5px;"></div>
+                </div>
             `;
-        });
-    }
-    authorRankingHtml += `
-            </div>
-        </div>
+        }
+
+        html += `</div>`;
+    });
+
+    html += `</div>`;
+    section.innerHTML = html;
+    container.appendChild(section);
+}
+
+function renderBookLeaderboardSection(container, title, list) {
+    const section = document.createElement('div');
+    section.style.cssText = `
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        border-radius: 6px;
+        box-shadow: var(--shadow-sm);
     `;
 
-    rankingContainer.innerHTML = bookRankingHtml + authorRankingHtml;
+    let html = `
+        <h3 style="font-family: var(--font-serif); font-size: 1rem; font-weight: 700; margin: 0 0 1.2rem 0; color: var(--text-primary);">
+            ${title}
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+    `;
+
+    const maxValue = list.length > 0 ? list[0].value : 0;
+
+    list.forEach((book, index) => {
+        let badge = `<span style="font-weight: 700; width: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">${index + 1}</span>`;
+        if (index === 0) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥇</span>`;
+        else if (index === 1) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥈</span>`;
+        else if (index === 2) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥉</span>`;
+
+        const percentage = maxValue > 0 ? (book.value / maxValue) * 100 : 0;
+        const itemBg = book.isMe ? 'rgba(0,0,0,0.02)' : 'transparent';
+        const borderStyle = book.isMe ? '1px dashed var(--border-color)' : 'none';
+        const paddingStyle = book.isMe ? '0.4rem 0.5rem' : '0';
+        const borderRadiusStyle = book.isMe ? '4px' : '0';
+
+        html += `
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; background: ${itemBg}; border: ${borderStyle}; padding: ${paddingStyle}; border-radius: ${borderRadiusStyle};">
+                <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1;">
+                        ${badge}
+                        <div style="min-width: 0; flex: 1;">
+                            <div style="font-family: var(--font-serif); font-size: 0.9rem; font-weight: ${book.isMe ? '700' : '600'}; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${book.title}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.05rem;">${book.author} ${book.isMe ? '<span style="font-size: 0.7rem; color:var(--text-secondary); font-weight:normal;">(나)</span>' : ''}</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); white-space: nowrap;">
+                        ${book.value.toLocaleString()}자
+                    </div>
+                </div>
+                <div style="height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-left: 30px;">
+                    <div style="height: 100%; width: ${percentage}%; background: var(--text-primary); opacity: 0.25; border-radius: 3px;"></div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    section.innerHTML = html;
+    container.appendChild(section);
+}
+
+function trackWritingProgress(oldVal, newVal) {
+    const oldLen = oldVal ? oldVal.length : 0;
+    const newLen = newVal ? newVal.length : 0;
+    if (newLen <= oldLen) return;
+
+    const addedChars = newLen - oldLen;
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    let stats = {
+        dailyLogs: {},
+        lastWrittenDate: "",
+        currentStreak: 0
+    };
+    
+    const saved = storage.getItem('monote-writing-stats');
+    if (saved) {
+        try {
+            stats = JSON.parse(saved);
+        } catch (e) {
+            console.error("Failed to parse writing stats:", e);
+        }
+    }
+    if (!stats.dailyLogs) stats.dailyLogs = {};
+    
+    stats.dailyLogs[todayStr] = (stats.dailyLogs[todayStr] || 0) + addedChars;
+    
+    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    
+    if (stats.lastWrittenDate !== todayStr) {
+        if (stats.lastWrittenDate === yesterdayStr) {
+            stats.currentStreak = (stats.currentStreak || 0) + 1;
+        } else {
+            stats.currentStreak = 1;
+        }
+        stats.lastWrittenDate = todayStr;
+    }
+    
+    storage.setItem('monote-writing-stats', JSON.stringify(stats));
+}
+
+function getUserDailyWritingCount() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const saved = storage.getItem('monote-writing-stats');
+    if (!saved) return 0;
+    try {
+        const stats = JSON.parse(saved);
+        return (stats.dailyLogs || {})[todayStr] || 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function getUserWeeklyWritingCount() {
+    const saved = storage.getItem('monote-writing-stats');
+    if (!saved) return 0;
+    try {
+        const stats = JSON.parse(saved);
+        const dailyLogs = stats.dailyLogs || {};
+        let weeklySum = 0;
+        
+        for (let i = 0; i < 7; i++) {
+            const dateStr = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
+            weeklySum += (dailyLogs[dateStr] || 0);
+        }
+        return weeklySum;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function getUserStreak() {
+    const saved = storage.getItem('monote-writing-stats');
+    if (!saved) return 0;
+    try {
+        const stats = JSON.parse(saved);
+        const todayStr = new Date().toISOString().split('T')[0];
+        const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        
+        if (stats.lastWrittenDate !== todayStr && stats.lastWrittenDate !== yesterdayStr) {
+            stats.currentStreak = 0;
+            storage.setItem('monote-writing-stats', JSON.stringify(stats));
+        }
+        return stats.currentStreak || 0;
+    } catch (e) {
+        return 0;
+    }
 }
 
 const defaultLoungePosts = [
