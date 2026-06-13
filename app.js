@@ -1286,6 +1286,58 @@ function renderRanking() {
     if (!rankingContainer) return;
     rankingContainer.innerHTML = '';
 
+    // Render active writer count banner at the top
+    const banner = document.createElement('div');
+    banner.className = 'writer-count-banner';
+    banner.style.cssText = `
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        font-weight: 500;
+        margin-bottom: 1rem;
+        font-family: var(--font-sans);
+    `;
+    banner.innerHTML = `현재 <span style="font-weight: 700; color: var(--accent-color); font-size: 0.95rem;" class="live-writer-count">...</span>명의 작가분이 모노트를 통해 책을 쓰고 있습니다.`;
+    rankingContainer.appendChild(banner);
+    
+    // Fetch registered user count asynchronously
+    if (supabaseClient) {
+        // Try profiles table first to get registered user count
+        supabaseClient.from('profiles').select('id', { count: 'exact', head: true })
+            .then(({ count, error }) => {
+                if (!error && count !== null) {
+                    const countSpan = banner.querySelector('.live-writer-count');
+                    if (countSpan) countSpan.textContent = count;
+                } else {
+                    throw new Error("profiles table not queryable, try projects");
+                }
+            })
+            .catch(() => {
+                // Fallback: unique user_id count from open_projects
+                supabaseClient.from('open_projects').select('user_id')
+                    .then(({ data, error }) => {
+                        let count = 1;
+                        if (!error && data) {
+                            const uniqueUsers = new Set(data.map(d => d.user_id).filter(Boolean));
+                            count = Math.max(1, uniqueUsers.size);
+                        }
+                        const countSpan = banner.querySelector('.live-writer-count');
+                        if (countSpan) countSpan.textContent = count;
+                    })
+                    .catch(() => {
+                        const countSpan = banner.querySelector('.live-writer-count');
+                        if (countSpan) countSpan.textContent = "1";
+                    });
+            });
+    } else {
+        const countSpan = banner.querySelector('.live-writer-count');
+        if (countSpan) countSpan.textContent = "1";
+    }
+
     // Calculate user stats
     const userDailyChars = getUserDailyWritingCount();
     const userWeeklyChars = getUserWeeklyWritingCount();
