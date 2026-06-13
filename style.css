@@ -237,13 +237,13 @@ body {
 /* VIEW 1: OVERVIEW SCREEN */
 .overview-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 2rem;
 }
 
 @media (max-width: 900px) {
     .overview-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 2.5rem;
     }
 }
