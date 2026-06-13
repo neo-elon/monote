@@ -1100,22 +1100,20 @@ function renderBookshelf() {
             ? ""
             : `<button class="delete-book-btn" title="작품 삭제">×</button>`;
 
-        const visibilityBadge = proj.id === "monote-manual-guide"
+        const visibilityIconHtml = proj.id === "monote-manual-guide"
             ? ""
             : (proj.isPrivate 
-                ? `<span class="book-visibility-badge private" title="비공개 (로컬 저장)">🔒 로컬</span>`
-                : `<span class="book-visibility-badge public" title="공개 (클라우드 동기화)">☁️ 동기화</span>`);
+                ? `<div class="book-visibility-icon private" title="비공개 (로컬 저장)">🔒</div>`
+                : `<div class="book-visibility-icon public" title="공개 (클라우드 동기화)">☁️</div>`);
 
         bookCard.innerHTML = `
             ${deleteBtnHtml}
             <div class="book-cover cover-${coverColor}">
+                ${visibilityIconHtml}
                 <div class="book-cover-title">${proj.title || '제목 없음'}</div>
                 <div class="book-cover-author">${authorName}</div>
             </div>
-            <div class="book-card-title-under" style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; width: 100%;">
-                <span class="book-title-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: calc(100% - 50px);">${proj.title || '제목 없음'}</span>
-                ${visibilityBadge}
-            </div>
+            <div class="book-card-title-under">${proj.title || '제목 없음'}</div>
         `;
         
         let isDragging = false;
