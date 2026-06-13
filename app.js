@@ -3747,7 +3747,7 @@ function updateLanguageUI() {
     if (addDialog) {
         const h3 = addDialog.querySelector('h3');
         if (h3) h3.textContent = t.newBookDialogTitle;
-        const labels = addDialog.querySelectorAll('.dialog-field label');
+        const labels = addDialog.querySelectorAll('.dialog-field > label');
         if (labels[0]) labels[0].textContent = t.newBookTitleLabel;
         if (labels[1]) labels[1].textContent = t.newBookCoverColorLabel;
         if (labels[2]) labels[2].textContent = t.newBookVisibilityLabel;
@@ -3768,7 +3768,7 @@ function updateLanguageUI() {
     if (editDialog) {
         const h3 = editDialog.querySelector('h3');
         if (h3) h3.textContent = t.editBookDialogTitle;
-        const labels = editDialog.querySelectorAll('.dialog-field label');
+        const labels = editDialog.querySelectorAll('.dialog-field > label');
         if (labels[0]) labels[0].textContent = t.newBookTitleLabel;
         if (labels[1]) labels[1].textContent = t.newBookCoverColorLabel;
         if (labels[2]) labels[2].textContent = t.newBookVisibilityLabel;
