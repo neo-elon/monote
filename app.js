@@ -662,7 +662,11 @@ function setupEventListeners() {
 function renderOverview() {
     projectTitleInput.value = project.title || '';
     projectSynopsisTextarea.value = project.synopsis || '';
-    projectIdeasTextarea.value = project.ideas || '';
+    if (project.id === "monote-manual-guide") {
+        projectIdeasTextarea.value = (project.ideas || '').replace(/,?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '');
+    } else {
+        projectIdeasTextarea.value = project.ideas || '';
+    }
     updateSynopsisCount();
     updateIdeasCount();
     renderChapterList();
@@ -676,7 +680,11 @@ function updateSynopsisCount() {
 
 // Update Ideas Character Count
 function updateIdeasCount() {
-    const len = project.ideas ? project.ideas.length : 0;
+    let ideasText = project.ideas || '';
+    if (project.id === "monote-manual-guide") {
+        ideasText = ideasText.replace(/,?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '');
+    }
+    const len = ideasText.length;
     ideasWordCount.textContent = `${len.toLocaleString()}자`;
 }
 
