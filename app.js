@@ -110,6 +110,20 @@ const charCountNoSpaces = document.getElementById('char-count-no-spaces');
 const wordCountElement = document.getElementById('word-count');
 const saveStatus = document.getElementById('save-status');
 
+// Community Elements
+const communityScreen = document.getElementById('community-screen');
+const communityMenuItem = document.getElementById('community-menu-item');
+const tabLibraryBtn = document.getElementById('tab-library-btn');
+const tabLoungeBtn = document.getElementById('tab-lounge-btn');
+const libraryTabContent = document.getElementById('library-tab-content');
+const loungeTabContent = document.getElementById('lounge-tab-content');
+const publicBooksGrid = document.getElementById('public-books-grid');
+const loungeFeed = document.getElementById('lounge-feed');
+const writePostBtn = document.getElementById('write-post-btn');
+const newPostDialog = document.getElementById('new-post-dialog');
+const previewBookDialog = document.getElementById('preview-book-dialog');
+const previewChapterDialog = document.getElementById('preview-chapter-dialog');
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async () => {
     loadTheme();
@@ -487,6 +501,36 @@ function setupEventListeners() {
             updateManualToggleUI();
             loadProjects(); // Reload and refresh bookshelf
         });
+    }
+
+    // Community Event Listeners
+    if (communityMenuItem) {
+        communityMenuItem.addEventListener('click', showCommunityScreen);
+    }
+    if (tabLibraryBtn) {
+        tabLibraryBtn.addEventListener('click', () => switchCommunityTab('library'));
+    }
+    if (tabLoungeBtn) {
+        tabLoungeBtn.addEventListener('click', () => switchCommunityTab('lounge'));
+    }
+    if (writePostBtn) {
+        writePostBtn.addEventListener('click', showNewPostDialogBox);
+    }
+    const cancelNewPostBtn = document.getElementById('cancel-new-post');
+    if (cancelNewPostBtn) {
+        cancelNewPostBtn.addEventListener('click', hideNewPostDialogBox);
+    }
+    const confirmNewPostBtn = document.getElementById('confirm-new-post');
+    if (confirmNewPostBtn) {
+        confirmNewPostBtn.addEventListener('click', createNewPost);
+    }
+    const closePreviewBookBtn = document.getElementById('close-preview-book');
+    if (closePreviewBookBtn) {
+        closePreviewBookBtn.addEventListener('click', hidePreviewBookDialog);
+    }
+    const closePreviewChapterBtn = document.getElementById('close-preview-chapter');
+    if (closePreviewChapterBtn) {
+        closePreviewChapterBtn.addEventListener('click', hidePreviewChapterDialog);
     }
 }
 
@@ -1002,9 +1046,11 @@ function showWritingScreen() {
 
     overviewScreen.classList.remove('active');
     bookshelfScreen.classList.remove('active');
+    if (communityScreen) communityScreen.classList.remove('active');
     setTimeout(() => {
         overviewScreen.style.display = 'none';
         bookshelfScreen.style.display = 'none';
+        if (communityScreen) communityScreen.style.display = 'none';
         writingScreen.style.display = 'block';
         
         // Recalculate title height now that the editor view is visible
@@ -1035,9 +1081,11 @@ function showOverviewScreen() {
     
     writingScreen.classList.remove('active');
     bookshelfScreen.classList.remove('active');
+    if (communityScreen) communityScreen.classList.remove('active');
     setTimeout(() => {
         writingScreen.style.display = 'none';
         bookshelfScreen.style.display = 'none';
+        if (communityScreen) communityScreen.style.display = 'none';
         overviewScreen.style.display = 'block';
         setTimeout(() => {
             overviewScreen.classList.add('active');
@@ -1058,15 +1106,461 @@ function showBookshelfScreen() {
     
     overviewScreen.classList.remove('active');
     writingScreen.classList.remove('active');
+    if (communityScreen) communityScreen.classList.remove('active');
     setTimeout(() => {
         overviewScreen.style.display = 'none';
         writingScreen.style.display = 'none';
+        if (communityScreen) communityScreen.style.display = 'none';
         bookshelfScreen.style.display = 'block';
         setTimeout(() => {
             bookshelfScreen.classList.add('active');
             renderBookshelf();
         }, 50);
     }, 300);
+}
+
+function showCommunityScreen() {
+    activeProjectId = null;
+    project = null;
+    storage.removeItem('monote-active-project-id');
+    storage.removeItem('monote-active-chapter-id');
+    
+    // In community screen: hide JSON import/export, hide txt export
+    if (importProjectTrigger) importProjectTrigger.style.display = 'none';
+    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+    if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
+    
+    // Move chapters-panel back to overview grid (just in case)
+    const chaptersPanel = document.getElementById('chapters-panel');
+    const overviewGrid = document.querySelector('.overview-grid');
+    if (chaptersPanel && overviewGrid) {
+        overviewGrid.appendChild(chaptersPanel);
+    }
+    
+    overviewScreen.classList.remove('active');
+    writingScreen.classList.remove('active');
+    bookshelfScreen.classList.remove('active');
+    
+    if (communityScreen) {
+        setTimeout(() => {
+            overviewScreen.style.display = 'none';
+            writingScreen.style.display = 'none';
+            bookshelfScreen.style.display = 'none';
+            communityScreen.style.display = 'block';
+            setTimeout(() => {
+                communityScreen.classList.add('active');
+                switchCommunityTab('library');
+            }, 50);
+        }, 300);
+    }
+}
+
+function switchCommunityTab(tab) {
+    if (tab === 'library') {
+        tabLibraryBtn.classList.add('active');
+        tabLoungeBtn.classList.remove('active');
+        tabLibraryBtn.style.borderBottomColor = 'var(--text-primary)';
+        tabLibraryBtn.style.color = 'var(--text-primary)';
+        tabLoungeBtn.style.borderBottomColor = 'transparent';
+        tabLoungeBtn.style.color = 'var(--text-secondary)';
+        
+        libraryTabContent.style.display = 'block';
+        loungeTabContent.style.display = 'none';
+        writePostBtn.style.display = 'none';
+        
+        renderPublicLibrary();
+    } else {
+        tabLibraryBtn.classList.remove('active');
+        tabLoungeBtn.classList.add('active');
+        tabLibraryBtn.style.borderBottomColor = 'transparent';
+        tabLibraryBtn.style.color = 'var(--text-secondary)';
+        tabLoungeBtn.style.borderBottomColor = 'var(--text-primary)';
+        tabLoungeBtn.style.color = 'var(--text-primary)';
+        
+        libraryTabContent.style.display = 'none';
+        loungeTabContent.style.display = 'block';
+        writePostBtn.style.display = 'block';
+        
+        renderLoungeFeed();
+    }
+}
+
+const mockPublicBooks = [
+    {
+        id: "mock-book-1",
+        title: "노인과 바다 (낭독 에디션)",
+        authorName: "어니스트 헤밍웨이",
+        coverColor: "slate",
+        synopsis: "쿠바의 노령 어부 산티아고가 멕시코 만류에서 거대한 마를린과 벌이는 84일간의 사투, 그리고 바다에서의 고독한 투쟁 이야기.",
+        chapters: [
+            { id: "m1-c1", title: "1장. 바다와 노인", content: "그는 멕시코 만류에서 돛단배를 타고 홀로 고기잡이를 하는 노인이었다. 84일 동안 그는 고기를 단 한 마리도 잡지 못했다..." },
+            { id: "m1-c2", title: "2장. 거대한 물고기", content: "마침내 낚싯줄 중 하나가 팽팽하게 당겨졌다. 노인은 직감했다. 이것은 지금까지 본 적 없는 거대한 녀석이라는 것을..." }
+        ]
+    },
+    {
+        id: "mock-book-2",
+        title: "1984 (새벽의 기록)",
+        authorName: "조지 오웰",
+        coverColor: "charcoal",
+        synopsis: "전체주의 감시 사회 체제인 오세아니아에서 당의 통제에 저항하며 인간적인 감정을 지키려 애쓰는 윈스턴 스미스의 비극적 분투.",
+        chapters: [
+            { id: "m2-c1", title: "1장. 빅 브라더가 보고 있다", content: "맑고 차가운 4월의 어느 날이었고, 시계들은 13시를 치고 있었다. 윈스턴 스미스는 거센 바람을 피하려 턱을 가슴팍에 묻고..." }
+        ]
+    },
+    {
+        id: "mock-book-3",
+        title: "자기만의 방",
+        authorName: "버지니아 울프",
+        coverColor: "linen",
+        synopsis: "여성이 픽션을 쓰기 위해서 필요한 것은 무엇인가? 경제적 자립을 뜻하는 돈, 그리고 온전히 몰입할 수 있는 자기만의 방.",
+        chapters: [
+            { id: "m3-c1", title: "1장. 여성이 소설을 쓰기 위하여", content: "여성과 소설이라는 주제에 대해 생각할 때, 나는 강가에 앉아 생각에 잠겼습니다. 여성이 소설을 쓰려면 돈과 자기만의 방이 있어야 한다는 생각이 스쳤습니다..." }
+        ]
+    }
+];
+
+async function renderPublicLibrary() {
+    if (!publicBooksGrid) return;
+    publicBooksGrid.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary); width: 100%;">서재를 불러오는 중...</div>';
+    
+    let dbPublicBooks = [];
+    if (supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('open_projects')
+                .select('*');
+            if (data && !error) {
+                dbPublicBooks = data
+                    .filter(dbProj => {
+                        const dbColor = dbProj.cover_color || '';
+                        return dbColor.includes(':public') && dbProj.id !== "monote-manual-guide";
+                    })
+                    .map(dbProj => {
+                        const dbColor = dbProj.cover_color || 'charcoal';
+                        const coverColor = dbColor.split(':')[0];
+                        return {
+                            id: dbProj.id,
+                            title: dbProj.title,
+                            authorName: dbProj.author_name || "익명의 작가",
+                            coverColor: coverColor,
+                            synopsis: dbProj.synopsis || '등록된 시놉시스가 없습니다.',
+                            chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || [])
+                        };
+                    });
+            }
+        } catch (e) {
+            console.error("Failed to fetch public projects from Supabase:", e);
+        }
+    }
+    
+    const allPublicBooks = [...dbPublicBooks, ...mockPublicBooks];
+    
+    publicBooksGrid.innerHTML = '';
+    
+    allPublicBooks.forEach(book => {
+        const bookCard = document.createElement('div');
+        bookCard.className = 'book-card';
+        bookCard.style.cursor = 'pointer';
+        
+        const totalCharCount = (book.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+        
+        bookCard.innerHTML = `
+            <div class="book-cover cover-${book.coverColor || 'charcoal'}">
+                <div class="book-cover-title">${book.title || '제목 없음'}</div>
+                <div class="book-cover-footer-group">
+                    <div class="book-cover-charcount">${totalCharCount.toLocaleString()}자</div>
+                    <div class="book-cover-author">${book.authorName || '작가 미상'}</div>
+                </div>
+            </div>
+            <div class="book-card-title-under">${book.title || '제목 없음'}</div>
+        `;
+        
+        bookCard.addEventListener('click', () => {
+            showPreviewBookDialog(book);
+        });
+        
+        publicBooksGrid.appendChild(bookCard);
+    });
+}
+
+const defaultLoungePosts = [
+    {
+        id: "post-1",
+        author: "이상",
+        content: "박제가 되어버린 천재를 아시오? 나는 유쾌하오. 이런 때 연애까지가 유쾌하오.",
+        timestamp: Date.now() - 1000 * 60 * 45,
+        likes: 12,
+        likedByMe: false,
+        comments: [
+            { author: "김유정", content: "표현이 깊이 남네요.", timestamp: Date.now() - 1000 * 60 * 30 }
+        ]
+    },
+    {
+        id: "post-2",
+        author: "윤동주",
+        content: "계절이 지나가는 하늘에는 가을로 가득 차 있습니다. 나는 아무 걱정도 없이 가을 속의 별들을 다 헤일 듯합니다...",
+        timestamp: Date.now() - 1000 * 60 * 180,
+        likes: 24,
+        likedByMe: true,
+        comments: []
+    }
+];
+
+function getLoungePosts() {
+    const saved = storage.getItem('monote-lounge-posts');
+    if (!saved) {
+        storage.setItem('monote-lounge-posts', JSON.stringify(defaultLoungePosts));
+        return defaultLoungePosts;
+    }
+    try {
+        return JSON.parse(saved);
+    } catch (e) {
+        return defaultLoungePosts;
+    }
+}
+
+function saveLoungePosts(posts) {
+    storage.setItem('monote-lounge-posts', JSON.stringify(posts));
+}
+
+function formatTimeElapsed(timestamp) {
+    const diff = Date.now() - timestamp;
+    if (diff < 0) return '방금 전';
+    const minutes = Math.floor(diff / (1000 * 60));
+    if (minutes < 1) return '방금 전';
+    if (minutes < 60) return `${minutes}분 전`;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours < 24) return `${hours}시간 전`;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return `${days}일 전`;
+}
+
+function renderLoungeFeed() {
+    if (!loungeFeed) return;
+    const posts = getLoungePosts();
+    loungeFeed.innerHTML = '';
+    
+    if (posts.length === 0) {
+        loungeFeed.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary); font-style: italic;">라운지에 첫 글을 작성해 보세요.</div>';
+        return;
+    }
+    
+    posts.forEach(post => {
+        const postEl = document.createElement('div');
+        postEl.className = 'lounge-post-card';
+        postEl.style.cssText = `
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 1.2rem;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: all var(--transition-speed);
+        `;
+        
+        const timeString = formatTimeElapsed(post.timestamp);
+        const likeIconColor = post.likedByMe ? 'var(--accent-color)' : 'currentColor';
+        const likeIconFill = post.likedByMe ? 'var(--accent-color)' : 'none';
+        
+        let commentsHtml = '';
+        if (post.comments && post.comments.length > 0) {
+            commentsHtml = `
+                <div class="comments-section" style="border-top: 1px dashed var(--border-color); padding-top: 0.75rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    ${post.comments.map(c => `
+                        <div style="font-size: 0.8rem; line-height: 1.4;">
+                            <strong style="color: var(--text-primary); font-weight: 600; margin-right: 0.4rem;">${c.author}</strong>
+                            <span style="color: var(--text-secondary); font-weight: 300;">${c.content}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        postEl.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-family: var(--font-serif); font-weight: 700; font-size: 0.9rem; color: var(--text-primary);">${post.author}</span>
+                <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 300;">${timeString}</span>
+            </div>
+            <div style="font-size: 0.85rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; word-break: break-all;">${post.content}</div>
+            
+            <div style="display: flex; align-items: center; gap: 1.2rem; font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                <button class="like-btn" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; color: ${likeIconColor}; padding: 0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="${likeIconFill}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <span>좋아요 ${post.likes || 0}</span>
+                </button>
+                <button class="comment-trigger-btn" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; color: var(--text-secondary); padding: 0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>댓글 달기</span>
+                </button>
+            </div>
+            
+            <div class="comment-input-area" style="display: none; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                <input type="text" class="comment-input" placeholder="댓글을 입력하세요..." style="flex: 1; font-size: 0.8rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); border-radius: 4px;" />
+                <button class="btn-flat btn-sm submit-comment-btn" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;">등록</button>
+            </div>
+            
+            ${commentsHtml}
+        `;
+        
+        postEl.querySelector('.like-btn').onclick = () => {
+            post.likedByMe = !post.likedByMe;
+            post.likes = post.likedByMe ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 1) - 1);
+            saveLoungePosts(posts);
+            renderLoungeFeed();
+        };
+        
+        const commentArea = postEl.querySelector('.comment-input-area');
+        postEl.querySelector('.comment-trigger-btn').onclick = () => {
+            commentArea.style.display = commentArea.style.display === 'none' ? 'flex' : 'none';
+            if (commentArea.style.display === 'flex') {
+                commentArea.querySelector('.comment-input').focus();
+            }
+        };
+        
+        const submitComment = () => {
+            const input = commentArea.querySelector('.comment-input');
+            const val = input.value.trim();
+            if (!val) return;
+            
+            const author = currentUser?.user_metadata?.pen_name || currentUser?.email?.split('@')[0] || "익명의 작가";
+            if (!post.comments) post.comments = [];
+            post.comments.push({
+                author: author,
+                content: val,
+                timestamp: Date.now()
+            });
+            saveLoungePosts(posts);
+            renderLoungeFeed();
+        };
+        
+        commentArea.querySelector('.submit-comment-btn').onclick = submitComment;
+        commentArea.querySelector('.comment-input').onkeydown = (e) => {
+            if (e.key === 'Enter') submitComment();
+        };
+        
+        loungeFeed.appendChild(postEl);
+    });
+}
+
+function showNewPostDialogBox() {
+    if (newPostDialog) {
+        const contentArea = document.getElementById('new-post-content');
+        if (contentArea) contentArea.value = '';
+        newPostDialog.style.display = 'flex';
+        setTimeout(() => {
+            contentArea.focus();
+        }, 100);
+    }
+}
+
+function hideNewPostDialogBox() {
+    if (newPostDialog) newPostDialog.style.display = 'none';
+}
+
+function createNewPost() {
+    const contentArea = document.getElementById('new-post-content');
+    if (!contentArea) return;
+    const content = contentArea.value.trim();
+    if (!content) {
+        alert("글 내용을 입력해 주세요.");
+        contentArea.focus();
+        return;
+    }
+    
+    const author = currentUser?.user_metadata?.pen_name || currentUser?.email?.split('@')[0] || "익명의 작가";
+    const posts = getLoungePosts();
+    posts.unshift({
+        id: "post-" + Date.now(),
+        author: author,
+        content: content,
+        timestamp: Date.now(),
+        likes: 0,
+        likedByMe: false,
+        comments: []
+    });
+    
+    saveLoungePosts(posts);
+    hideNewPostDialogBox();
+    renderLoungeFeed();
+}
+
+function showPreviewBookDialog(book) {
+    if (!previewBookDialog) return;
+    
+    const titleEl = document.getElementById('preview-book-title');
+    const authorEl = document.getElementById('preview-book-author');
+    const synopsisEl = document.getElementById('preview-book-synopsis');
+    const chaptersEl = document.getElementById('preview-book-chapters');
+    
+    if (titleEl) titleEl.textContent = book.title || '제목 없음';
+    if (authorEl) authorEl.textContent = `${book.authorName || '작가 미상'} 작가`;
+    if (synopsisEl) synopsisEl.textContent = book.synopsis || '등록된 시놉시스가 없습니다.';
+    
+    if (chaptersEl) {
+        chaptersEl.innerHTML = '';
+        if (!book.chapters || book.chapters.length === 0) {
+            chaptersEl.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic; padding: 0.5rem 0;">등록된 챕터가 없습니다.</div>';
+        } else {
+            book.chapters.forEach((ch) => {
+                const item = document.createElement('div');
+                item.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.5rem 0.75rem;
+                    border: 1px solid var(--border-color);
+                    border-radius: 4px;
+                    background: var(--bg-secondary);
+                    cursor: pointer;
+                    transition: all var(--transition-speed);
+                `;
+                item.innerHTML = `
+                    <span style="font-size: 0.85rem; font-family: var(--font-serif); color: var(--text-primary); font-weight: 500;">${ch.title || '제목 없음'}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">${ch.content ? ch.content.length.toLocaleString() : 0}자</span>
+                `;
+                item.addEventListener('click', () => {
+                    showPreviewChapterDialog(ch);
+                });
+                
+                item.onmouseenter = () => {
+                    item.style.borderColor = 'var(--text-primary)';
+                };
+                item.onmouseleave = () => {
+                    item.style.borderColor = 'var(--border-color)';
+                };
+                
+                chaptersEl.appendChild(item);
+            });
+        }
+    }
+    
+    previewBookDialog.style.display = 'flex';
+}
+
+function hidePreviewBookDialog() {
+    if (previewBookDialog) previewBookDialog.style.display = 'none';
+}
+
+function showPreviewChapterDialog(chapter) {
+    if (!previewChapterDialog) return;
+    
+    const titleEl = document.getElementById('preview-chapter-title');
+    const contentEl = document.getElementById('preview-chapter-content');
+    
+    if (titleEl) titleEl.textContent = chapter.title || '제목 없음';
+    if (contentEl) contentEl.textContent = chapter.content || '내용이 없습니다.';
+    
+    previewChapterDialog.style.display = 'flex';
+}
+
+function hidePreviewChapterDialog() {
+    if (previewChapterDialog) previewChapterDialog.style.display = 'none';
 }
 
 // Render the Bookshelf View

@@ -99,6 +99,17 @@
                             </span>
                             전체 원고 다운로드 (.txt)
                         </button>
+                        <button id="community-menu-item" class="dropdown-item" title="커뮤니티 이동">
+                            <span class="dropdown-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </span>
+                            커뮤니티
+                        </button>
                         <button id="edit-penname-item" class="dropdown-item" title="작가 필명 수정" style="display: none; border-top: 1px solid var(--border-color);">
                             <span class="dropdown-icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -242,6 +253,41 @@
                     </div>
                 </div>
             </section>
+
+            <!-- VIEW 3: COMMUNITY SCREEN -->
+            <section id="community-screen" class="view-section">
+                <div class="community-header">
+                    <div>
+                        <h2 class="community-title" style="font-size: 1.25rem; font-weight: 600; font-family: var(--font-serif); margin-bottom: 0.25rem;">Monote 커뮤니티</h2>
+                        <p class="community-subtitle" style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">작가들의 교류와 작품 공유를 위한 아늑한 광장</p>
+                    </div>
+                    <div class="community-actions">
+                        <button id="write-post-btn" class="btn-flat btn-sm" style="display: none; border-color: var(--accent-color); font-weight: 500;">
+                            <span class="plus-icon">+</span> 라운지 글쓰기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="community-tabs" style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border-color); margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                    <button id="tab-library-btn" class="tab-btn active" style="background: none; border: none; border-bottom: 2px solid var(--text-primary); padding: 0.5rem 0.15rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: all var(--transition-speed); margin-bottom: -1px;">공개 서재</button>
+                    <button id="tab-lounge-btn" class="tab-btn" style="background: none; border: none; border-bottom: 2px solid transparent; padding: 0.5rem 0.15rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-speed); margin-bottom: -1px;">작가 라운지</button>
+                </div>
+
+                <!-- Tab Content 1: Public Library -->
+                <div id="library-tab-content" class="tab-content active">
+                    <div id="public-books-grid" class="books-grid">
+                        <!-- Public books will be generated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Tab Content 2: Lounge -->
+                <div id="lounge-tab-content" class="tab-content" style="display: none;">
+                    <div id="lounge-feed" class="lounge-feed" style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px; margin: 0 auto;">
+                        <!-- Community posts will be generated dynamically -->
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -334,6 +380,61 @@
             </div>
             <div class="dialog-actions">
                 <button id="confirm-penname" class="btn-flat btn-sm">설정 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Book Dialog (Read Only) -->
+    <div id="preview-book-dialog" class="book-dialog" style="display: none;">
+        <div class="dialog-content" style="max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border: 1px solid var(--border-color); background: var(--bg-primary);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
+                <div>
+                    <h3 id="preview-book-title" style="margin: 0; font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">작품 제목</h3>
+                    <div id="preview-book-author" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">작가 필명</div>
+                </div>
+                <button id="close-preview-book" class="btn-flat btn-sm btn-danger" style="border: none; padding: 0.2rem 0.5rem; font-size: 0.8rem; line-height: 1;">닫기</button>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div>
+                    <h4 style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 0.4rem 0; letter-spacing: 0.05em; font-weight: 600;">전체 시놉시스</h4>
+                    <div id="preview-book-synopsis" style="font-family: var(--font-serif); font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); padding: 0.75rem; background: var(--bg-secondary); border-radius: 4px; border: 1px solid var(--border-color); max-height: 150px; overflow-y: auto;">시놉시스가 없습니다.</div>
+                </div>
+                
+                <div>
+                    <h4 style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 0.4rem 0; letter-spacing: 0.05em; font-weight: 600;">목차 및 원고 보기</h4>
+                    <div id="preview-book-chapters" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 250px; overflow-y: auto;">
+                        <!-- List of chapters will be rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Read Chapter Dialog -->
+    <div id="preview-chapter-dialog" class="book-dialog" style="display: none; z-index: 1100;">
+        <div class="dialog-content" style="max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border: 1px solid var(--border-color); background: var(--bg-primary);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
+                <h3 id="preview-chapter-title" style="margin: 0; font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">챕터 제목</h3>
+                <button id="close-preview-chapter" class="btn-flat btn-sm btn-danger" style="border: none; padding: 0.2rem 0.5rem; font-size: 0.8rem; line-height: 1;">닫기</button>
+            </div>
+            <div id="preview-chapter-content" style="font-family: var(--font-serif); font-size: 1rem; line-height: 2; white-space: pre-wrap; color: var(--text-primary); padding: 0.5rem 0; max-height: 50vh; overflow-y: auto;">
+                내용...
+            </div>
+        </div>
+    </div>
+
+    <!-- New Post Dialog -->
+    <div id="new-post-dialog" class="book-dialog" style="display: none;">
+        <div class="dialog-content" style="max-width: 400px; width: 90%; display: flex; flex-direction: column; gap: 1.25rem;">
+            <h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700;">라운지 글쓰기</h3>
+            <div class="dialog-field">
+                <label for="new-post-content" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.4rem;">글 내용</label>
+                <textarea id="new-post-content" class="textarea-flat" style="height: 150px; resize: none; font-family: var(--font-sans); padding: 0.6rem; font-size: 0.85rem; line-height: 1.5; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);" placeholder="소설에 대한 피드백 요청, 글쓰기 꿀팁 등 작가들과 나누고 싶은 이야기를 적어주세요..."></textarea>
+            </div>
+            <div class="dialog-actions">
+                <button id="cancel-new-post" class="btn-flat btn-sm btn-danger">취소</button>
+                <button id="confirm-new-post" class="btn-flat btn-sm">작성 완료</button>
             </div>
         </div>
     </div>
