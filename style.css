@@ -1095,3 +1095,8 @@ body {
         gap: 0.3rem;
     }
 }
+
+.rename-btn {
+    transform: scaleX(-1);
+    display: inline-flex;
+}
