@@ -107,15 +107,18 @@ const wordCountElement = document.getElementById('word-count');
 const saveStatus = document.getElementById('save-status');
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     loadTheme();
-    loadProjects();
+    await loadProjects();
     setupEventListeners();
     renderBookshelf();
     // Initially in bookshelf mode: show import/export, hide txt export
     if (importProjectTrigger) importProjectTrigger.style.display = '';
     if (exportProjectBtn) exportProjectBtn.style.display = '';
     if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
+    
+    // Restore previous active project/chapter state
+    restoreActiveState();
 });
 
 // Load Theme from LocalStorage
@@ -841,6 +844,7 @@ function openChapterEditor(chapterId) {
     if (!chapter) return;
     
     activeChapterId = chapterId;
+    storage.setItem('monote-active-chapter-id', chapterId);
     
     // Set UI Values
     chapterNumberBadge.textContent = getChapterPrefix(chapterId);
@@ -928,6 +932,7 @@ function showOverviewScreen() {
     }
 
     activeChapterId = null;
+    storage.removeItem('monote-active-chapter-id');
     renderOverview();
     
     writingScreen.classList.remove('active');
@@ -945,6 +950,8 @@ function showOverviewScreen() {
 function showBookshelfScreen() {
     activeProjectId = null;
     project = null;
+    storage.removeItem('monote-active-project-id');
+    storage.removeItem('monote-active-chapter-id');
     
     // In bookshelf screen: show JSON import/export, hide txt export
     if (importProjectTrigger) importProjectTrigger.style.display = '';
@@ -1098,8 +1105,10 @@ function openProject(projectId) {
     if (!proj) return;
     
     activeProjectId = projectId;
+    storage.setItem('monote-active-project-id', projectId);
     project = JSON.parse(JSON.stringify(proj)); // Deep copy to edit
     activeChapterId = null;
+    storage.removeItem('monote-active-chapter-id');
     
     
     
@@ -1301,4 +1310,58 @@ function runSpellCheck(text) {
         alert("맞춤법 검사기 페이지로 이동합니다. 본문을 직접 복사(Ctrl + C)하여 검사기 창에 붙여넣기(Ctrl + V) 하세요.");
         window.open('https://dic.daum.net/grammar_checker.do', '_blank');
     });
+}
+
+// Restore state from localStorage on page load/refresh
+function restoreActiveState() {
+    const savedProjectId = storage.getItem('monote-active-project-id');
+    const savedChapterId = storage.getItem('monote-active-chapter-id');
+    
+    if (savedProjectId) {
+        const proj = projects.find(p => p.id === savedProjectId);
+        if (proj) {
+            activeProjectId = savedProjectId;
+            project = JSON.parse(JSON.stringify(proj));
+            
+            renderOverview();
+            
+            if (savedChapterId) {
+                const chapter = project.chapters.find(c => c.id === savedChapterId);
+                if (chapter) {
+                    activeChapterId = savedChapterId;
+                    
+                    // Directly load values
+                    chapterNumberBadge.textContent = getChapterPrefix(savedChapterId);
+                    chapterTitleInput.value = chapter.title || '';
+                    chapterContentTextarea.value = chapter.content || '';
+                    updateEditorCounts(chapter.content || '');
+                    
+                    // Instant screen switch (avoiding sliding animation flicker on refresh)
+                    overviewScreen.style.display = 'none';
+                    bookshelfScreen.style.display = 'none';
+                    writingScreen.style.display = 'block';
+                    writingScreen.classList.add('active');
+                    
+                    // Adjust title height
+                    adjustTitleHeight();
+                    
+                    // Move chapters-panel to editor sidebar
+                    const chaptersPanel = document.getElementById('chapters-panel');
+                    const editorSidebar = document.getElementById('editor-sidebar');
+                    if (chaptersPanel && editorSidebar) {
+                        editorSidebar.appendChild(chaptersPanel);
+                    }
+                    
+                    // Set menu actions
+                    if (importProjectTrigger) importProjectTrigger.style.display = 'none';
+                    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+                    if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = '';
+                } else {
+                    showOverviewScreen();
+                }
+            } else {
+                showOverviewScreen();
+            }
+        }
+    }
 }
