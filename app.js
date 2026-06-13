@@ -427,7 +427,10 @@ function setupEventListeners() {
     // Bookshelf Navigation & Event Listeners
     goToBookshelfBtn.addEventListener('click', showBookshelfScreen);
     
-    document.getElementById('create-project-btn').addEventListener('click', showNewBookDialog);
+    const createProjBtn = document.getElementById('create-project-btn');
+    if (createProjBtn) {
+        createProjBtn.addEventListener('click', showNewBookDialog);
+    }
     document.getElementById('cancel-new-book').addEventListener('click', hideNewBookDialog);
     document.getElementById('confirm-new-book').addEventListener('click', createNewProject);
     
@@ -1063,7 +1066,7 @@ function renderBookshelf() {
         
         const coverColor = proj.coverColor || 'charcoal';
         
-        const deleteBtnHtml = proj.title === "모노트로 책 쓰기"
+        const deleteBtnHtml = proj.id === "monote-manual-guide"
             ? ""
             : `<button class="delete-book-btn" title="작품 삭제">×</button>`;
 
