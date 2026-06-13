@@ -927,8 +927,6 @@ function renderChapterList() {
         justify-content: space-between;
         align-items: center;
         padding: 0.8rem 0.2rem;
-        margin-top: 0.5rem;
-        border-top: 1px solid var(--border-color);
         font-size: 0.8rem;
         color: var(--text-secondary);
         font-weight: 600;
