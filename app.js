@@ -56,7 +56,7 @@ function updateSyncStatus(status, message) {
 }
 
 async function saveProjectToCloud(proj) {
-    if (!supabaseClient) return;
+    if (!supabaseClient || !currentUser) return;
     const { error } = await supabaseClient
         .from('open_projects')
         .upsert({
@@ -67,7 +67,8 @@ async function saveProjectToCloud(proj) {
             chapters: proj.chapters || [],
             cover_color: proj.coverColor || 'charcoal',
             updated_at: proj.updatedAt || new Date().toISOString(),
-            created_at: proj.createdAt || new Date().toISOString()
+            created_at: proj.createdAt || new Date().toISOString(),
+            user_id: currentUser.id
         });
     if (error) throw error;
 }
@@ -187,12 +188,13 @@ async function loadProjects() {
     renderBookshelf();
 
     // Fetch from Supabase
-    if (supabaseClient) {
+    if (supabaseClient && currentUser) {
         updateSyncStatus('syncing', '불러오는 중...');
         try {
             const { data, error } = await supabaseClient
                 .from('open_projects')
                 .select('*')
+                .eq('user_id', currentUser.id)
                 .order('updated_at', { ascending: false });
 
             if (error) throw error;
@@ -250,7 +252,7 @@ function triggerSave() {
         saveStatus.textContent = "저장 완료";
         
         // Sync to Supabase
-        if (supabaseClient) {
+        if (supabaseClient && currentUser) {
             updateSyncStatus('syncing', '동기화 중...');
             try {
                 await saveProjectToCloud(project);
@@ -1097,7 +1099,7 @@ async function createNewProject() {
     openProject(newProj.id);
 
     // Sync to Supabase
-    if (supabaseClient) {
+    if (supabaseClient && currentUser) {
         updateSyncStatus('syncing', '동기화 중...');
         try {
             await saveProjectToCloud(newProj);
@@ -1142,13 +1144,14 @@ async function deleteProject(projectId) {
     }
 
     // Delete from Supabase
-    if (supabaseClient) {
+    if (supabaseClient && currentUser) {
         updateSyncStatus('syncing', '동기화 중...');
         try {
             const { error } = await supabaseClient
                 .from('open_projects')
                 .delete()
-                .eq('id', projectId);
+                .eq('id', projectId)
+                .eq('user_id', currentUser.id);
             if (error) throw error;
             updateSyncStatus('success', '동기화 완료');
         } catch (err) {
