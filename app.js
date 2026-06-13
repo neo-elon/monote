@@ -67,7 +67,7 @@ async function saveProjectToCloud(proj) {
             synopsis: proj.synopsis || '',
             ideas: proj.ideas || '',
             chapters: proj.chapters || [],
-            cover_color: proj.coverColor || 'charcoal',
+            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}`,
             updated_at: proj.updatedAt || new Date().toISOString(),
             created_at: proj.createdAt || new Date().toISOString(),
             user_id: currentUser.id
@@ -228,17 +228,24 @@ async function loadProjects() {
 
             if (error) throw error;
 
-            const dbProjects = data ? data.map(dbProj => ({
-                id: dbProj.id,
-                title: dbProj.title,
-                synopsis: dbProj.synopsis || '',
-                ideas: dbProj.ideas || '',
-                chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || []),
-                coverColor: dbProj.cover_color || 'charcoal',
-                createdAt: dbProj.created_at,
-                updatedAt: dbProj.updated_at,
-                user_id: dbProj.user_id
-            })) : [];
+            const dbProjects = data ? data.map(dbProj => {
+                const dbColor = dbProj.cover_color || 'charcoal';
+                const colorParts = dbColor.split(':');
+                const coverColor = colorParts[0];
+                const isPrivate = colorParts[1] === 'private';
+                return {
+                    id: dbProj.id,
+                    title: dbProj.title,
+                    synopsis: dbProj.synopsis || '',
+                    ideas: dbProj.ideas || '',
+                    chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || []),
+                    coverColor: coverColor,
+                    isPrivate: isPrivate,
+                    createdAt: dbProj.created_at,
+                    updatedAt: dbProj.updated_at,
+                    user_id: dbProj.user_id
+                };
+            }) : [];
 
             // Merge local offline projects into account projects
             const mergedProjects = [...dbProjects];
@@ -1093,13 +1100,22 @@ function renderBookshelf() {
             ? ""
             : `<button class="delete-book-btn" title="작품 삭제">×</button>`;
 
+        const visibilityBadge = proj.id === "monote-manual-guide"
+            ? ""
+            : (proj.isPrivate 
+                ? `<span class="book-visibility-badge private" title="비공개 (로컬 저장)">🔒 로컬</span>`
+                : `<span class="book-visibility-badge public" title="공개 (클라우드 동기화)">☁️ 동기화</span>`);
+
         bookCard.innerHTML = `
             ${deleteBtnHtml}
             <div class="book-cover cover-${coverColor}">
                 <div class="book-cover-title">${proj.title || '제목 없음'}</div>
                 <div class="book-cover-author">${authorName}</div>
             </div>
-            <div class="book-card-title-under">${proj.title || '제목 없음'}</div>
+            <div class="book-card-title-under" style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; width: 100%;">
+                <span class="book-title-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: calc(100% - 50px);">${proj.title || '제목 없음'}</span>
+                ${visibilityBadge}
+            </div>
         `;
         
         let isDragging = false;
@@ -1308,6 +1324,9 @@ function showNewBookDialog() {
     const defaultRadio = document.querySelector('input[name="cover-color"][value="charcoal"]');
     if (defaultRadio) defaultRadio.checked = true;
 
+    const defaultVisibilityRadio = document.querySelector('input[name="book-visibility"][value="public"]');
+    if (defaultVisibilityRadio) defaultVisibilityRadio.checked = true;
+
     newBookDialog.style.display = 'flex';
     setTimeout(() => {
         newBookTitleInput.focus();
@@ -1331,6 +1350,9 @@ async function createNewProject() {
     const selectedColorRadio = document.querySelector('input[name="cover-color"]:checked');
     const coverColor = selectedColorRadio ? selectedColorRadio.value : 'charcoal';
     
+    const visibilityRadio = document.querySelector('input[name="book-visibility"]:checked');
+    const isPrivate = visibilityRadio ? (visibilityRadio.value === 'private') : false;
+    
     const newProj = {
         id: Date.now().toString(),
         title: title,
@@ -1338,6 +1360,7 @@ async function createNewProject() {
         ideas: '',
         chapters: [],
         coverColor: coverColor,
+        isPrivate: isPrivate,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };

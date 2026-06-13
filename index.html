@@ -146,6 +146,19 @@
                                 <label class="color-option terracotta"><input type="radio" name="cover-color" value="terracotta"><span></span></label>
                             </div>
                         </div>
+                        <div class="dialog-field">
+                            <label>공개 설정</label>
+                            <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.5rem;">
+                                <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-primary);">
+                                    <input type="radio" name="book-visibility" value="public" checked style="cursor: pointer;">
+                                    <span>공개 (클라우드 동기화)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-primary);">
+                                    <input type="radio" name="book-visibility" value="private" style="cursor: pointer;">
+                                    <span>비공개 (로컬 저장)</span>
+                                </label>
+                            </div>
+                        </div>
                         <div class="dialog-actions">
                             <button id="cancel-new-book" class="btn-flat btn-sm btn-danger">취소</button>
                             <button id="confirm-new-book" class="btn-flat btn-sm">생성</button>

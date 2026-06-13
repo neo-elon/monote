@@ -1206,3 +1206,25 @@ body {
         display: none;
     }
 }
+
+.book-visibility-badge {
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.book-visibility-badge.private {
+    color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+}
+
+.book-visibility-badge.public {
+    color: #3498db;
+    background-color: rgba(52, 152, 219, 0.05);
+    border-color: rgba(52, 152, 219, 0.2);
+}
