@@ -147,15 +147,21 @@ function updateThemeIcons(theme) {
 // Load Projects and handle Migration
 async function loadProjects() {
     const savedProjects = storage.getItem('monote-projects');
+    let localProjects = [];
     if (savedProjects) {
         try {
-            projects = JSON.parse(savedProjects);
+            localProjects = JSON.parse(savedProjects);
         } catch (e) {
             console.error("Failed to parse projects data:", e);
-            projects = [];
         }
+    }
+
+    if (currentUser) {
+        // Keep only projects belonging to this user OR offline projects (no user_id)
+        projects = localProjects.filter(p => !p.user_id || p.user_id === currentUser.id);
     } else {
-        projects = [];
+        // Offline mode: keep only offline projects (no user_id)
+        projects = localProjects.filter(p => !p.user_id);
     }
 
     // Migration from old single-project structure
@@ -175,6 +181,9 @@ async function loadProjects() {
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 };
+                if (currentUser) {
+                    migrated.user_id = currentUser.id;
+                }
                 projects.push(migrated);
                 storage.setItem('monote-projects', JSON.stringify(projects));
             }
@@ -199,34 +208,38 @@ async function loadProjects() {
 
             if (error) throw error;
 
-            if (data && data.length > 0) {
-                projects = data.map(dbProj => ({
-                    id: dbProj.id,
-                    title: dbProj.title,
-                    synopsis: dbProj.synopsis || '',
-                    ideas: dbProj.ideas || '',
-                    chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || []),
-                    coverColor: dbProj.cover_color || 'charcoal',
-                    createdAt: dbProj.created_at,
-                    updatedAt: dbProj.updated_at
-                }));
-                storage.setItem('monote-projects', JSON.stringify(projects));
-                renderBookshelf();
-                updateSyncStatus('success', '동기화 완료');
-            } else {
-                // Cloud is empty, if we have local projects, push them to cloud
-                if (projects.length > 0) {
-                    updateSyncStatus('syncing', '동기화 중...');
-                    for (const proj of projects) {
-                        await saveProjectToCloud(proj);
-                    }
+            const dbProjects = data ? data.map(dbProj => ({
+                id: dbProj.id,
+                title: dbProj.title,
+                synopsis: dbProj.synopsis || '',
+                ideas: dbProj.ideas || '',
+                chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || []),
+                coverColor: dbProj.cover_color || 'charcoal',
+                createdAt: dbProj.created_at,
+                updatedAt: dbProj.updated_at,
+                user_id: dbProj.user_id
+            })) : [];
+
+            // Merge local offline projects into account projects
+            const mergedProjects = [...dbProjects];
+            const offlineProjects = projects.filter(p => !p.user_id);
+
+            for (const localProj of offlineProjects) {
+                // Check for duplicates
+                if (!mergedProjects.some(dbP => dbP.id === localProj.id)) {
+                    localProj.user_id = currentUser.id;
+                    await saveProjectToCloud(localProj);
+                    mergedProjects.push(localProj);
                 }
-                renderBookshelf();
-                updateSyncStatus('success', '동기화 완료');
             }
+
+            projects = mergedProjects;
+            storage.setItem('monote-projects', JSON.stringify(projects));
+            renderBookshelf();
+            updateSyncStatus('success', '동기화 완료');
         } catch (err) {
             console.error('Failed to sync with Supabase:', err);
-            updateSyncStatus('error', '로컬 모드');
+            updateSyncStatus('error', '동기화 실패');
         }
     } else {
         updateSyncStatus('error', '로컬 모드');
@@ -247,6 +260,9 @@ function triggerSave() {
         const idx = projects.findIndex(p => p.id === activeProjectId);
         if (idx !== -1) {
             project.updatedAt = new Date().toISOString();
+            if (currentUser) {
+                project.user_id = currentUser.id;
+            }
             projects[idx] = project;
             storage.setItem('monote-projects', JSON.stringify(projects));
         }
@@ -1092,6 +1108,9 @@ async function createNewProject() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
+    if (currentUser) {
+        newProj.user_id = currentUser.id;
+    }
     
     projects.push(newProj);
     storage.setItem('monote-projects', JSON.stringify(projects));
@@ -1548,6 +1567,30 @@ async function handleLogout() {
     try {
         const { error } = await supabaseClient.auth.signOut();
         if (error) throw error;
+        
+        // Filter out logged-in user's projects and keep only offline local projects (no user_id)
+        const savedProjects = storage.getItem('monote-projects');
+        let offlineProjects = [];
+        if (savedProjects) {
+            try {
+                offlineProjects = JSON.parse(savedProjects).filter(p => !p.user_id);
+            } catch (e) {
+                console.error("Failed to parse projects during logout:", e);
+            }
+        }
+        
+        // Save only offline projects back to local storage
+        storage.setItem('monote-projects', JSON.stringify(offlineProjects));
+        storage.removeItem('monote-active-project-id');
+        storage.removeItem('monote-active-chapter-id');
+        
+        projects = offlineProjects;
+        activeProjectId = null;
+        activeChapterId = null;
+        project = null;
+        
+        showBookshelfScreen();
+        renderBookshelf();
     } catch (err) {
         console.error("Logout failed:", err);
         alert(`로그아웃에 실패했습니다: ${err.message || err}`);
