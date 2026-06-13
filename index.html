@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monote — 작가를 위한 모노톤 메모장</title>
+    <title>Monote — 작가를 위한 모노톤 글쓰기 플랫폼</title>
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231a1a1a'/><text y='68' x='15' font-size='70' font-family='Outfit, sans-serif' font-weight='700' fill='%23fbfbf9'>m.</text></svg>">
     <!-- Google Fonts: Nanum Myeongjo for Literary Serif, Outfit for Sans-serif -->
@@ -29,12 +29,13 @@
                     <span class="sync-dot"></span>
                     <span class="sync-text">대기 중</span>
                 </div>
-                
+
                 <div id="auth-container" class="auth-container"></div>
-                
+
                 <div class="menu-dropdown-container">
                     <button id="menu-btn" class="btn-icon" title="메뉴" aria-label="Menu">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="1"></circle>
                             <circle cx="12" cy="5" r="1"></circle>
                             <circle cx="12" cy="19" r="1"></circle>
@@ -43,8 +44,9 @@
                     <div id="menu-dropdown" class="menu-dropdown">
                         <button id="theme-toggle" class="dropdown-item" title="테마 변경">
                             <span class="dropdown-icon">
-                                <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="5"></circle>
                                     <line x1="12" y1="1" x2="12" y2="3"></line>
                                     <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -55,8 +57,9 @@
                                     <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
                                     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                                 </svg>
-                                <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" style="display: none;">
                                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                                 </svg>
                             </span>
@@ -64,7 +67,8 @@
                         </button>
                         <button id="toggle-manual-item" class="dropdown-item" title="설명서 보이기/숨기기">
                             <span class="dropdown-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
                                     <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                                 </svg>
@@ -73,8 +77,8 @@
                         </button>
                         <button id="import-project-trigger" class="dropdown-item" title="백업 파일 불러오기">
                             <span class="dropdown-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="17 8 12 3 7 8"></polyline>
                                     <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -84,8 +88,8 @@
                         </button>
                         <button id="export-project" class="dropdown-item" title="전체 백업 다운로드 (.json)">
                             <span class="dropdown-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -95,13 +99,21 @@
                         </button>
                         <button id="export-project-txt" class="dropdown-item" title="전체 원고 다운로드 (.txt)">
                             <span class="dropdown-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
                             </span>
                             전체 원고 다운로드 (.txt)
                         </button>
                         <button id="community-menu-item" class="dropdown-item" title="커뮤니티 이동">
                             <span class="dropdown-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="9" cy="7" r="4"></circle>
                                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -110,18 +122,27 @@
                             </span>
                             커뮤니티
                         </button>
-                        <button id="edit-penname-item" class="dropdown-item" title="작가 필명 수정" style="display: none; border-top: 1px solid var(--border-color);">
+                        <button id="edit-penname-item" class="dropdown-item" title="작가 필명 수정"
+                            style="display: none; border-top: 1px solid var(--border-color);">
                             <span class="dropdown-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M12 20h9"></path>
                                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                                 </svg>
                             </span>
                             작가 필명 수정
                         </button>
-                        <button id="logout-menu-item" class="dropdown-item" title="로그아웃" style="display: none; color: var(--danger-color);">
+                        <button id="logout-menu-item" class="dropdown-item" title="로그아웃"
+                            style="display: none; color: var(--danger-color);">
                             <span class="dropdown-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--danger-color);"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    style="color: var(--danger-color);">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
                             </span>
                             로그아웃
                         </button>
@@ -137,8 +158,11 @@
             <section id="bookshelf-screen" class="view-section active">
                 <div class="bookshelf-header">
                     <h2 class="bookshelf-title" id="bookshelf-title">내 책장</h2>
-                    <button id="bookshelf-community-btn" class="btn-flat btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: flex; align-items: center; gap: 0.25rem; font-weight: 500;" title="커뮤니티 이동">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button id="bookshelf-community-btn" class="btn-flat btn-sm"
+                        style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: flex; align-items: center; gap: 0.25rem; font-weight: 500;"
+                        title="커뮤니티 이동">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                             <circle cx="9" cy="7" r="4"></circle>
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -147,7 +171,7 @@
                         커뮤니티
                     </button>
                 </div>
-                
+
                 <div id="books-grid" class="books-grid">
                     <!-- Book covers will be generated dynamically -->
                 </div>
@@ -161,7 +185,8 @@
                         <div class="panel-section">
                             <div class="label-row">
                                 <label for="project-title" class="section-label">작품 제목</label>
-                                <button id="edit-project-settings-btn" class="btn-flat btn-sm btn-danger" style="border: none; padding: 0.2rem 0.5rem;" title="작품 설정 수정">✎ 설정</button>
+                                <button id="edit-project-settings-btn" class="btn-flat btn-sm btn-danger"
+                                    style="border: none; padding: 0.2rem 0.5rem;" title="작품 설정 수정">✎ 설정</button>
                             </div>
                             <input type="text" id="project-title" class="input-flat title-input"
                                 placeholder="작품의 이름을 지어주세요..." autocomplete="off">
@@ -267,20 +292,30 @@
             <section id="community-screen" class="view-section">
                 <div class="community-header">
                     <div>
-                        <h2 class="community-title" style="font-size: 1.25rem; font-weight: 600; font-family: var(--font-serif); margin-bottom: 0.25rem;">Monote 커뮤니티</h2>
-                        <p class="community-subtitle" style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">작가들의 교류와 작품 공유를 위한 아늑한 광장</p>
+                        <h2 class="community-title"
+                            style="font-size: 1.25rem; font-weight: 600; font-family: var(--font-serif); margin-bottom: 0.25rem;">
+                            Monote 커뮤니티</h2>
+                        <p class="community-subtitle"
+                            style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">작가들의 교류와 작품 공유를 위한 아늑한
+                            광장</p>
                     </div>
                 </div>
 
                 <!-- Tabs -->
-                <div class="community-tabs" style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border-color); margin-top: 1.5rem; margin-bottom: 1.5rem;">
-                    <button id="tab-ranking-btn" class="tab-btn active" style="background: none; border: none; border-bottom: 2px solid var(--text-primary); padding: 0.5rem 0.15rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: all var(--transition-speed); margin-bottom: -1px;">명예의 전당 (랭킹)</button>
-                    <button id="tab-lounge-btn" class="tab-btn" style="background: none; border: none; border-bottom: 2px solid transparent; padding: 0.5rem 0.15rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-speed); margin-bottom: -1px;">작가 라운지</button>
+                <div class="community-tabs"
+                    style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border-color); margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                    <button id="tab-ranking-btn" class="tab-btn active"
+                        style="background: none; border: none; border-bottom: 2px solid var(--text-primary); padding: 0.5rem 0.15rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: all var(--transition-speed); margin-bottom: -1px;">명예의
+                        전당 (랭킹)</button>
+                    <button id="tab-lounge-btn" class="tab-btn"
+                        style="background: none; border: none; border-bottom: 2px solid transparent; padding: 0.5rem 0.15rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-speed); margin-bottom: -1px;">작가
+                        라운지</button>
                 </div>
 
                 <!-- Tab Content 1: Ranking -->
                 <div id="ranking-tab-content" class="tab-content active">
-                    <div id="ranking-container" style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px; margin: 0 auto; padding: 0.5rem 0 2rem 0;">
+                    <div id="ranking-container"
+                        style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px; margin: 0 auto; padding: 0.5rem 0 2rem 0;">
                         <!-- Rankings will be generated dynamically -->
                     </div>
                 </div>
@@ -288,11 +323,13 @@
                 <!-- Tab Content 2: Lounge -->
                 <div id="lounge-tab-content" class="tab-content" style="display: none;">
                     <div style="max-width: 600px; margin: 0 auto 1rem auto; display: flex; justify-content: flex-end;">
-                        <button id="write-post-btn" class="btn-flat btn-sm" style="display: none; border-color: var(--accent-color); font-weight: 500;">
+                        <button id="write-post-btn" class="btn-flat btn-sm"
+                            style="display: none; border-color: var(--accent-color); font-weight: 500;">
                             <span class="plus-icon">+</span> 라운지 글쓰기
                         </button>
                     </div>
-                    <div id="lounge-feed" class="lounge-feed" style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px; margin: 0 auto;">
+                    <div id="lounge-feed" class="lounge-feed"
+                        style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px; margin: 0 auto;">
                         <!-- Community posts will be generated dynamically -->
                     </div>
                 </div>
@@ -311,23 +348,32 @@
             <div class="dialog-field">
                 <label>표지 색상</label>
                 <div class="cover-color-picker">
-                    <label class="color-option charcoal active"><input type="radio" name="cover-color" value="charcoal" checked><span></span></label>
-                    <label class="color-option linen"><input type="radio" name="cover-color" value="linen"><span></span></label>
-                    <label class="color-option ivory"><input type="radio" name="cover-color" value="ivory"><span></span></label>
-                    <label class="color-option slate"><input type="radio" name="cover-color" value="slate"><span></span></label>
-                    <label class="color-option terracotta"><input type="radio" name="cover-color" value="terracotta"><span></span></label>
-                    <label class="color-option olive"><input type="radio" name="cover-color" value="olive"><span></span></label>
-                    <label class="color-option navy"><input type="radio" name="cover-color" value="navy"><span></span></label>
+                    <label class="color-option charcoal active"><input type="radio" name="cover-color" value="charcoal"
+                            checked><span></span></label>
+                    <label class="color-option linen"><input type="radio" name="cover-color"
+                            value="linen"><span></span></label>
+                    <label class="color-option ivory"><input type="radio" name="cover-color"
+                            value="ivory"><span></span></label>
+                    <label class="color-option slate"><input type="radio" name="cover-color"
+                            value="slate"><span></span></label>
+                    <label class="color-option terracotta"><input type="radio" name="cover-color"
+                            value="terracotta"><span></span></label>
+                    <label class="color-option olive"><input type="radio" name="cover-color"
+                            value="olive"><span></span></label>
+                    <label class="color-option navy"><input type="radio" name="cover-color"
+                            value="navy"><span></span></label>
                 </div>
             </div>
             <div class="dialog-field">
                 <label>공개 설정</label>
                 <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.5rem;">
-                    <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                    <label
+                        style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
                         <input type="radio" name="book-visibility" value="public" checked style="cursor: pointer;">
                         <span>공개</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                    <label
+                        style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
                         <input type="radio" name="book-visibility" value="private" style="cursor: pointer;">
                         <span>비공개</span>
                     </label>
@@ -339,35 +385,45 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Book Settings Edit Modal (Hidden by default) -->
     <div id="edit-book-dialog" class="book-dialog" style="display: none;">
         <div class="dialog-content">
             <h3>작품 설정 수정</h3>
             <div class="dialog-field">
                 <label for="edit-book-title">작품 제목</label>
-                <input type="text" id="edit-book-title" class="input-flat" placeholder="제목을 입력하세요..." autocomplete="off">
+                <input type="text" id="edit-book-title" class="input-flat" placeholder="제목을 입력하세요..."
+                    autocomplete="off">
             </div>
             <div class="dialog-field">
                 <label>표지 색상</label>
                 <div class="cover-color-picker">
-                    <label class="color-option charcoal"><input type="radio" name="edit-cover-color" value="charcoal"><span></span></label>
-                    <label class="color-option linen"><input type="radio" name="edit-cover-color" value="linen"><span></span></label>
-                    <label class="color-option ivory"><input type="radio" name="edit-cover-color" value="ivory"><span></span></label>
-                    <label class="color-option slate"><input type="radio" name="edit-cover-color" value="slate"><span></span></label>
-                    <label class="color-option terracotta"><input type="radio" name="edit-cover-color" value="terracotta"><span></span></label>
-                    <label class="color-option olive"><input type="radio" name="edit-cover-color" value="olive"><span></span></label>
-                    <label class="color-option navy"><input type="radio" name="edit-cover-color" value="navy"><span></span></label>
+                    <label class="color-option charcoal"><input type="radio" name="edit-cover-color"
+                            value="charcoal"><span></span></label>
+                    <label class="color-option linen"><input type="radio" name="edit-cover-color"
+                            value="linen"><span></span></label>
+                    <label class="color-option ivory"><input type="radio" name="edit-cover-color"
+                            value="ivory"><span></span></label>
+                    <label class="color-option slate"><input type="radio" name="edit-cover-color"
+                            value="slate"><span></span></label>
+                    <label class="color-option terracotta"><input type="radio" name="edit-cover-color"
+                            value="terracotta"><span></span></label>
+                    <label class="color-option olive"><input type="radio" name="edit-cover-color"
+                            value="olive"><span></span></label>
+                    <label class="color-option navy"><input type="radio" name="edit-cover-color"
+                            value="navy"><span></span></label>
                 </div>
             </div>
             <div class="dialog-field">
                 <label>공개 설정</label>
                 <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.5rem;">
-                    <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                    <label
+                        style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
                         <input type="radio" name="edit-book-visibility" value="public" style="cursor: pointer;">
                         <span>공개</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                    <label
+                        style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
                         <input type="radio" name="edit-book-visibility" value="private" style="cursor: pointer;">
                         <span>비공개</span>
                     </label>
@@ -379,7 +435,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Pen Name Registration Dialog -->
     <div id="penname-dialog" class="book-dialog" style="display: none;">
         <div class="dialog-content">
@@ -399,24 +455,37 @@
 
     <!-- Preview Book Dialog (Read Only) -->
     <div id="preview-book-dialog" class="book-dialog" style="display: none;">
-        <div class="dialog-content" style="max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border: 1px solid var(--border-color); background: var(--bg-primary);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
+        <div class="dialog-content"
+            style="max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border: 1px solid var(--border-color); background: var(--bg-primary);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
                 <div>
-                    <h3 id="preview-book-title" style="margin: 0; font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">작품 제목</h3>
-                    <div id="preview-book-author" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">작가 필명</div>
+                    <h3 id="preview-book-title"
+                        style="margin: 0; font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">
+                        작품 제목</h3>
+                    <div id="preview-book-author"
+                        style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">작가 필명</div>
                 </div>
-                <button id="close-preview-book" class="btn-flat btn-sm btn-danger" style="border: none; padding: 0.2rem 0.5rem; font-size: 0.8rem; line-height: 1;">닫기</button>
+                <button id="close-preview-book" class="btn-flat btn-sm btn-danger"
+                    style="border: none; padding: 0.2rem 0.5rem; font-size: 0.8rem; line-height: 1;">닫기</button>
             </div>
-            
+
             <div style="display: flex; flex-direction: column; gap: 1.25rem;">
                 <div>
-                    <h4 style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 0.4rem 0; letter-spacing: 0.05em; font-weight: 600;">전체 시놉시스</h4>
-                    <div id="preview-book-synopsis" style="font-family: var(--font-serif); font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); padding: 0.75rem; background: var(--bg-secondary); border-radius: 4px; border: 1px solid var(--border-color); max-height: 150px; overflow-y: auto;">시놉시스가 없습니다.</div>
+                    <h4
+                        style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 0.4rem 0; letter-spacing: 0.05em; font-weight: 600;">
+                        전체 시놉시스</h4>
+                    <div id="preview-book-synopsis"
+                        style="font-family: var(--font-serif); font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); padding: 0.75rem; background: var(--bg-secondary); border-radius: 4px; border: 1px solid var(--border-color); max-height: 150px; overflow-y: auto;">
+                        시놉시스가 없습니다.</div>
                 </div>
-                
+
                 <div>
-                    <h4 style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 0.4rem 0; letter-spacing: 0.05em; font-weight: 600;">목차 및 원고 보기</h4>
-                    <div id="preview-book-chapters" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 250px; overflow-y: auto;">
+                    <h4
+                        style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 0.4rem 0; letter-spacing: 0.05em; font-weight: 600;">
+                        목차 및 원고 보기</h4>
+                    <div id="preview-book-chapters"
+                        style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 250px; overflow-y: auto;">
                         <!-- List of chapters will be rendered dynamically -->
                     </div>
                 </div>
@@ -426,12 +495,18 @@
 
     <!-- Read Chapter Dialog -->
     <div id="preview-chapter-dialog" class="book-dialog" style="display: none; z-index: 1100;">
-        <div class="dialog-content" style="max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border: 1px solid var(--border-color); background: var(--bg-primary);">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
-                <h3 id="preview-chapter-title" style="margin: 0; font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">챕터 제목</h3>
-                <button id="close-preview-chapter" class="btn-flat btn-sm btn-danger" style="border: none; padding: 0.2rem 0.5rem; font-size: 0.8rem; line-height: 1;">닫기</button>
+        <div class="dialog-content"
+            style="max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border: 1px solid var(--border-color); background: var(--bg-primary);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
+                <h3 id="preview-chapter-title"
+                    style="margin: 0; font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">
+                    챕터 제목</h3>
+                <button id="close-preview-chapter" class="btn-flat btn-sm btn-danger"
+                    style="border: none; padding: 0.2rem 0.5rem; font-size: 0.8rem; line-height: 1;">닫기</button>
             </div>
-            <div id="preview-chapter-content" style="font-family: var(--font-serif); font-size: 1rem; line-height: 2; white-space: pre-wrap; color: var(--text-primary); padding: 0.5rem 0; max-height: 50vh; overflow-y: auto;">
+            <div id="preview-chapter-content"
+                style="font-family: var(--font-serif); font-size: 1rem; line-height: 2; white-space: pre-wrap; color: var(--text-primary); padding: 0.5rem 0; max-height: 50vh; overflow-y: auto;">
                 내용...
             </div>
         </div>
@@ -439,11 +514,16 @@
 
     <!-- New Post Dialog -->
     <div id="new-post-dialog" class="book-dialog" style="display: none;">
-        <div class="dialog-content" style="max-width: 400px; width: 90%; display: flex; flex-direction: column; gap: 1.25rem;">
+        <div class="dialog-content"
+            style="max-width: 400px; width: 90%; display: flex; flex-direction: column; gap: 1.25rem;">
             <h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700;">라운지 글쓰기</h3>
             <div class="dialog-field">
-                <label for="new-post-content" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.4rem;">글 내용</label>
-                <textarea id="new-post-content" class="textarea-flat" style="height: 150px; resize: none; font-family: var(--font-sans); padding: 0.6rem; font-size: 0.85rem; line-height: 1.5; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);" placeholder="소설에 대한 피드백 요청, 글쓰기 꿀팁 등 작가들과 나누고 싶은 이야기를 적어주세요..."></textarea>
+                <label for="new-post-content"
+                    style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.4rem;">글
+                    내용</label>
+                <textarea id="new-post-content" class="textarea-flat"
+                    style="height: 150px; resize: none; font-family: var(--font-sans); padding: 0.6rem; font-size: 0.85rem; line-height: 1.5; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);"
+                    placeholder="소설에 대한 피드백 요청, 글쓰기 꿀팁 등 작가들과 나누고 싶은 이야기를 적어주세요..."></textarea>
             </div>
             <div class="dialog-actions">
                 <button id="cancel-new-post" class="btn-flat btn-sm btn-danger">취소</button>
