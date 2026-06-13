@@ -60,7 +60,24 @@ function updateSyncStatus(status, message) {
     if (!text) return;
     
     badge.className = 'sync-status ' + status; // success, syncing, error
-    text.textContent = message;
+    
+    let displayMessage = message;
+    if (typeof currentLang !== 'undefined' && currentLang === 'en') {
+        const translations = {
+            '대기 중': 'Pending',
+            '불러오는 중...': 'Loading...',
+            '동기화 완료': 'Synced',
+            '동기화 실패': 'Sync Failed',
+            '로컬 모드': 'Local Mode',
+            '동기화 중...': 'Syncing...',
+            '필명 업데이트 중...': 'Updating pen name...',
+            '필명 업데이트 완료': 'Pen name updated',
+            '업데이트 실패': 'Update Failed'
+        };
+        displayMessage = translations[message] || message;
+    }
+    
+    text.textContent = displayMessage;
 }
 
 async function saveProjectToCloud(proj) {
@@ -373,7 +390,7 @@ async function loadProjects() {
 function triggerSave() {
     if (!activeProjectId) return;
     
-    saveStatus.textContent = "저장 중...";
+    saveStatus.textContent = currentLang === 'en' ? "Saving..." : "저장 중...";
     saveStatus.style.opacity = "1";
     
     if (saveTimeout) clearTimeout(saveTimeout);
@@ -389,7 +406,7 @@ function triggerSave() {
             projects[idx] = project;
             storage.setItem('monote-projects', JSON.stringify(projects));
         }
-        saveStatus.textContent = "저장 완료";
+        saveStatus.textContent = currentLang === 'en' ? "Saved" : "저장 완료";
         
         // Sync to Supabase
         if (supabaseClient && currentUser) {
@@ -561,7 +578,8 @@ function setupEventListeners() {
 
     deleteChapterBtn.addEventListener('click', () => {
         if (activeChapterId !== null) {
-            if (confirm("이 챕터를 완전히 삭제하시겠습니까? 되돌릴 수 없습니다.")) {
+            const confirmMsg = currentLang === 'en' ? "Are you sure you want to delete this chapter? This cannot be undone." : "이 챕터를 완전히 삭제하시겠습니까? 되돌릴 수 없습니다.";
+            if (confirm(confirmMsg)) {
                 deleteChapter(activeChapterId);
             }
         }
@@ -738,7 +756,7 @@ function renderChapterList() {
     if (!project.chapters || project.chapters.length === 0) {
         chaptersList.innerHTML = `
             <div class="empty-chapters">
-                아직 생성된 챕터가 없습니다. 오른쪽 상단의 '+ 챕터 추가' 버튼을 눌러 첫 글을 시작해 보세요.
+                ${i18n[currentLang].overviewEmptyChapters}
             </div>
         `;
         return;
@@ -835,10 +853,11 @@ function renderChapterList() {
 
         renameBtn.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent card click
-            const newTitle = prompt("챕터 제목을 변경하시겠습니까?", chapter.title || '');
+            const promptMsg = currentLang === 'en' ? "Do you want to change the chapter title?" : "챕터 제목을 변경하시겠습니까?";
+            const newTitle = prompt(promptMsg, chapter.title || '');
             if (newTitle !== null) {
                 const trimmed = newTitle.trim();
-                chapter.title = trimmed || '제목 없음';
+                chapter.title = trimmed || (currentLang === 'en' ? 'Untitled' : '제목 없음');
                 
                 // If this chapter is currently active in the editor, update the editor's title input too
                 if (activeChapterId === chapter.id) {
@@ -1065,9 +1084,13 @@ function renderChapterList() {
         color: var(--text-secondary);
         font-weight: 600;
     `;
+    const labelText = currentLang === 'en' ? 'Total Chars' : '총 글자수';
+    const unitText = currentLang === 'en' ? ' chars' : '자';
+    const exclText = currentLang === 'en' ? '(Excl. Private Books)' : '(비공개 작품 제외)';
+    
     totalRow.innerHTML = `
-        <span>총 글자수</span>
-        <span style="font-family: var(--font-sans); color: var(--text-primary); font-weight: 700;">${rankingChars.toLocaleString()}자${!isPublic ? '<span style="font-size: 0.7rem; font-weight: 400; color: var(--text-secondary); margin-left: 0.25rem;">(비공개 작품 제외)</span>' : ''}</span>
+        <span>${labelText}</span>
+        <span style="font-family: var(--font-sans); color: var(--text-primary); font-weight: 700;">${rankingChars.toLocaleString()}${unitText}${!isPublic ? `<span style="font-size: 0.7rem; font-weight: 400; color: var(--text-secondary); margin-left: 0.25rem;">${exclText}</span>` : ''}</span>
     `;
     chaptersList.appendChild(totalRow);
 }
@@ -1125,13 +1148,14 @@ function getChapterPrefixForLvl(chapterId, tempLevel) {
 
 // Add New Chapter
 function addNewChapter() {
-    const title = prompt("새 챕터의 제목을 입력하세요:", "");
+    const promptMsg = currentLang === 'en' ? "Enter the title of the new chapter:" : "새 챕터의 제목을 입력하세요:";
+    const title = prompt(promptMsg, "");
     if (title === null) return; // Cancelled
     
     const newId = Date.now().toString();
     const newChapter = {
         id: newId,
-        title: title.trim() || '제목 없음',
+        title: title.trim() || (currentLang === 'en' ? 'Untitled' : '제목 없음'),
         content: '',
         level: 0
     };
@@ -2498,9 +2522,13 @@ function renderBookshelf() {
     if (bookshelfTitleEl) {
         const authorName = currentUser?.user_metadata?.pen_name || currentUser?.user_metadata?.full_name || currentUser?.email || '';
         if (authorName) {
-            bookshelfTitleEl.innerHTML = `작가 ${authorName}<span class="bookshelf-title-sub">님의 책장</span>`;
+            if (currentLang === 'en') {
+                bookshelfTitleEl.innerHTML = `${authorName}'s Bookshelf`;
+            } else {
+                bookshelfTitleEl.innerHTML = `작가 ${authorName}<span class="bookshelf-title-sub">님의 책장</span>`;
+            }
         } else {
-            bookshelfTitleEl.textContent = '내 책장';
+            bookshelfTitleEl.textContent = currentLang === 'en' ? 'My Bookshelf' : '내 책장';
         }
     }
     
@@ -2510,9 +2538,9 @@ function renderBookshelf() {
     addCard.innerHTML = `
         <div class="book-cover cover-add">
             <div style="font-size: 2rem; font-weight: 300; line-height: 1;">+</div>
-            <div style="font-size: 0.8rem; margin-top: 0.25rem;">새 작품 쓰기</div>
+            <div style="font-size: 0.8rem; margin-top: 0.25rem;">${currentLang === 'en' ? 'Write New Book' : '새 작품 쓰기'}</div>
         </div>
-        <div class="book-card-title-under" style="color: var(--text-secondary);">새 작품 추가</div>
+        <div class="book-card-title-under" style="color: var(--text-secondary);">${currentLang === 'en' ? 'Add New Book' : '새 작품 추가'}</div>
         <div class="book-card-date-under" style="font-size: 0.75rem; color: transparent; margin-top: 0.15rem; font-weight: 300; user-select: none;">&nbsp;</div>
     `;
     addCard.addEventListener('click', () => {
@@ -2557,14 +2585,14 @@ function renderBookshelf() {
             ${deleteBtnHtml}
             <div class="book-cover cover-${coverColor}">
                 ${visibilityIconHtml}
-                <div class="book-cover-title">${proj.title || '제목 없음'}</div>
+                <div class="book-cover-title">${proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</div>
                 <div class="book-cover-footer-group">
-                    <div class="book-cover-charcount">${totalCharCount.toLocaleString()}자</div>
+                    <div class="book-cover-charcount">${totalCharCount.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</div>
                     <div class="book-cover-author">${authorName}</div>
                 </div>
             </div>
-            <div class="book-card-title-under">${proj.title || '제목 없음'}</div>
-            <div class="book-card-date-under" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem; font-weight: 300;">마지막 집필: ${formattedDate}</div>
+            <div class="book-card-title-under">${proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</div>
+            <div class="book-card-date-under" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem; font-weight: 300;">${currentLang === 'en' ? 'Last Edit' : '마지막 집필'}: ${formattedDate}</div>
         `;
         
         let isDragging = false;
@@ -3532,16 +3560,21 @@ function updateLanguageUI() {
     // Bookshelf Screen
     const bookshelfTitleEl = document.getElementById('bookshelf-title');
     if (bookshelfTitleEl) {
-        const sub = bookshelfTitleEl.querySelector('.bookshelf-title-sub');
-        bookshelfTitleEl.childNodes[0].textContent = t.bookshelfTitle;
-        if (sub) {
-            sub.textContent = currentLang === 'en' ? ' (Guide)' : ' (가이드)';
+        const authorName = currentUser?.user_metadata?.pen_name || currentUser?.user_metadata?.full_name || currentUser?.email || '';
+        if (authorName) {
+            if (currentLang === 'en') {
+                bookshelfTitleEl.innerHTML = `${authorName}'s Bookshelf`;
+            } else {
+                bookshelfTitleEl.innerHTML = `작가 ${authorName}<span class="bookshelf-title-sub">님의 책장</span>`;
+            }
+        } else {
+            bookshelfTitleEl.textContent = t.bookshelfTitle;
         }
     }
     const bookshelfCommunityBtn = document.getElementById('bookshelf-community-btn');
     if (bookshelfCommunityBtn) {
         bookshelfCommunityBtn.setAttribute('title', t.bookshelfCommunityTitle);
-        const textNode = Array.from(bookshelfCommunityBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+        const textNode = Array.from(bookshelfCommunityBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0);
         if (textNode) textNode.textContent = ' ' + t.bookshelfCommunity;
     }
 
@@ -3695,6 +3728,15 @@ function updateLanguageUI() {
     if (chapterTitleInput) chapterTitleInput.setAttribute('placeholder', t.editorTitlePlaceholder);
     if (chapterContentTextarea) chapterContentTextarea.setAttribute('placeholder', t.editorContentPlaceholder);
 
+    const saveStatusEl = document.getElementById('save-status');
+    if (saveStatusEl) {
+        if (saveStatusEl.textContent.trim() === "저장 완료" || saveStatusEl.textContent.trim() === "Saved") {
+            saveStatusEl.textContent = currentLang === 'en' ? "Saved" : "저장 완료";
+        } else if (saveStatusEl.textContent.trim() === "저장 중..." || saveStatusEl.textContent.trim() === "Saving...") {
+            saveStatusEl.textContent = currentLang === 'en' ? "Saving..." : "저장 중...";
+        }
+    }
+
     const statLabels = document.querySelectorAll('.stat-group .stat-label');
     if (statLabels[0]) statLabels[0].textContent = t.editorStatIncl;
     if (statLabels[1]) statLabels[1].textContent = t.editorStatExcl;
@@ -3715,6 +3757,54 @@ function updateLanguageUI() {
     const writePostBtn = document.getElementById('write-post-btn');
     if (writePostBtn) {
         writePostBtn.innerHTML = `<span class="plus-icon">+</span>${t.communityLoungeWrite}`;
+    }
+
+    // Translate currently displayed sync status text
+    const badgeText = document.querySelector('#cloud-sync-status .sync-text');
+    if (badgeText) {
+        const text = badgeText.textContent.trim();
+        const syncTranslations = {
+            ko: {
+                'Pending': '대기 중',
+                'Loading...': '불러오는 중...',
+                'Synced': '동기화 완료',
+                'Sync Failed': '동기화 실패',
+                'Local Mode': '로컬 모드',
+                'Syncing...': '동기화 중...',
+                'Updating pen name...': '필명 업데이트 중...',
+                'Pen name updated': '필명 업데이트 완료',
+                'Update Failed': '업데이트 실패'
+            },
+            en: {
+                '대기 중': 'Pending',
+                '불러오는 중...': 'Loading...',
+                '동기화 완료': 'Synced',
+                '동기화 실패': 'Sync Failed',
+                '로컬 모드': 'Local Mode',
+                '동기화 중...': 'Syncing...',
+                '필명 업데이트 중...': 'Updating pen name...',
+                '필명 업데이트 완료': 'Pen name updated',
+                '업데이트 실패': 'Update Failed'
+            }
+        };
+        const reverseEn = {
+            'Pending': 'Pending', 'Loading...': 'Loading...', 'Synced': 'Synced', 'Sync Failed': 'Sync Failed',
+            'Local Mode': 'Local Mode', 'Syncing...': 'Syncing...', 'Updating pen name...': 'Updating pen name...',
+            'Pen name updated': 'Pen name updated', 'Update Failed': 'Update Failed'
+        };
+        const reverseKo = {
+            '대기 중': '대기 중', '불러오는 중...': '불러오는 중...', '동기화 완료': '동기화 완료', '동기화 실패': '동기화 실패',
+            '로컬 모드': '로컬 모드', '동기화 중...': '동기화 중...', '필명 업데이트 중...': '필명 업데이트 중...',
+            '필명 업데이트 완료': '필명 업데이트 완료', '업데이트 실패': '업데이트 실패'
+        };
+        
+        let mapped = text;
+        if (currentLang === 'en') {
+            mapped = syncTranslations.en[text] || reverseEn[text] || text;
+        } else {
+            mapped = syncTranslations.ko[text] || reverseKo[text] || text;
+        }
+        badgeText.textContent = mapped;
     }
 
     // Refresh dynamic lists to apply new language string fallbacks
