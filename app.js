@@ -1389,16 +1389,160 @@ function switchCommunityTab(tab) {
 }
 
 function getUserWritingTier(totalChars) {
+    const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
     if (totalChars <= 5000) {
-        return { name: "새싹 작가 🌱", next: 5000, nextName: "동네 작가", prev: 0, icon: "🌱" };
+        return { 
+            name: isEn ? "Sprout Writer 🌱" : "새싹 작가 🌱", 
+            next: 5000, 
+            nextName: isEn ? "Neighborhood Writer" : "동네 작가", 
+            prev: 0, 
+            icon: "🌱" 
+        };
     } else if (totalChars <= 15000) {
-        return { name: "동네 작가 ✒️", next: 15000, nextName: "프로 작가", prev: 5000, icon: "✒️" };
+        return { 
+            name: isEn ? "Neighborhood Writer ✒️" : "동네 작가 ✒️", 
+            next: 15000, 
+            nextName: isEn ? "Professional Writer" : "프로 작가", 
+            prev: 5000, 
+            icon: "✒️" 
+        };
     } else if (totalChars <= 50000) {
-        return { name: "프로 작가 🪶", next: 50000, nextName: "거장 작가", prev: 15000, icon: "🪶" };
+        return { 
+            name: isEn ? "Professional Writer 🪶" : "프로 작가 🪶", 
+            next: 50000, 
+            nextName: isEn ? "Master Writer" : "거장 작가", 
+            prev: 15000, 
+            icon: "🪶" 
+        };
     } else {
-        return { name: "거장 작가 👑", next: Infinity, nextName: "", prev: 50000, icon: "👑" };
+        return { 
+            name: isEn ? "Master Writer 👑" : "거장 작가 👑", 
+            next: Infinity, 
+            nextName: "", 
+            prev: 50000, 
+            icon: "👑" 
+        };
     }
 }
+
+function translateAuthor(name) {
+    if (typeof currentLang !== 'undefined' && currentLang === 'en') {
+        const mapping = {
+            "이상": "Yi Sang",
+            "윤동주": "Yun Dong-ju",
+            "김유정": "Kim Yu-jeong",
+            "백석": "Baek Seok",
+            "한용운": "Han Yong-un",
+            "정지용": "Jeong Ji-yong",
+            "조지 오웰": "George Orwell",
+            "버지니아 울프": "Virginia Woolf",
+            "어니스트 헤밍웨이": "Ernest Hemingway",
+            "나 (작가)": "Me (Writer)"
+        };
+        return mapping[name] || name;
+    }
+    return name;
+}
+
+const badgeTranslations = {
+    // Cumulative
+    "원고의 시작": "Start of Manuscript", "누적 1,000자 달성": "Reach 1,000 chars cumulative",
+    "글자 채우기": "Filling Words", "누적 3,000자 달성": "Reach 3,000 chars cumulative",
+    "첫 묘사": "First Description", "누적 5,000자 달성": "Reach 5,000 chars cumulative",
+    "동네 작가": "Neighborhood Writer", "누적 10,000자 달성": "Reach 10,000 chars cumulative",
+    "풍부한 서사": "Rich Narrative", "누적 20,000자 달성": "Reach 20,000 chars cumulative",
+    "프로 작가": "Professional Writer", "누적 30,000자 달성": "Reach 30,000 chars cumulative",
+    "거장 작가": "Master Writer", "누적 50,000자 달성": "Reach 50,000 chars cumulative",
+    "대문호": "Great Writer", "누적 100,000자 달성": "Reach 100,000 chars cumulative",
+    "불멸의 기록": "Immortal Record", "누적 200,000자 달성": "Reach 200,000 chars cumulative",
+    "우주의 서사시": "Cosmic Epic", "누적 500,000자 달성": "Reach 500,000 chars cumulative",
+
+    // Streak
+    "시작의 불씨": "Spark of Beginning", "연속 집필 1일 달성": "Write for 1 consecutive day",
+    "작은 실천": "Small Action", "연속 집필 2일 달성": "Write for 2 consecutive days",
+    "꾸준한 펜 끝": "Steady Pen Tip", "연속 집필 3일 달성": "Write for 3 consecutive days",
+    "작가의 일상": "Writer's Routine", "연속 집필 5일 달성": "Write for 5 consecutive days",
+    "집필의 습관": "Writing Habit", "연속 집필 7일 달성": "Write for 7 consecutive days",
+    "일주일의 너머": "Beyond a Week", "연속 집필 10일 달성": "Write for 10 consecutive days",
+    "창작의 궤도": "Orbit of Creation", "연속 집필 14일 달성": "Write for 14 consecutive days",
+    "습관의 완성": "Perfect Habit", "연속 집필 21일 달성": "Write for 21 consecutive days",
+    "집필의 달인": "Master of Writing", "연속 집필 30일 달성": "Write for 30 consecutive days",
+    "집필의 화신": "Incarnation of Writing", "연속 집필 100일 달성": "Write for 100 consecutive days",
+
+    // Daily
+    "한 장의 메모": "A Page of Note", "하루 100자 집필": "Write 100 chars in a day",
+    "생각의 기록": "Record of Thoughts", "하루 300자 집필": "Write 300 chars in a day",
+    "짧은 에세이": "Short Essay", "하루 500자 집필": "Write 500 chars in a day",
+    "열정의 시작": "Start of Passion", "하루 1,000자 집필": "Write 1,000 chars in a day",
+    "집중의 순간": "Moment of Focus", "하루 2,000자 집필": "Write 2,000 chars in a day",
+    "창작의 가속": "Acceleration", "하루 3,000자 집필": "Write 3,000 chars in a day",
+    "영감의 현신": "Inspiration", "하루 5,000자 집필": "Write 5,000 chars in a day",
+    "무아지경": "Trance State", "하루 8,000자 집필": "Write 8,000 chars in a day",
+    "창작의 폭풍": "Storm of Creation", "하루 10,000자 집필": "Write 10,000 chars in a day",
+    "신의 서기": "Divine Scribe", "하루 20,000자 집필": "Write 20,000 chars in a day",
+
+    // Projects
+    "첫 책장 채우기": "First Book", "작품 1개 등록": "Register 1 project",
+    "이야기의 확장": "Story Expansion", "작품 2개 등록": "Register 2 projects",
+    "다채로운 세계": "Colorful Worlds", "작품 3개 등록": "Register 3 projects",
+    "소설가의 서재": "Writer's Study", "작품 4개 등록": "Register 4 projects",
+    "창조의 선물": "Gift of Creation", "작품 5개 등록": "Register 5 projects",
+    "풍요로운 상상": "Rich Imagination", "작품 7개 등록": "Register 7 projects",
+    "다작 작가": "Prolific Writer", "작품 10개 등록": "Register 10 projects",
+    "세계관 창조자": "World Creator", "작품 15개 등록": "Register 15 projects",
+    "이야기 보따리": "Bundle of Stories", "작품 20개 등록": "Register 20 projects",
+    "창작의 도서관": "Library of Creation", "작품 30개 등록": "Register 30 projects"
+};
+
+const badgeShortDescsEn = {
+    // Cumulative
+    "원고의 시작": "1,000 chars",
+    "글자 채우기": "3,000 chars",
+    "첫 묘사": "5,000 chars",
+    "동네 작가": "10,000 chars",
+    "풍부한 서사": "20,000 chars",
+    "프로 작가": "30,000 chars",
+    "거장 작가": "50,000 chars",
+    "대문호": "100,000 chars",
+    "불멸의 기록": "200,000 chars",
+    "우주의 서사시": "500,000 chars",
+
+    // Streak
+    "시작의 불씨": "1 day",
+    "작은 실천": "2 days",
+    "꾸준한 펜 끝": "3 days",
+    "작가의 일상": "5 days",
+    "집필의 습관": "7 days",
+    "일주일의 너머": "10 days",
+    "창작의 궤도": "14 days",
+    "습관의 완성": "21 days",
+    "집필의 달인": "30 days",
+    "집필의 화신": "100 days",
+
+    // Daily
+    "한 장의 메모": "100 chars/d",
+    "생각의 기록": "300 chars/d",
+    "짧은 에세이": "500 chars/d",
+    "열정의 시작": "1,000 chars/d",
+    "집중의 순간": "2,000 chars/d",
+    "창작의 가속": "3,000 chars/d",
+    "영감의 현신": "5,000 chars/d",
+    "무아지경": "8,000 chars/d",
+    "창작의 폭풍": "10,000 chars/d",
+    "신의 서기": "20,000 chars/d",
+
+    // Projects
+    "첫 책장 채우기": "1 book",
+    "이야기의 확장": "2 books",
+    "다채로운 세계": "3 books",
+    "소설가의 서재": "4 books",
+    "창조의 선물": "5 books",
+    "풍요로운 상상": "7 books",
+    "다작 작가": "10 books",
+    "세계관 창조자": "15 books",
+    "이야기 보따리": "20 books",
+    "창작의 도서관": "30 books"
+};
 
 function renderRanking() {
     if (!rankingContainer) return;
@@ -1419,7 +1563,9 @@ function renderRanking() {
         margin-bottom: 1rem;
         font-family: var(--font-sans);
     `;
-    banner.innerHTML = `현재 <span style="font-weight: 700; color: var(--accent-color); font-size: 0.95rem;" class="live-writer-count">...</span>명의 작가분이 모노트를 통해 책을 쓰고 있습니다.`;
+    banner.innerHTML = currentLang === 'en'
+        ? `Currently, <span style="font-weight: 700; color: var(--accent-color); font-size: 0.95rem;" class="live-writer-count">...</span> writers are writing books with Monote.`
+        : `현재 <span style="font-weight: 700; color: var(--accent-color); font-size: 0.95rem;" class="live-writer-count">...</span>명의 작가분이 모노트를 통해 책을 쓰고 있습니다.`;
     rankingContainer.appendChild(banner);
     
     // Fetch registered user count asynchronously
@@ -1489,12 +1635,14 @@ function renderRanking() {
     let progressPercent = 100;
     if (tier.next !== Infinity) {
         const nextDiff = tier.next - userTotalCumulative;
-        progressText = `다음 등급인 [${tier.nextName}]까지 <strong>${nextDiff.toLocaleString()}자</strong> 남음`;
+        progressText = currentLang === 'en'
+            ? `<strong>${nextDiff.toLocaleString()} chars</strong> left until the next level, [${tier.nextName}]`
+            : `다음 등급인 [${tier.nextName}]까지 <strong>${nextDiff.toLocaleString()}자</strong> 남음`;
         const totalTierRange = tier.next - tier.prev;
         const currentTierProgress = userTotalCumulative - tier.prev;
         progressPercent = Math.min(100, Math.max(0, (currentTierProgress / totalTierRange) * 100));
     } else {
-        progressText = "축하합니다! 최고 등급에 도달했습니다.";
+        progressText = currentLang === 'en' ? "Congratulations! You have reached the highest level." : "축하합니다! 최고 등급에 도달했습니다.";
     }
 
     tierCard.innerHTML = `
@@ -1502,13 +1650,13 @@ function renderRanking() {
             <div style="display: flex; align-items: center; gap: 0.6rem;">
                 <span style="font-size: 1.5rem;">${tier.icon}</span>
                 <div>
-                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">나의 작가 등급</div>
+                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">${currentLang === 'en' ? 'My Writer Level' : '나의 작가 등급'}</div>
                     <div style="font-family: var(--font-serif); font-size: 1rem; font-weight: 700; color: var(--text-primary);">${tier.name}</div>
                 </div>
             </div>
             <div style="text-align: right;">
-                <div style="font-size: 0.7rem; color: var(--text-secondary);">총 집필량</div>
-                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">${userTotalCumulative.toLocaleString()}자</div>
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">${currentLang === 'en' ? 'Total Chars' : '총 집필량'}</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">${userTotalCumulative.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</div>
             </div>
         </div>
         
@@ -1530,16 +1678,16 @@ function renderRanking() {
     `;
     statsRow.innerHTML = `
         <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 6px; text-align: center; box-shadow: var(--shadow-sm);">
-            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">오늘 집필</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${userDailyChars.toLocaleString()}자</div>
+            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">${currentLang === 'en' ? 'Today' : '오늘 집필'}</div>
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${userDailyChars.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</div>
         </div>
         <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 6px; text-align: center; box-shadow: var(--shadow-sm);">
-            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">주간 누적</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${userWeeklyChars.toLocaleString()}자</div>
+            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">${currentLang === 'en' ? 'Weekly' : '주간 누적'}</div>
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${userWeeklyChars.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</div>
         </div>
         <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 6px; text-align: center; box-shadow: var(--shadow-sm);">
-            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">연속 집필</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--accent-color);">${userStreak}일 🔥</div>
+            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">${currentLang === 'en' ? 'Streak' : '연속 집필'}</div>
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--accent-color);">${userStreak}${currentLang === 'en' ? (userStreak === 1 ? ' day' : ' days') : '일'} 🔥</div>
         </div>
     `;
     rankingContainer.appendChild(statsRow);
@@ -1562,7 +1710,7 @@ function renderRanking() {
     
     const allBadgeCategories = {
         cumulative: {
-            title: "📚 누적 집필량",
+            title: currentLang === 'en' ? "📚 Cumulative" : "📚 누적 집필량",
             badges: [
                 { name: "원고의 시작", icon: "🌱", desc: "누적 1,000자 달성", unlocked: userTotalCumulative >= 1000 },
                 { name: "글자 채우기", icon: "🍀", desc: "누적 3,000자 달성", unlocked: userTotalCumulative >= 3000 },
@@ -1577,7 +1725,7 @@ function renderRanking() {
             ]
         },
         streak: {
-            title: "🔥 연속 집필 스트릭",
+            title: currentLang === 'en' ? "🔥 Streak" : "🔥 연속 집필 스트릭",
             badges: [
                 { name: "시작의 불씨", icon: "🪵", desc: "연속 집필 1일 달성", unlocked: userStreak >= 1 },
                 { name: "작은 실천", icon: "🕯️", desc: "연속 집필 2일 달성", unlocked: userStreak >= 2 },
@@ -1592,7 +1740,7 @@ function renderRanking() {
             ]
         },
         daily: {
-            title: "⚡ 일일 집필 한계 돌파",
+            title: currentLang === 'en' ? "⚡ Daily" : "⚡ 일일 집필 한계 돌파",
             badges: [
                 { name: "한 장의 메모", icon: "📝", desc: "하루 100자 집필", unlocked: userDailyChars >= 100 },
                 { name: "생각의 기록", icon: "✏️", desc: "하루 300자 집필", unlocked: userDailyChars >= 300 },
@@ -1607,7 +1755,7 @@ function renderRanking() {
             ]
         },
         projects: {
-            title: "🏛️ 창작 작품 수",
+            title: currentLang === 'en' ? "🏛️ Creation" : "🏛️ 창작 작품 수",
             badges: [
                 { name: "첫 책장 채우기", icon: "📖", desc: "작품 1개 등록", unlocked: activeProjects.length >= 1 },
                 { name: "이야기의 확장", icon: "📕", desc: "작품 2개 등록", unlocked: activeProjects.length >= 2 },
@@ -1639,6 +1787,7 @@ function renderRanking() {
     Object.keys(allBadgeCategories).forEach(tabKey => {
         const isActive = activeBadgeTab === tabKey;
         const catUnlocked = allBadgeCategories[tabKey].badges.filter(b => b.unlocked).length;
+        let tabTitle = allBadgeCategories[tabKey].title.split(" ")[1];
         badgeTabsHtml += `
             <button class="badge-tab-btn" data-tab="${tabKey}" style="
                 background: ${isActive ? 'var(--text-primary)' : 'var(--bg-secondary)'};
@@ -1651,15 +1800,15 @@ function renderRanking() {
                 cursor: pointer;
                 white-space: nowrap;
                 transition: all var(--transition-speed);
-            ">${allBadgeCategories[tabKey].title.split(" ")[1]} (${catUnlocked}/10)</button>
+            ">${tabTitle} (${catUnlocked}/10)</button>
         `;
     });
     badgeTabsHtml += '</div>';
 
     let badgesHtml = `
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.6rem; margin-bottom: 0.4rem;">
-            <div style="font-family: var(--font-serif); font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">나의 집필 뱃지 (${unlockedBadgesCount}/${totalBadgesCount})</div>
-            <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">전체 획득률 ${Math.round((unlockedBadgesCount/totalBadgesCount)*100)}%</div>
+            <div style="font-family: var(--font-serif); font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">${currentLang === 'en' ? `My Writing Badges (${unlockedBadgesCount}/${totalBadgesCount})` : `나의 집필 뱃지 (${unlockedBadgesCount}/${totalBadgesCount})`}</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">${currentLang === 'en' ? `Overall Unlock Rate ${Math.round((unlockedBadgesCount/totalBadgesCount)*100)}%` : `전체 획득률 ${Math.round((unlockedBadgesCount/totalBadgesCount)*100)}%`}</div>
         </div>
         ${badgeTabsHtml}
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.2rem;">
@@ -1677,9 +1826,18 @@ function renderRanking() {
         const bg = b.unlocked ? 'var(--bg-secondary)' : 'transparent';
         
         const displayIcon = isSecret ? '❓' : b.icon;
-        const displayName = isSecret ? '???' : b.name;
-        const displayDesc = isSecret ? '비공개 뱃지' : (b.desc.includes(" ") ? b.desc.split(" ")[1] : b.desc);
-        const titleText = isSecret ? '이전 단계 뱃지를 획득하면 공개됩니다.' : b.desc;
+        let displayName = isSecret ? '???' : b.name;
+        let displayDesc = isSecret ? (currentLang === 'en' ? 'Secret Badge' : '비공개 뱃지') : (b.desc.includes(" ") ? b.desc.split(" ")[1] : b.desc);
+        let titleText = isSecret ? (currentLang === 'en' ? 'Unlocked after obtaining the previous tier badge.' : '이전 단계 뱃지를 획득하면 공개됩니다.') : b.desc;
+        
+        if (currentLang === 'en' && !isSecret) {
+            displayName = badgeTranslations[b.name] || b.name;
+            const translatedDesc = badgeTranslations[b.desc];
+            if (translatedDesc) {
+                titleText = translatedDesc;
+                displayDesc = badgeShortDescsEn[b.name] || displayDesc;
+            }
+        }
         
         badgesHtml += `
             <div title="${titleText}" style="
@@ -1734,10 +1892,10 @@ function renderRanking() {
     `;
 
     const subTabConfigs = [
-        { key: 'daily', label: '일간 집필량' },
-        { key: 'weekly', label: '주간' },
-        { key: 'cumulative', label: '누적' },
-        { key: 'streak', label: '연속 집필일' }
+        { key: 'daily', label: currentLang === 'en' ? 'Daily Volume' : '일간 집필량' },
+        { key: 'weekly', label: currentLang === 'en' ? 'Weekly' : '주간' },
+        { key: 'cumulative', label: currentLang === 'en' ? 'Cumulative' : '누적' },
+        { key: 'streak', label: currentLang === 'en' ? 'Streak Days' : '연속 집필일' }
     ];
 
     subTabConfigs.forEach(config => {
@@ -1775,7 +1933,7 @@ function renderRanking() {
     `;
     rankingContainer.appendChild(leaderboardEl);
 
-    const userAuthorName = currentUser?.user_metadata?.pen_name || "나 (작가)";
+    const userAuthorName = currentUser?.user_metadata?.pen_name || (currentLang === 'en' ? "Me (Writer)" : "나 (작가)");
 
     if (activeRankingTab === 'daily') {
         const dailyRankingList = [
@@ -1786,7 +1944,7 @@ function renderRanking() {
             { author: "김유정", value: 450 }
         ].sort((a, b) => b.value - a.value);
 
-        renderEnhancedLeaderboard(leaderboardEl, "✍️ 오늘 하루 집필량 랭킹", dailyRankingList, "자", true);
+        renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "✍️ Today's Writing Volume Ranking" : "✍️ 오늘 하루 집필량 랭킹", dailyRankingList, currentLang === 'en' ? " chars" : "자", true);
         
     } else if (activeRankingTab === 'weekly') {
         const weeklyRankingList = [
@@ -1797,7 +1955,7 @@ function renderRanking() {
             { author: "김유정", value: 5200 }
         ].sort((a, b) => b.value - a.value);
 
-        renderEnhancedLeaderboard(leaderboardEl, "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, "자", true);
+        renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "📅 Weekly Writing Volume Ranking (7 Days Total)" : "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, currentLang === 'en' ? " chars" : "자", true);
         
     } else if (activeRankingTab === 'cumulative') {
         const userBooks = projects
@@ -1805,14 +1963,19 @@ function renderRanking() {
             .map(proj => {
                 const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
                 return {
-                    title: proj.title || '제목 없음',
+                    title: proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음'),
                     author: userAuthorName,
                     value: charCount,
                     isMe: true
                 };
             });
 
-        const classicBooks = [
+        const classicBooks = currentLang === 'en' ? [
+            { title: "1984", author: "George Orwell", value: 78420 },
+            { title: "A Room of One's Own", author: "Virginia Woolf", value: 42150 },
+            { title: "The Old Man and the Sea", author: "Ernest Hemingway", value: 35890 },
+            { title: "Wings", author: "Yi Sang", value: 12450 }
+        ] : [
             { title: "1984 (새벽의 기록)", author: "조지 오웰", value: 78420 },
             { title: "자기만의 방", author: "버지니아 울프", value: 42150 },
             { title: "노인과 바다 (낭독 에디션)", author: "어니스트 헤밍웨이", value: 35890 },
@@ -1823,7 +1986,7 @@ function renderRanking() {
             .filter(b => b.value > 0)
             .sort((a, b) => b.value - a.value);
 
-        renderBookLeaderboardSection(leaderboardEl, "🏆 명예의 전당 (누적 글자수 랭킹)", allBooks);
+        renderBookLeaderboardSection(leaderboardEl, currentLang === 'en' ? "🏆 Hall of Fame (Cumulative Character Count Ranking)" : "🏆 명예의 전당 (누적 글자수 랭킹)", allBooks);
         
     } else if (activeRankingTab === 'streak') {
         const streakRankingList = [
@@ -1834,7 +1997,7 @@ function renderRanking() {
             { author: "이상", value: 3 }
         ].sort((a, b) => b.value - a.value);
 
-        renderEnhancedLeaderboard(leaderboardEl, "🔥 연속 집필 스트릭 랭킹", streakRankingList, "일 연속", false);
+        renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "🔥 Writing Streak Ranking" : "🔥 연속 집필 스트릭 랭킹", streakRankingList, currentLang === 'en' ? " days streak" : "일 연속", false);
     }
 }
 
@@ -1860,7 +2023,7 @@ function renderEnhancedLeaderboard(container, title, list, unit, showBar) {
                 <!-- 2nd Place (Silver) -->
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
                     <span style="font-size: 1.3rem;">🥈</span>
-                    <span style="font-size: 0.8rem; font-weight: ${silver.isMe ? '700' : '500'}; color: var(--text-primary); text-align: center; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${silver.author}</span>
+                    <span style="font-size: 0.8rem; font-weight: ${silver.isMe ? '700' : '500'}; color: var(--text-primary); text-align: center; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${translateAuthor(silver.author)}</span>
                     <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">${silver.value.toLocaleString()}${unit}</span>
                     <div style="width: 100%; height: 45px; background: var(--bg-secondary); border-radius: 4px 4px 0 0; border: 1px solid var(--border-color); border-bottom: none; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">2</div>
                 </div>
@@ -1868,7 +2031,7 @@ function renderEnhancedLeaderboard(container, title, list, unit, showBar) {
                 <!-- 1st Place (Gold) -->
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; transform: translateY(-8px);">
                     <span style="font-size: 1.8rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">👑</span>
-                    <span style="font-size: 0.85rem; font-weight: ${gold.isMe ? '700' : '600'}; color: var(--text-primary); text-align: center; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${gold.author}</span>
+                    <span style="font-size: 0.85rem; font-weight: ${gold.isMe ? '700' : '600'}; color: var(--text-primary); text-align: center; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${translateAuthor(gold.author)}</span>
                     <span style="font-size: 0.8rem; color: var(--accent-color); font-weight: 600;">${gold.value.toLocaleString()}${unit}</span>
                     <div style="width: 100%; height: 65px; background: var(--text-primary); opacity: 0.9; border-radius: 4px 4px 0 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 800; color: var(--bg-primary);">1</div>
                 </div>
@@ -1876,7 +2039,7 @@ function renderEnhancedLeaderboard(container, title, list, unit, showBar) {
                 <!-- 3rd Place (Bronze) -->
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
                     <span style="font-size: 1.3rem;">🥉</span>
-                    <span style="font-size: 0.8rem; font-weight: ${bronze.isMe ? '700' : '500'}; color: var(--text-primary); text-align: center; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${bronze.author}</span>
+                    <span style="font-size: 0.8rem; font-weight: ${bronze.isMe ? '700' : '500'}; color: var(--text-primary); text-align: center; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${translateAuthor(bronze.author)}</span>
                     <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">${bronze.value.toLocaleString()}${unit}</span>
                     <div style="width: 100%; height: 35px; background: var(--bg-secondary); border-radius: 4px 4px 0 0; border: 1px solid var(--border-color); border-bottom: none; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">3</div>
                 </div>
@@ -1910,7 +2073,7 @@ function renderEnhancedLeaderboard(container, title, list, unit, showBar) {
                 <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: space-between;">
                     <div style="display: flex; align-items: center; gap: 0.6rem;">
                         <span style="font-weight: 700; width: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">${i + 1}</span>
-                        <span style="font-size: 0.9rem; font-weight: ${item.isMe ? '700' : '600'}; color: var(--text-primary);">${item.author} ${item.isMe ? '<span style="font-size: 0.7rem; font-weight:normal; color:var(--text-secondary);">(나)</span>' : ''}</span>
+                        <span style="font-size: 0.9rem; font-weight: ${item.isMe ? '700' : '600'}; color: var(--text-primary);">${translateAuthor(item.author)} ${item.isMe ? `<span style="font-size: 0.7rem; font-weight:normal; color:var(--text-secondary);">${currentLang === 'en' ? '(You)' : '(나)'}</span>` : ''}</span>
                     </div>
                     <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">
                         ${item.value.toLocaleString()}${unit}
@@ -1927,7 +2090,7 @@ function renderEnhancedLeaderboard(container, title, list, unit, showBar) {
         </h3>
         ${podiumHtml}
         <div style="display: flex; flex-direction: column; gap: 0.9rem;">
-            ${listHtml || `<div style="text-align: center; font-size: 0.8rem; color: var(--text-secondary); font-style: italic; padding: 0.5rem 0;">4위 이하 순위가 없습니다.</div>`}
+            ${listHtml || `<div style="text-align: center; font-size: 0.8rem; color: var(--text-secondary); font-style: italic; padding: 0.5rem 0;">${currentLang === 'en' ? 'No rankings below 4th place.' : '4위 이하 순위가 없습니다.'}</div>`}
         </div>
     `;
     container.appendChild(section);
@@ -1968,7 +2131,7 @@ function renderLeaderboardSection(container, title, list, unit, showBar) {
                 <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: space-between;">
                     <div style="display: flex; align-items: center; gap: 0.6rem;">
                         ${badge}
-                        <span style="font-size: 0.9rem; font-weight: ${item.isMe ? '700' : '600'}; color: var(--text-primary);">${item.author} ${item.isMe ? '<span style="font-size: 0.7rem; font-weight:normal; color:var(--text-secondary);">(나)</span>' : ''}</span>
+                        <span style="font-size: 0.9rem; font-weight: ${item.isMe ? '700' : '600'}; color: var(--text-primary);">${translateAuthor(item.author)} ${item.isMe ? `<span style="font-size: 0.7rem; font-weight:normal; color:var(--text-secondary);">${currentLang === 'en' ? '(You)' : '(나)'}</span>` : ''}</span>
                     </div>
                     <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">
                         ${item.value.toLocaleString()}${unit}
@@ -2031,11 +2194,11 @@ function renderBookLeaderboardSection(container, title, list) {
                         ${badge}
                         <div style="min-width: 0; flex: 1;">
                             <div style="font-family: var(--font-serif); font-size: 0.9rem; font-weight: ${book.isMe ? '700' : '600'}; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${book.title}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.05rem;">${book.author} ${book.isMe ? '<span style="font-size: 0.7rem; color:var(--text-secondary); font-weight:normal;">(나)</span>' : ''}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.05rem;">${translateAuthor(book.author)} ${book.isMe ? `<span style="font-size: 0.7rem; color:var(--text-secondary); font-weight:normal;">${currentLang === 'en' ? '(You)' : '(나)'}</span>` : ''}</div>
                         </div>
                     </div>
                     <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); white-space: nowrap;">
-                        ${book.value.toLocaleString()}자
+                        ${book.value.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}
                     </div>
                 </div>
                 <div style="height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-left: 30px;">
@@ -2250,14 +2413,14 @@ function initLoungeSimulation() {
 
 function formatTimeElapsed(timestamp) {
     const diff = Date.now() - timestamp;
-    if (diff < 0) return '방금 전';
+    if (diff < 0) return currentLang === 'en' ? 'Just now' : '방금 전';
     const minutes = Math.floor(diff / (1000 * 60));
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
+    if (minutes < 1) return currentLang === 'en' ? 'Just now' : '방금 전';
+    if (minutes < 60) return currentLang === 'en' ? `${minutes}m ago` : `${minutes}분 전`;
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (hours < 24) return `${hours}시간 전`;
+    if (hours < 24) return currentLang === 'en' ? `${hours}h ago` : `${hours}시간 전`;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return `${days}일 전`;
+    return currentLang === 'en' ? `${days}d ago` : `${days}일 전`;
 }
 
 function renderLoungeFeed() {
@@ -2266,7 +2429,7 @@ function renderLoungeFeed() {
     loungeFeed.innerHTML = '';
     
     if (posts.length === 0) {
-        loungeFeed.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary); font-style: italic;">라운지에 첫 글을 작성해 보세요.</div>';
+        loungeFeed.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-secondary); font-style: italic;">${currentLang === 'en' ? 'Write the first post in the lounge.' : '라운지에 첫 글을 작성해 보세요.'}</div>`;
         return;
     }
     
@@ -2291,7 +2454,7 @@ function renderLoungeFeed() {
         
         const canDeletePost = isAdmin() || (currentUser && post.email === currentUser.email);
         const postDeleteBtnHtml = canDeletePost 
-            ? `<button class="delete-post-btn" style="background: none; border: none; color: var(--danger-color); font-size: 0.75rem; cursor: pointer; padding: 0;">삭제</button>` 
+            ? `<button class="delete-post-btn" style="background: none; border: none; color: var(--danger-color); font-size: 0.75rem; cursor: pointer; padding: 0;">${currentLang === 'en' ? 'Delete' : '삭제'}</button>` 
             : '';
 
         let commentsHtml = '';
@@ -2300,7 +2463,7 @@ function renderLoungeFeed() {
                 <div class="comments-section" style="border-top: 1px dashed var(--border-color); padding-top: 0.75rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
                     ${post.comments.map(c => `
                         <div style="font-size: 0.8rem; line-height: 1.4;">
-                            <strong style="color: var(--text-primary); font-weight: 600; margin-right: 0.4rem;">${c.author}</strong>
+                            <strong style="color: var(--text-primary); font-weight: 600; margin-right: 0.4rem;">${translateAuthor(c.author)}</strong>
                             <span style="color: var(--text-secondary); font-weight: 300;">${c.content}</span>
                         </div>
                     `).join('')}
@@ -2310,7 +2473,7 @@ function renderLoungeFeed() {
         
         postEl.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-family: var(--font-serif); font-weight: 700; font-size: 0.9rem; color: var(--text-primary);">${post.author}</span>
+                <span style="font-family: var(--font-serif); font-weight: 700; font-size: 0.9rem; color: var(--text-primary);">${translateAuthor(post.author)}</span>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 300;">${timeString}</span>
                     ${postDeleteBtnHtml}
@@ -2323,19 +2486,19 @@ function renderLoungeFeed() {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="${likeIconFill}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
-                    <span>좋아요 ${post.likes || 0}</span>
+                    <span>${currentLang === 'en' ? 'Like' : '좋아요'} ${post.likes || 0}</span>
                 </button>
                 <button class="comment-trigger-btn" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; color: var(--text-secondary); padding: 0;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    <span>댓글 달기</span>
+                    <span>${currentLang === 'en' ? 'Comment' : '댓글 달기'}</span>
                 </button>
             </div>
             
             <div class="comment-input-area" style="display: none; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-                <input type="text" class="comment-input" placeholder="댓글을 입력하세요..." style="flex: 1; font-size: 0.8rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); border-radius: 4px;" />
-                <button class="btn-flat btn-sm submit-comment-btn" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;">등록</button>
+                <input type="text" class="comment-input" placeholder="${currentLang === 'en' ? 'Enter a comment...' : '댓글을 입력하세요...'}" style="flex: 1; font-size: 0.8rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); border-radius: 4px;" />
+                <button class="btn-flat btn-sm submit-comment-btn" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;">${currentLang === 'en' ? 'Post' : '등록'}</button>
             </div>
             
             ${commentsHtml}
@@ -2345,7 +2508,8 @@ function renderLoungeFeed() {
             const delBtn = postEl.querySelector('.delete-post-btn');
             if (delBtn) {
                 delBtn.onclick = () => {
-                    if (confirm("이 라운지 글을 삭제하시겠습니까?")) {
+                    const confirmMsg = currentLang === 'en' ? "Are you sure you want to delete this lounge post?" : "이 라운지 글을 삭제하시겠습니까?";
+                    if (confirm(confirmMsg)) {
                         let currentPosts = getLoungePosts();
                         currentPosts = currentPosts.filter(p => p.id !== post.id);
                         saveLoungePosts(currentPosts);
@@ -2375,7 +2539,7 @@ function renderLoungeFeed() {
             const val = input.value.trim();
             if (!val) return;
             
-            const author = currentUser?.user_metadata?.pen_name || currentUser?.email?.split('@')[0] || "익명의 작가";
+            const author = currentUser?.user_metadata?.pen_name || currentUser?.email?.split('@')[0] || (currentLang === 'en' ? "Anonymous Writer" : "익명의 작가");
             if (!post.comments) post.comments = [];
             post.comments.push({
                 author: author,
@@ -2415,12 +2579,12 @@ function createNewPost() {
     if (!contentArea) return;
     const content = contentArea.value.trim();
     if (!content) {
-        alert("글 내용을 입력해 주세요.");
+        alert(currentLang === 'en' ? "Please enter post content." : "글 내용을 입력해 주세요.");
         contentArea.focus();
         return;
     }
     
-    const author = currentUser?.user_metadata?.pen_name || currentUser?.email?.split('@')[0] || "익명의 작가";
+    const author = currentUser?.user_metadata?.pen_name || currentUser?.email?.split('@')[0] || (currentLang === 'en' ? "Anonymous Writer" : "익명의 작가");
     posts.unshift({
         id: "post-" + Date.now(),
         author: author,
@@ -2445,14 +2609,14 @@ function showPreviewBookDialog(book) {
     const synopsisEl = document.getElementById('preview-book-synopsis');
     const chaptersEl = document.getElementById('preview-book-chapters');
     
-    if (titleEl) titleEl.textContent = book.title || '제목 없음';
-    if (authorEl) authorEl.textContent = `${book.authorName || '작가 미상'} 작가`;
-    if (synopsisEl) synopsisEl.textContent = book.synopsis || '등록된 시놉시스가 없습니다.';
+    if (titleEl) titleEl.textContent = book.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+    if (authorEl) authorEl.textContent = currentLang === 'en' ? `By ${translateAuthor(book.authorName) || 'Unknown Writer'}` : `${book.authorName || '작가 미상'} 작가`;
+    if (synopsisEl) synopsisEl.textContent = book.synopsis || (currentLang === 'en' ? 'No synopsis registered.' : '등록된 시놉시스가 없습니다.');
     
     if (chaptersEl) {
         chaptersEl.innerHTML = '';
         if (!book.chapters || book.chapters.length === 0) {
-            chaptersEl.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic; padding: 0.5rem 0;">등록된 챕터가 없습니다.</div>';
+            chaptersEl.innerHTML = `<div style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic; padding: 0.5rem 0;">${currentLang === 'en' ? 'No chapters registered.' : '등록된 챕터가 없습니다.'}</div>`;
         } else {
             book.chapters.forEach((ch) => {
                 const item = document.createElement('div');
@@ -2500,8 +2664,8 @@ function showPreviewChapterDialog(chapter) {
     const titleEl = document.getElementById('preview-chapter-title');
     const contentEl = document.getElementById('preview-chapter-content');
     
-    if (titleEl) titleEl.textContent = chapter.title || '제목 없음';
-    if (contentEl) contentEl.textContent = chapter.content || '내용이 없습니다.';
+    if (titleEl) titleEl.textContent = chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+    if (contentEl) contentEl.textContent = chapter.content || (currentLang === 'en' ? 'No content.' : '내용이 없습니다.');
     
     previewChapterDialog.style.display = 'flex';
 }
