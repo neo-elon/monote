@@ -1493,6 +1493,7 @@ function updateAuthUI(user) {
 
         // Remove the profile icon completely
         authContainer.innerHTML = '';
+        authContainer.style.display = 'none';
 
         if (editPennameItem) {
             editPennameItem.style.display = 'flex';
@@ -1524,6 +1525,7 @@ function updateAuthUI(user) {
         }
     } else {
         // User logged out
+        authContainer.style.display = '';
         authContainer.innerHTML = `
             <button id="google-login-btn" class="btn-flat btn-sm google-login-btn" title="구글 로그인">
                 <svg class="google-icon" viewBox="0 0 24 24" width="16" height="16">
