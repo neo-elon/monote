@@ -128,61 +128,6 @@
                     <h2 class="bookshelf-title" id="bookshelf-title">내 책장</h2>
                 </div>
                 
-                <!-- Book Cover Creation Modal / Form Dialog (Hidden by default) -->
-                <div id="new-book-dialog" class="book-dialog" style="display: none;">
-                    <div class="dialog-content">
-                        <h3>새 작품 추가</h3>
-                        <div class="dialog-field">
-                            <label for="new-book-title">작품 제목</label>
-                            <input type="text" id="new-book-title" class="input-flat" placeholder="제목을 입력하세요..." autocomplete="off">
-                        </div>
-                        <div class="dialog-field">
-                            <label>표지 색상</label>
-                            <div class="cover-color-picker">
-                                <label class="color-option charcoal active"><input type="radio" name="cover-color" value="charcoal" checked><span></span></label>
-                                <label class="color-option linen"><input type="radio" name="cover-color" value="linen"><span></span></label>
-                                <label class="color-option ivory"><input type="radio" name="cover-color" value="ivory"><span></span></label>
-                                <label class="color-option slate"><input type="radio" name="cover-color" value="slate"><span></span></label>
-                                <label class="color-option terracotta"><input type="radio" name="cover-color" value="terracotta"><span></span></label>
-                            </div>
-                        </div>
-                        <div class="dialog-field">
-                            <label>공개 설정</label>
-                            <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.5rem;">
-                                <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-primary);">
-                                    <input type="radio" name="book-visibility" value="public" checked style="cursor: pointer;">
-                                    <span>공개</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-primary);">
-                                    <input type="radio" name="book-visibility" value="private" style="cursor: pointer;">
-                                    <span>비공개</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="dialog-actions">
-                            <button id="cancel-new-book" class="btn-flat btn-sm btn-danger">취소</button>
-                            <button id="confirm-new-book" class="btn-flat btn-sm">생성</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Pen Name Registration Dialog -->
-                <div id="penname-dialog" class="book-dialog" style="display: none;">
-                    <div class="dialog-content">
-                        <h3>작가 필명 설정</h3>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.5rem;">
-                            Monote에서 작품 표지와 헤더에 구글 계정이름 대신 표시될 필명을 설정해 주세요. 언제든지 재설정할 수 있습니다.
-                        </p>
-                        <div class="dialog-field">
-                            <label for="new-penname">필명</label>
-                            <input type="text" id="new-penname" class="input-flat" placeholder="필명을 입력하세요..." autocomplete="off">
-                        </div>
-                        <div class="dialog-actions">
-                            <button id="confirm-penname" class="btn-flat btn-sm">설정 완료</button>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="books-grid" class="books-grid">
                     <!-- Book covers will be generated dynamically -->
                 </div>
@@ -295,6 +240,61 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Book Cover Creation Modal / Form Dialog (Hidden by default) -->
+    <div id="new-book-dialog" class="book-dialog" style="display: none;">
+        <div class="dialog-content">
+            <h3>새 작품 추가</h3>
+            <div class="dialog-field">
+                <label for="new-book-title">작품 제목</label>
+                <input type="text" id="new-book-title" class="input-flat" placeholder="제목을 입력하세요..." autocomplete="off">
+            </div>
+            <div class="dialog-field">
+                <label>표지 색상</label>
+                <div class="cover-color-picker">
+                    <label class="color-option charcoal active"><input type="radio" name="cover-color" value="charcoal" checked><span></span></label>
+                    <label class="color-option linen"><input type="radio" name="cover-color" value="linen"><span></span></label>
+                    <label class="color-option ivory"><input type="radio" name="cover-color" value="ivory"><span></span></label>
+                    <label class="color-option slate"><input type="radio" name="cover-color" value="slate"><span></span></label>
+                    <label class="color-option terracotta"><input type="radio" name="cover-color" value="terracotta"><span></span></label>
+                </div>
+            </div>
+            <div class="dialog-field">
+                <label>공개 설정</label>
+                <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-primary);">
+                        <input type="radio" name="book-visibility" value="public" checked style="cursor: pointer;">
+                        <span>공개</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-primary);">
+                        <input type="radio" name="book-visibility" value="private" style="cursor: pointer;">
+                        <span>비공개</span>
+                    </label>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button id="cancel-new-book" class="btn-flat btn-sm btn-danger">취소</button>
+                <button id="confirm-new-book" class="btn-flat btn-sm">생성</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pen Name Registration Dialog -->
+    <div id="penname-dialog" class="book-dialog" style="display: none;">
+        <div class="dialog-content">
+            <h3>작가 필명 설정</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.5rem;">
+                Monote에서 작품 표지와 헤더에 구글 계정이름 대신 표시될 필명을 설정해 주세요. 언제든지 재설정할 수 있습니다.
+            </p>
+            <div class="dialog-field">
+                <label for="new-penname">필명</label>
+                <input type="text" id="new-penname" class="input-flat" placeholder="필명을 입력하세요..." autocomplete="off">
+            </div>
+            <div class="dialog-actions">
+                <button id="confirm-penname" class="btn-flat btn-sm">설정 완료</button>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
