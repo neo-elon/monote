@@ -2052,6 +2052,7 @@ function renderBookshelf() {
                 ? `<div class="book-visibility-icon private" title="비공개 (로컬 저장)">🔒</div>`
                 : "");
 
+        const totalCharCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
         const dateObj = new Date(proj.updatedAt || proj.createdAt || Date.now());
         const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')}`;
 
