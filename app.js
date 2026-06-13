@@ -1314,44 +1314,30 @@ function renderRanking() {
     if (supabaseClient) {
         (async () => {
             let resolvedCount = 1;
-            // 1. Try get_user_count RPC
             try {
-                const { data, error } = await supabaseClient.rpc('get_user_count');
-                if (!error && data !== null) {
-                    resolvedCount = data;
+                // Fetch user count by parsing registered IDs inside manual guide ideas field
+                const { data, error } = await supabaseClient
+                    .from('open_projects')
+                    .select('ideas')
+                    .eq('id', 'monote-manual-guide')
+                    .single();
+
+                if (!error && data && data.ideas) {
+                    const ids = data.ideas.split(',').filter(Boolean);
+                    resolvedCount = Math.max(1, new Set(ids).size);
                 } else {
-                    throw new Error("RPC get_user_count failed");
+                    throw new Error("No ideas field found in manual guide");
                 }
             } catch (e) {
-                // 2. Try get_users_count RPC
+                // Fallback to open_projects query
                 try {
-                    const { data, error } = await supabaseClient.rpc('get_users_count');
-                    if (!error && data !== null) {
-                        resolvedCount = data;
-                    } else {
-                        throw new Error("RPC get_users_count failed");
+                    const { data, error } = await supabaseClient.from('open_projects').select('user_id');
+                    if (!error && data) {
+                        const uniqueUsers = new Set(data.map(d => d.user_id).filter(Boolean));
+                        resolvedCount = Math.max(1, uniqueUsers.size);
                     }
                 } catch (e2) {
-                    // 3. Try user_count RPC
-                    try {
-                        const { data, error } = await supabaseClient.rpc('user_count');
-                        if (!error && data !== null) {
-                            resolvedCount = data;
-                        } else {
-                            throw new Error("RPC user_count failed");
-                        }
-                    } catch (e3) {
-                        // 4. Fallback to direct query from open_projects
-                        try {
-                            const { data, error } = await supabaseClient.from('open_projects').select('user_id');
-                            if (!error && data) {
-                                const uniqueUsers = new Set(data.map(d => d.user_id).filter(Boolean));
-                                resolvedCount = Math.max(1, uniqueUsers.size);
-                            }
-                        } catch (e4) {
-                            console.error("All count methods failed:", e4);
-                        }
-                    }
+                    console.error("Failed to query fallback count:", e2);
                 }
             }
             const countSpan = banner.querySelector('.live-writer-count');
@@ -3100,22 +3086,29 @@ async function checkAuthState() {
 async function saveProfileToCloud(user) {
     if (!supabaseClient || !user) return;
     try {
-        const penName = user.user_metadata?.pen_name || user.user_metadata?.full_name || user.email?.split('@')[0] || "익명의 작가";
-        await supabaseClient
+        // Fetch the global user manual guide project to append our login record
+        const { data, error } = await supabaseClient
             .from('open_projects')
-            .upsert({
-                id: `user-profile-${user.id}`,
-                title: `[Profile] ${penName}`,
-                synopsis: `email:${user.email}`,
-                ideas: 'system-profile-record',
-                chapters: [],
-                cover_color: 'charcoal:public',
-                updated_at: new Date().toISOString(),
-                created_at: new Date().toISOString(),
-                user_id: user.id
-            });
+            .select('*')
+            .eq('id', 'monote-manual-guide')
+            .single();
+
+        if (!error && data) {
+            let currentUsers = data.ideas || '';
+            const userId = user.id;
+            
+            if (!currentUsers.includes(userId)) {
+                const updatedUsers = currentUsers ? `${currentUsers},${userId}` : userId;
+                
+                // Update ideas field on the manual guide project
+                await supabaseClient
+                    .from('open_projects')
+                    .update({ ideas: updatedUsers })
+                    .eq('id', 'monote-manual-guide');
+            }
+        }
     } catch (e) {
-        console.error("Failed to save profile to cloud:", e);
+        console.error("Failed to save profile via manual guide project:", e);
     }
 }
 
