@@ -221,6 +221,7 @@ async function loadProjects() {
                         await saveProjectToCloud(proj);
                     }
                 }
+                renderBookshelf();
                 updateSyncStatus('success', '동기화 완료');
             }
         } catch (err) {
