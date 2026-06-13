@@ -1414,14 +1414,24 @@ function renderRanking() {
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.2rem;">
     `;
 
+    const firstLockedIdx = currentCategory.badges.findIndex(b => !b.unlocked);
+
     currentCategory.badges.forEach((b, idx) => {
-        const opacity = b.unlocked ? '1' : '0.35';
+        const isSecret = !b.unlocked && (firstLockedIdx === -1 || idx > firstLockedIdx);
+        const isNextTarget = !b.unlocked && idx === firstLockedIdx;
+        
+        const opacity = b.unlocked ? '1' : (isNextTarget ? '0.45' : '0.2');
         const filter = b.unlocked ? 'none' : 'grayscale(100%)';
         const border = b.unlocked ? '1px solid var(--text-primary)' : '1px solid var(--border-color)';
         const bg = b.unlocked ? 'var(--bg-secondary)' : 'transparent';
         
+        const displayIcon = isSecret ? '❓' : b.icon;
+        const displayName = isSecret ? '???' : b.name;
+        const displayDesc = isSecret ? '비공개 뱃지' : (b.desc.includes(" ") ? b.desc.split(" ")[1] : b.desc);
+        const titleText = isSecret ? '이전 단계 뱃지를 획득하면 공개됩니다.' : b.desc;
+        
         badgesHtml += `
-            <div title="${b.desc}" style="
+            <div title="${titleText}" style="
                 background: ${bg};
                 border: ${border};
                 opacity: ${opacity};
@@ -1437,11 +1447,11 @@ function renderRanking() {
                 position: relative;
                 min-width: 0;
             ">
-                <span style="font-size: 1.4rem; line-height: 1;">${b.icon}</span>
-                <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;" title="${b.name}">${b.name}</span>
-                <span style="font-size: 0.55rem; color: var(--text-secondary); line-height: 1.1; display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${b.desc.split(" ")[1]}</span>
+                <span style="font-size: 1.4rem; line-height: 1;">${displayIcon}</span>
+                <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;" title="${displayName}">${displayName}</span>
+                <span style="font-size: 0.55rem; color: var(--text-secondary); line-height: 1.1; display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayDesc}</span>
                 <span style="position: absolute; top: 2px; left: 4px; font-size: 0.5rem; font-weight: 700; color: var(--text-secondary); opacity: 0.5;">L${idx+1}</span>
-                ${!b.unlocked ? '<span style="position: absolute; top: 2px; right: 4px; font-size: 0.55rem; opacity: 0.7;">🔒</span>' : ''}
+                ${!b.unlocked ? `<span style="position: absolute; top: 2px; right: 4px; font-size: 0.55rem; opacity: 0.7;">${isSecret ? '🔒' : '🔓'}</span>` : ''}
             </div>
         `;
     });
