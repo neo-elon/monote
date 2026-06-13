@@ -34,6 +34,7 @@ let project = null; // Active project reference
 let activeChapterId = null;
 let saveTimeout = null;
 let currentUser = null;
+let hideManual = false;
 
 // Supabase Config & Initialization
 const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
@@ -112,6 +113,9 @@ const saveStatus = document.getElementById('save-status');
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async () => {
     loadTheme();
+    hideManual = storage.getItem('monote-hide-manual') === 'true';
+    updateManualToggleUI();
+    
     if (supabaseClient) {
         await checkAuthState();
     }
@@ -158,10 +162,15 @@ async function loadProjects() {
     }
 
     if (currentUser) {
-        // Keep only projects belonging to this user OR offline projects (no user_id) OR public user manual
-        projects = localProjects.filter(p => !p.user_id || p.user_id === currentUser.id || p.id === "monote-manual-guide");
+        if (hideManual) {
+            // Logged in & hideManual true: Hide the public user manual!
+            projects = localProjects.filter(p => (!p.user_id && p.id !== "monote-manual-guide") || p.user_id === currentUser.id);
+        } else {
+            // Logged in & hideManual false: Keep the public user manual!
+            projects = localProjects.filter(p => !p.user_id || p.user_id === currentUser.id || p.id === "monote-manual-guide");
+        }
     } else {
-        // Offline mode: keep only offline projects (no user_id) OR public user manual
+        // Offline mode: keep offline projects (no user_id) AND the public user manual
         projects = localProjects.filter(p => !p.user_id || p.id === "monote-manual-guide");
     }
 
@@ -197,14 +206,21 @@ async function loadProjects() {
 
     renderBookshelf();
 
-    // Fetch from Supabase (fetch manual for offline, or user projects + manual for logged in)
+    // Fetch from Supabase (fetch manual for offline, or user projects only for logged in)
     if (supabaseClient) {
         updateSyncStatus('syncing', '불러오는 중...');
         try {
             let query = supabaseClient.from('open_projects').select('*');
             if (currentUser) {
-                query = query.or(`user_id.eq.${currentUser.id},id.eq.monote-manual-guide`);
+                if (hideManual) {
+                    // Logged in & hideManual true: Fetch only user projects (hiding manual)
+                    query = query.eq('user_id', currentUser.id);
+                } else {
+                    // Logged in & hideManual false: Fetch user projects + manual
+                    query = query.or(`user_id.eq.${currentUser.id},id.eq.monote-manual-guide`);
+                }
             } else {
+                // Offline mode: Fetch only the public manual
                 query = query.eq('id', 'monote-manual-guide');
             }
             const { data, error } = await query.order('updated_at', { ascending: false });
@@ -424,6 +440,17 @@ function setupEventListeners() {
             e.target.closest('.color-option').classList.add('active');
         });
     });
+
+    // Toggle manual visibility listener
+    const toggleManualItem = document.getElementById('toggle-manual-item');
+    if (toggleManualItem) {
+        toggleManualItem.addEventListener('click', () => {
+            hideManual = !hideManual;
+            storage.setItem('monote-hide-manual', hideManual ? 'true' : 'false');
+            updateManualToggleUI();
+            loadProjects(); // Reload and refresh bookshelf
+        });
+    }
 }
 
 // Render Overview View
@@ -1443,6 +1470,7 @@ function updateAuthUI(user) {
     if (!authContainer) return;
 
     const logoutMenuItem = document.getElementById('logout-menu-item');
+    const toggleManualItem = document.getElementById('toggle-manual-item');
 
     if (user) {
         // Run check to prompt for pen name if not set
@@ -1472,6 +1500,10 @@ function updateAuthUI(user) {
             };
         }
 
+        if (toggleManualItem) {
+            toggleManualItem.style.display = 'flex';
+        }
+
         if (logoutMenuItem) {
             logoutMenuItem.style.display = 'flex';
             logoutMenuItem.onclick = (e) => {
@@ -1493,6 +1525,10 @@ function updateAuthUI(user) {
                 </svg>
             </button>
         `;
+
+        if (toggleManualItem) {
+            toggleManualItem.style.display = 'none';
+        }
 
         if (logoutMenuItem) {
             logoutMenuItem.style.display = 'none';
@@ -1623,5 +1659,12 @@ async function updateUserPenName(newVal) {
         console.error("Failed to update pen name:", err);
         alert(`필명 변경에 실패했습니다: ${err.message || err}`);
         updateSyncStatus('error', '업데이트 실패');
+    }
+}
+
+function updateManualToggleUI() {
+    const textSpan = document.getElementById('toggle-manual-text');
+    if (textSpan) {
+        textSpan.textContent = hideManual ? '설명서 보이기' : '설명서 숨기기';
     }
 }
