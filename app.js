@@ -180,6 +180,17 @@ async function loadProjects() {
         }
     }
 
+    // Remove duplicates from localProjects first
+    const uniqueLocal = [];
+    const localSeen = new Set();
+    for (const p of localProjects) {
+        if (!localSeen.has(p.id)) {
+            localSeen.add(p.id);
+            uniqueLocal.push(p);
+        }
+    }
+    localProjects = uniqueLocal;
+
     if (currentUser) {
         if (hideManual) {
             // Logged in & hideManual true: Hide the public user manual!
@@ -222,6 +233,17 @@ async function loadProjects() {
         // Remove old key so we don't migrate again
         storage.removeItem('monote-project');
     }
+
+    // Deduplicate projects after local loading / migration
+    const dedupedProjects = [];
+    const seenIds = new Set();
+    for (const p of projects) {
+        if (!seenIds.has(p.id)) {
+            seenIds.add(p.id);
+            dedupedProjects.push(p);
+        }
+    }
+    projects = dedupedProjects;
 
     sortProjectsByOrder();
     renderBookshelf();
@@ -281,7 +303,17 @@ async function loadProjects() {
                 }
             }
 
-            projects = mergedProjects;
+            // Final deduplication on merged projects
+            const finalProjects = [];
+            const finalSeen = new Set();
+            for (const p of mergedProjects) {
+                if (!finalSeen.has(p.id)) {
+                    finalSeen.add(p.id);
+                    finalProjects.push(p);
+                }
+            }
+
+            projects = finalProjects;
             sortProjectsByOrder();
             storage.setItem('monote-projects', JSON.stringify(projects));
             renderBookshelf();
