@@ -1113,6 +1113,7 @@ function adjustTitleHeight() {
 
 // View Switches
 function showWritingScreen() {
+    storage.setItem('monote-active-screen', 'writing');
     // Hide JSON import/export in project screens, show TXT export
     if (importProjectTrigger) importProjectTrigger.style.display = 'none';
     if (exportProjectBtn) exportProjectBtn.style.display = 'none';
@@ -1144,6 +1145,7 @@ function showWritingScreen() {
 }
 
 function showOverviewScreen() {
+    storage.setItem('monote-active-screen', 'overview');
     // Hide JSON import/export in project screens, show TXT export
     if (importProjectTrigger) importProjectTrigger.style.display = 'none';
     if (exportProjectBtn) exportProjectBtn.style.display = 'none';
@@ -1175,6 +1177,7 @@ function showOverviewScreen() {
 }
 
 function showBookshelfScreen() {
+    storage.setItem('monote-active-screen', 'bookshelf');
     activeProjectId = null;
     project = null;
     storage.removeItem('monote-active-project-id');
@@ -1201,6 +1204,7 @@ function showBookshelfScreen() {
 }
 
 function showCommunityScreen() {
+    storage.setItem('monote-active-screen', 'community');
     activeProjectId = null;
     project = null;
     storage.removeItem('monote-active-project-id');
@@ -2972,8 +2976,30 @@ function runSpellCheck(text) {
 
 // Restore state from localStorage on page load/refresh
 function restoreActiveState() {
+    const savedScreen = storage.getItem('monote-active-screen');
     const savedProjectId = storage.getItem('monote-active-project-id');
     const savedChapterId = storage.getItem('monote-active-chapter-id');
+    
+    if (savedScreen === 'community') {
+        bookshelfScreen.classList.remove('active');
+        overviewScreen.classList.remove('active');
+        writingScreen.classList.remove('active');
+        
+        bookshelfScreen.style.display = 'none';
+        overviewScreen.style.display = 'none';
+        writingScreen.style.display = 'none';
+        
+        if (communityScreen) {
+            communityScreen.style.display = 'block';
+            communityScreen.classList.add('active');
+            switchCommunityTab('ranking');
+        }
+        
+        if (importProjectTrigger) importProjectTrigger.style.display = 'none';
+        if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+        if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
+        return;
+    }
     
     if (savedProjectId) {
         const proj = projects.find(p => p.id === savedProjectId);
