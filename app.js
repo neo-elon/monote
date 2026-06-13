@@ -903,6 +903,10 @@ function showWritingScreen() {
         overviewScreen.style.display = 'none';
         bookshelfScreen.style.display = 'none';
         writingScreen.style.display = 'block';
+        
+        // Recalculate title height now that the editor view is visible
+        adjustTitleHeight();
+        
         setTimeout(() => {
             writingScreen.classList.add('active');
         }, 50);
