@@ -507,6 +507,10 @@ function setupEventListeners() {
     if (communityMenuItem) {
         communityMenuItem.addEventListener('click', showCommunityScreen);
     }
+    const bookshelfCommunityBtn = document.getElementById('bookshelf-community-btn');
+    if (bookshelfCommunityBtn) {
+        bookshelfCommunityBtn.addEventListener('click', showCommunityScreen);
+    }
     if (tabLibraryBtn) {
         tabLibraryBtn.addEventListener('click', () => switchCommunityTab('library'));
     }
