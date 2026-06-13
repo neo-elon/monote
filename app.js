@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     restoreActiveState();
     
     // Start Lounge post simulation
-    initLoungeSimulation();
+    // initLoungeSimulation();
 });
 
 // Load Theme from LocalStorage
