@@ -57,6 +57,7 @@ function updateSyncStatus(status, message) {
 
 async function saveProjectToCloud(proj) {
     if (!supabaseClient || !currentUser) return;
+    if (proj.title === "모노트로 책 쓰기") return; // Protect global user manual from overwrite
     const { error } = await supabaseClient
         .from('open_projects')
         .upsert({
@@ -157,11 +158,11 @@ async function loadProjects() {
     }
 
     if (currentUser) {
-        // Keep only projects belonging to this user OR offline projects (no user_id)
-        projects = localProjects.filter(p => !p.user_id || p.user_id === currentUser.id);
+        // Keep only projects belonging to this user OR offline projects (no user_id) OR public user manual
+        projects = localProjects.filter(p => !p.user_id || p.user_id === currentUser.id || p.title === "모노트로 책 쓰기");
     } else {
-        // Offline mode: keep only offline projects (no user_id)
-        projects = localProjects.filter(p => !p.user_id);
+        // Offline mode: keep only offline projects (no user_id) OR public user manual
+        projects = localProjects.filter(p => !p.user_id || p.title === "모노트로 책 쓰기");
     }
 
     // Migration from old single-project structure
@@ -196,15 +197,17 @@ async function loadProjects() {
 
     renderBookshelf();
 
-    // Fetch from Supabase
-    if (supabaseClient && currentUser) {
+    // Fetch from Supabase (fetch manual for offline, or user projects + manual for logged in)
+    if (supabaseClient) {
         updateSyncStatus('syncing', '불러오는 중...');
         try {
-            const { data, error } = await supabaseClient
-                .from('open_projects')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('updated_at', { ascending: false });
+            let query = supabaseClient.from('open_projects').select('*');
+            if (currentUser) {
+                query = query.or(`user_id.eq.${currentUser.id},title.eq.모노트로 책 쓰기`);
+            } else {
+                query = query.eq('title', '모노트로 책 쓰기');
+            }
+            const { data, error } = await query.order('updated_at', { ascending: false });
 
             if (error) throw error;
 
@@ -222,13 +225,15 @@ async function loadProjects() {
 
             // Merge local offline projects into account projects
             const mergedProjects = [...dbProjects];
-            const offlineProjects = projects.filter(p => !p.user_id);
+            const offlineProjects = projects.filter(p => !p.user_id && p.title !== "모노트로 책 쓰기");
 
             for (const localProj of offlineProjects) {
                 // Check for duplicates
                 if (!mergedProjects.some(dbP => dbP.id === localProj.id)) {
-                    localProj.user_id = currentUser.id;
-                    await saveProjectToCloud(localProj);
+                    if (currentUser) {
+                        localProj.user_id = currentUser.id;
+                        await saveProjectToCloud(localProj);
+                    }
                     mergedProjects.push(localProj);
                 }
             }
@@ -1031,8 +1036,12 @@ function renderBookshelf() {
         
         const coverColor = proj.coverColor || 'charcoal';
         
+        const deleteBtnHtml = proj.title === "모노트로 책 쓰기"
+            ? ""
+            : `<button class="delete-book-btn" title="작품 삭제">×</button>`;
+
         bookCard.innerHTML = `
-            <button class="delete-book-btn" title="작품 삭제">×</button>
+            ${deleteBtnHtml}
             <div class="book-cover cover-${coverColor}">
                 <div class="book-cover-title">${proj.title || '제목 없음'}</div>
                 <div class="book-cover-author">${authorName}</div>
