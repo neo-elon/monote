@@ -1231,7 +1231,6 @@ function renderRanking() {
         flex-direction: column;
         gap: 0.75rem;
         box-shadow: var(--shadow-sm);
-        margin-bottom: 1.5rem;
     `;
 
     let progressText = "";
@@ -1261,7 +1260,7 @@ function renderRanking() {
             </div>
         </div>
         
-        <div style="margin-top: 0.25rem;">
+        <div>
             <div style="height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-bottom: 0.4rem;">
                 <div style="height: 100%; width: ${progressPercent}%; background: var(--text-primary); opacity: 0.4; border-radius: 3px; transition: width 0.5s ease;"></div>
             </div>
@@ -1276,7 +1275,6 @@ function renderRanking() {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 0.75rem;
-        margin-bottom: 1.5rem;
     `;
     statsRow.innerHTML = `
         <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 6px; text-align: center; box-shadow: var(--shadow-sm);">
@@ -1302,7 +1300,6 @@ function renderRanking() {
         padding: 1.25rem;
         border-radius: 8px;
         box-shadow: var(--shadow-sm);
-        margin-bottom: 1.5rem;
         display: flex;
         flex-direction: column;
         gap: 0.8rem;
@@ -1362,7 +1359,6 @@ function renderRanking() {
         display: flex;
         justify-content: center;
         gap: 0.35rem;
-        margin-bottom: 1.5rem;
         background: var(--bg-secondary);
         padding: 0.25rem;
         border-radius: 20px;
