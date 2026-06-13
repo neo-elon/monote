@@ -2796,7 +2796,7 @@ function renderBookshelf() {
     addCard.innerHTML = `
         <div class="book-cover cover-add">
             <div style="font-size: 2rem; font-weight: 300; line-height: 1;">+</div>
-            <div style="font-size: 0.8rem; margin-top: 0.25rem;">${currentLang === 'en' ? 'Write New Book' : '새 작품 쓰기'}</div>
+            <div style="font-size: 0.8rem; margin-top: 0.25rem;">${currentLang === 'en' ? 'Add New Book' : '새 작품 추가'}</div>
         </div>
         <div class="book-card-title-under" style="color: var(--text-secondary);">${currentLang === 'en' ? 'Add New Book' : '새 작품 추가'}</div>
         <div class="book-card-date-under" style="font-size: 0.75rem; color: transparent; margin-top: 0.15rem; font-weight: 300; user-select: none;">&nbsp;</div>
