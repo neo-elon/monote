@@ -1312,30 +1312,54 @@ function renderRanking() {
     
     // Fetch registered user count asynchronously
     if (supabaseClient) {
-        supabaseClient.from('open_projects').select('user_id')
-            .then(({ data, error }) => {
-                let count = 1;
-                if (!error && data) {
-                    const uniqueUsers = new Set(data.map(d => d.user_id).filter(Boolean));
-                    count = Math.max(1, uniqueUsers.size);
+        (async () => {
+            let resolvedCount = 1;
+            // 1. Try get_user_count RPC
+            try {
+                const { data, error } = await supabaseClient.rpc('get_user_count');
+                if (!error && data !== null) {
+                    resolvedCount = data;
+                } else {
+                    throw new Error("RPC get_user_count failed");
                 }
-                
-                // If database restricts other users' records (RLS) resulting in 1 user,
-                // fall back to showing a baseline registered count of 18 for design/community integrity
-                if (count <= 1) {
-                    count = 18;
+            } catch (e) {
+                // 2. Try get_users_count RPC
+                try {
+                    const { data, error } = await supabaseClient.rpc('get_users_count');
+                    if (!error && data !== null) {
+                        resolvedCount = data;
+                    } else {
+                        throw new Error("RPC get_users_count failed");
+                    }
+                } catch (e2) {
+                    // 3. Try user_count RPC
+                    try {
+                        const { data, error } = await supabaseClient.rpc('user_count');
+                        if (!error && data !== null) {
+                            resolvedCount = data;
+                        } else {
+                            throw new Error("RPC user_count failed");
+                        }
+                    } catch (e3) {
+                        // 4. Fallback to direct query from open_projects
+                        try {
+                            const { data, error } = await supabaseClient.from('open_projects').select('user_id');
+                            if (!error && data) {
+                                const uniqueUsers = new Set(data.map(d => d.user_id).filter(Boolean));
+                                resolvedCount = Math.max(1, uniqueUsers.size);
+                            }
+                        } catch (e4) {
+                            console.error("All count methods failed:", e4);
+                        }
+                    }
                 }
-                
-                const countSpan = banner.querySelector('.live-writer-count');
-                if (countSpan) countSpan.textContent = count;
-            })
-            .catch(() => {
-                const countSpan = banner.querySelector('.live-writer-count');
-                if (countSpan) countSpan.textContent = "18";
-            });
+            }
+            const countSpan = banner.querySelector('.live-writer-count');
+            if (countSpan) countSpan.textContent = resolvedCount;
+        })();
     } else {
         const countSpan = banner.querySelector('.live-writer-count');
-        if (countSpan) countSpan.textContent = "18";
+        if (countSpan) countSpan.textContent = "1";
     }
 
     // Calculate user stats
