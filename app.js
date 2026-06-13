@@ -204,6 +204,7 @@ async function loadProjects() {
         storage.removeItem('monote-project');
     }
 
+    sortProjectsByOrder();
     renderBookshelf();
 
     // Fetch from Supabase (fetch manual for offline, or user projects only for logged in)
@@ -255,6 +256,7 @@ async function loadProjects() {
             }
 
             projects = mergedProjects;
+            sortProjectsByOrder();
             storage.setItem('monote-projects', JSON.stringify(projects));
             renderBookshelf();
             updateSyncStatus('success', '동기화 완료');
@@ -1068,12 +1070,22 @@ function renderBookshelf() {
     });
     booksGrid.appendChild(addCard);
     
+    // Make the add card accept drops (so items can be dropped back to the first spot)
+    addCard.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const draggingCard = document.querySelector('.book-card.dragging');
+        if (!draggingCard) return;
+        // Keep the addCard as the first element
+        booksGrid.insertBefore(draggingCard, addCard.nextSibling);
+    });
+    
     const authorName = currentUser?.user_metadata?.pen_name || 'Monote';
     
     projects.forEach((proj) => {
         const bookCard = document.createElement('div');
         bookCard.className = 'book-card';
         bookCard.dataset.id = proj.id;
+        bookCard.setAttribute('draggable', 'true');
         
         const coverColor = proj.coverColor || 'charcoal';
         
@@ -1090,8 +1102,11 @@ function renderBookshelf() {
             <div class="book-card-title-under">${proj.title || '제목 없음'}</div>
         `;
         
+        let isDragging = false;
+
         // Open project on click
         bookCard.addEventListener('click', (e) => {
+            if (isDragging) return;
             // If click was on delete button, do not open
             if (e.target.classList.contains('delete-book-btn')) {
                 e.stopPropagation();
@@ -1102,10 +1117,178 @@ function renderBookshelf() {
             }
             openProject(proj.id);
         });
+
+        // Desktop Drag & Drop Events
+        bookCard.addEventListener('dragstart', (e) => {
+            isDragging = true;
+            bookCard.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', proj.id);
+        });
+
+        bookCard.addEventListener('dragend', (e) => {
+            bookCard.classList.remove('dragging');
+            saveAndRefreshBooksOrder();
+            setTimeout(() => {
+                isDragging = false;
+            }, 100);
+        });
+
+        bookCard.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingCard = document.querySelector('.book-card.dragging');
+            if (!draggingCard || draggingCard === bookCard) return;
+
+            const rect = bookCard.getBoundingClientRect();
+            // Determine drop placement based on center coordinates of target
+            const isAfter = (e.clientX - rect.left) / (rect.right - rect.left) > 0.5 || 
+                            (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+
+            booksGrid.insertBefore(draggingCard, isAfter ? bookCard.nextSibling : bookCard);
+        });
+
+        // Mobile Touch Drag & Drop Events
+        let touchStartCard = null;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let hasMovedThreshold = false;
+        let touchTimeout = null;
+        let isLongPress = false;
+
+        bookCard.addEventListener('touchstart', (e) => {
+            touchStartCard = bookCard;
+            dragStartX = e.touches[0].clientX;
+            dragStartY = e.touches[0].clientY;
+            hasMovedThreshold = false;
+            isDragging = false;
+            isLongPress = false;
+
+            window.getSelection().removeAllRanges();
+
+            if (touchTimeout) clearTimeout(touchTimeout);
+            touchTimeout = setTimeout(() => {
+                isLongPress = true;
+                isDragging = true;
+                bookCard.classList.add('dragging');
+                if (navigator.vibrate) {
+                    navigator.vibrate(40);
+                }
+            }, 500);
+        }, { passive: true });
+
+        bookCard.addEventListener('touchmove', (e) => {
+            if (!touchStartCard) return;
+
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - dragStartX;
+            const deltaY = touch.clientY - dragStartY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distance > 8) {
+                hasMovedThreshold = true;
+                if (!isLongPress && touchTimeout) {
+                    clearTimeout(touchTimeout);
+                    touchTimeout = null;
+                }
+            }
+
+            if (isLongPress && isDragging) {
+                if (e.cancelable) e.preventDefault();
+                window.getSelection().removeAllRanges();
+
+                const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (elementUnder) {
+                    const targetCard = elementUnder.closest('.book-card');
+                    if (targetCard && targetCard !== bookCard) {
+                        if (targetCard === addCard) {
+                            booksGrid.insertBefore(bookCard, addCard.nextSibling);
+                        } else {
+                            const rect = targetCard.getBoundingClientRect();
+                            const isAfter = (touch.clientX - rect.left) / (rect.right - rect.left) > 0.5 || 
+                                            (touch.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                            booksGrid.insertBefore(bookCard, isAfter ? targetCard.nextSibling : targetCard);
+                        }
+                    }
+                }
+            }
+        }, { passive: false });
+
+        bookCard.addEventListener('touchend', (e) => {
+            if (touchTimeout) {
+                clearTimeout(touchTimeout);
+                touchTimeout = null;
+            }
+
+            if (!touchStartCard) return;
+
+            bookCard.classList.remove('dragging');
+            touchStartCard = null;
+
+            if (isLongPress && isDragging) {
+                e.preventDefault();
+                saveAndRefreshBooksOrder();
+                setTimeout(() => {
+                    isDragging = false;
+                    isLongPress = false;
+                }, 100);
+            }
+        });
+
+        bookCard.addEventListener('touchcancel', () => {
+            if (touchTimeout) {
+                clearTimeout(touchTimeout);
+                touchTimeout = null;
+            }
+            bookCard.classList.remove('dragging');
+            touchStartCard = null;
+            isDragging = false;
+            isLongPress = false;
+        });
         
         booksGrid.appendChild(bookCard);
     });
 }
+
+// Save order of books in localStorage
+function saveAndRefreshBooksOrder() {
+    const booksGrid = document.getElementById('books-grid');
+    if (!booksGrid) return;
+
+    const newProjectsOrder = [];
+    const seenIds = new Set();
+    const renderedCards = booksGrid.querySelectorAll('.book-card');
+    renderedCards.forEach(cardEl => {
+        const id = cardEl.dataset.id;
+        if (id && !seenIds.has(id)) {
+            const proj = projects.find(p => p.id === id);
+            if (proj) {
+                newProjectsOrder.push(proj);
+                seenIds.add(id);
+            }
+        }
+    });
+
+    projects = newProjectsOrder;
+    storage.setItem('monote-projects', JSON.stringify(projects));
+
+    // Save order IDs list
+    const orderList = projects.map(p => p.id);
+    storage.setItem('monote-books-order', JSON.stringify(orderList));
+}
+
+// Sort projects globally using custom order list
+function sortProjectsByOrder() {
+    const orderList = JSON.parse(storage.getItem('monote-books-order') || '[]');
+    if (orderList.length > 0) {
+        projects.sort((a, b) => {
+            const idxA = orderList.indexOf(a.id);
+            const idxB = orderList.indexOf(b.id);
+            if (idxA === -1 && idxB === -1) return 0;
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+        });
+    }
 
 // Dialog elements references helper
 const newBookDialog = document.getElementById('new-book-dialog');
