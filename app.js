@@ -38,6 +38,10 @@ let hideManual = false;
 let activeRankingTab = 'daily';
 let activeBadgeTab = 'cumulative';
 
+function isAdmin() {
+    return currentUser && currentUser.email === 'parkyangkyu@gmail.com';
+}
+
 // Supabase Config & Initialization
 const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdWN2ZnFpYXZ2Y3VqdHp3enZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODE3NzksImV4cCI6MjA5Njg1Nzc3OX0.-zLSHjeHvaW5eHRTH9eC7CcFWnwlWBKbgzlc-9Fzceg';
@@ -60,7 +64,12 @@ function updateSyncStatus(status, message) {
 
 async function saveProjectToCloud(proj) {
     if (!supabaseClient || !currentUser) return;
-    if (proj.id === "monote-manual-guide") return; // Protect global user manual from overwrite
+    if (proj.id === "monote-manual-guide" && !isAdmin()) return; // Protect global user manual from overwrite unless admin
+    
+    const projectUserId = proj.id === "monote-manual-guide" 
+        ? (proj.user_id || currentUser.id) 
+        : currentUser.id;
+
     const { error } = await supabaseClient
         .from('open_projects')
         .upsert({
@@ -72,7 +81,7 @@ async function saveProjectToCloud(proj) {
             cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}`,
             updated_at: proj.updatedAt || new Date().toISOString(),
             created_at: proj.createdAt || new Date().toISOString(),
-            user_id: currentUser.id
+            user_id: projectUserId
         });
     if (error) throw error;
 }
@@ -2106,6 +2115,11 @@ function renderLoungeFeed() {
         const likeIconColor = post.likedByMe ? 'var(--accent-color)' : 'currentColor';
         const likeIconFill = post.likedByMe ? 'var(--accent-color)' : 'none';
         
+        const canDeletePost = isAdmin() || (currentUser && post.email === currentUser.email);
+        const postDeleteBtnHtml = canDeletePost 
+            ? `<button class="delete-post-btn" style="background: none; border: none; color: var(--danger-color); font-size: 0.75rem; cursor: pointer; padding: 0;">삭제</button>` 
+            : '';
+
         let commentsHtml = '';
         if (post.comments && post.comments.length > 0) {
             commentsHtml = `
@@ -2123,7 +2137,10 @@ function renderLoungeFeed() {
         postEl.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-family: var(--font-serif); font-weight: 700; font-size: 0.9rem; color: var(--text-primary);">${post.author}</span>
-                <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 300;">${timeString}</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 300;">${timeString}</span>
+                    ${postDeleteBtnHtml}
+                </div>
             </div>
             <div style="font-size: 0.85rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; word-break: break-all;">${post.content}</div>
             
@@ -2150,6 +2167,20 @@ function renderLoungeFeed() {
             ${commentsHtml}
         `;
         
+        if (canDeletePost) {
+            const delBtn = postEl.querySelector('.delete-post-btn');
+            if (delBtn) {
+                delBtn.onclick = () => {
+                    if (confirm("이 라운지 글을 삭제하시겠습니까?")) {
+                        let currentPosts = getLoungePosts();
+                        currentPosts = currentPosts.filter(p => p.id !== post.id);
+                        saveLoungePosts(currentPosts);
+                        renderLoungeFeed();
+                    }
+                };
+            }
+        }
+
         postEl.querySelector('.like-btn').onclick = () => {
             post.likedByMe = !post.likedByMe;
             post.likes = post.likedByMe ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 1) - 1);
@@ -2216,10 +2247,10 @@ function createNewPost() {
     }
     
     const author = currentUser?.user_metadata?.pen_name || currentUser?.email?.split('@')[0] || "익명의 작가";
-    const posts = getLoungePosts();
     posts.unshift({
         id: "post-" + Date.now(),
         author: author,
+        email: currentUser?.email || "",
         content: content,
         timestamp: Date.now(),
         likes: 0,
@@ -2358,7 +2389,7 @@ function renderBookshelf() {
         
         const coverColor = proj.coverColor || 'charcoal';
         
-        const deleteBtnHtml = proj.id === "monote-manual-guide"
+        const deleteBtnHtml = (proj.id === "monote-manual-guide" && !isAdmin())
             ? ""
             : `<button class="delete-book-btn" title="작품 삭제">×</button>`;
 
