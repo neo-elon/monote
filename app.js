@@ -913,6 +913,28 @@ function renderChapterList() {
         
         chaptersList.appendChild(card);
     });
+
+    // Calculate total character count (including titles)
+    const totalChars = project.chapters.reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+    
+    const totalRow = document.createElement('div');
+    totalRow.className = 'chapters-total-row';
+    totalRow.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.8rem 0.2rem;
+        margin-top: 0.5rem;
+        border-top: 1px double var(--border-color);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+    `;
+    totalRow.innerHTML = `
+        <span>총 글자수 (제목 포함)</span>
+        <span style="font-family: var(--font-sans); color: var(--text-primary); font-weight: 700;">${totalChars.toLocaleString()}자</span>
+    `;
+    chaptersList.appendChild(totalRow);
 }
 
 // Helper to save order and refresh
