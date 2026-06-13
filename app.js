@@ -34,6 +34,43 @@ let project = null; // Active project reference
 let activeChapterId = null;
 let saveTimeout = null;
 
+// Supabase Config & Initialization
+const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdWN2ZnFpYXZ2Y3VqdHp3enZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODE3NzksImV4cCI6MjA5Njg1Nzc3OX0.-zLSHjeHvaW5eHRTH9eC7CcFWnwlWBKbgzlc-9Fzceg';
+let supabase = null;
+
+if (typeof window.supabase !== 'undefined') {
+    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+}
+
+// Sync Status UI helper
+function updateSyncStatus(status, message) {
+    const badge = document.getElementById('cloud-sync-status');
+    if (!badge) return;
+    const text = badge.querySelector('.sync-text');
+    if (!text) return;
+    
+    badge.className = 'sync-status ' + status; // success, syncing, error
+    text.textContent = message;
+}
+
+async function saveProjectToCloud(proj) {
+    if (!supabase) return;
+    const { error } = await supabase
+        .from('open_projects')
+        .upsert({
+            id: proj.id,
+            title: proj.title,
+            synopsis: proj.synopsis || '',
+            ideas: proj.ideas || '',
+            chapters: proj.chapters || [],
+            cover_color: proj.coverColor || 'charcoal',
+            updated_at: proj.updatedAt || new Date().toISOString(),
+            created_at: proj.createdAt || new Date().toISOString()
+        });
+    if (error) throw error;
+}
+
 // DOM Elements
 const bookshelfScreen = document.getElementById('bookshelf-screen');
 const overviewScreen = document.getElementById('overview-screen');
@@ -95,7 +132,7 @@ function updateThemeIcons(theme) {
 }
 
 // Load Projects and handle Migration
-function loadProjects() {
+async function loadProjects() {
     const savedProjects = storage.getItem('monote-projects');
     if (savedProjects) {
         try {
@@ -134,6 +171,51 @@ function loadProjects() {
         // Remove old key so we don't migrate again
         storage.removeItem('monote-project');
     }
+
+    renderBookshelf();
+
+    // Fetch from Supabase
+    if (supabase) {
+        updateSyncStatus('syncing', '불러오는 중...');
+        try {
+            const { data, error } = await supabase
+                .from('open_projects')
+                .select('*')
+                .order('updated_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                projects = data.map(dbProj => ({
+                    id: dbProj.id,
+                    title: dbProj.title,
+                    synopsis: dbProj.synopsis || '',
+                    ideas: dbProj.ideas || '',
+                    chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || []),
+                    coverColor: dbProj.cover_color || 'charcoal',
+                    createdAt: dbProj.created_at,
+                    updatedAt: dbProj.updated_at
+                }));
+                storage.setItem('monote-projects', JSON.stringify(projects));
+                renderBookshelf();
+                updateSyncStatus('success', '동기화 완료');
+            } else {
+                // Cloud is empty, if we have local projects, push them to cloud
+                if (projects.length > 0) {
+                    updateSyncStatus('syncing', '동기화 중...');
+                    for (const proj of projects) {
+                        await saveProjectToCloud(proj);
+                    }
+                }
+                updateSyncStatus('success', '동기화 완료');
+            }
+        } catch (err) {
+            console.error('Failed to sync with Supabase:', err);
+            updateSyncStatus('error', '로컬 모드');
+        }
+    } else {
+        updateSyncStatus('error', '로컬 모드');
+    }
 }
 
 // Save Data to LocalStorage with Debounce
@@ -145,7 +227,7 @@ function triggerSave() {
     
     if (saveTimeout) clearTimeout(saveTimeout);
     
-    saveTimeout = setTimeout(() => {
+    saveTimeout = setTimeout(async () => {
         // Find index of current project
         const idx = projects.findIndex(p => p.id === activeProjectId);
         if (idx !== -1) {
@@ -154,6 +236,19 @@ function triggerSave() {
             storage.setItem('monote-projects', JSON.stringify(projects));
         }
         saveStatus.textContent = "저장 완료";
+        
+        // Sync to Supabase
+        if (supabase) {
+            updateSyncStatus('syncing', '동기화 중...');
+            try {
+                await saveProjectToCloud(project);
+                updateSyncStatus('success', '동기화 완료');
+            } catch (err) {
+                console.error('Failed to save to cloud:', err);
+                updateSyncStatus('error', '동기화 실패');
+            }
+        }
+        
         setTimeout(() => {
             saveStatus.style.opacity = "0.7";
         }, 1000);
@@ -856,7 +951,7 @@ function hideNewBookDialog() {
 }
 
 // Create new project
-function createNewProject() {
+async function createNewProject() {
     const title = newBookTitleInput.value.trim();
     if (!title) {
         alert("작품 제목을 입력해 주세요.");
@@ -885,6 +980,18 @@ function createNewProject() {
     
     // Open immediately
     openProject(newProj.id);
+
+    // Sync to Supabase
+    if (supabase) {
+        updateSyncStatus('syncing', '동기화 중...');
+        try {
+            await saveProjectToCloud(newProj);
+            updateSyncStatus('success', '동기화 완료');
+        } catch (err) {
+            console.error('Failed to sync new project to cloud:', err);
+            updateSyncStatus('error', '동기화 실패');
+        }
+    }
 }
 
 // Open selected project
@@ -904,7 +1011,7 @@ function openProject(projectId) {
 }
 
 // Delete project
-function deleteProject(projectId) {
+async function deleteProject(projectId) {
     projects = projects.filter(p => p.id !== projectId);
     storage.setItem('monote-projects', JSON.stringify(projects));
     
@@ -915,6 +1022,22 @@ function deleteProject(projectId) {
         showBookshelfScreen();
     } else {
         renderBookshelf();
+    }
+
+    // Delete from Supabase
+    if (supabase) {
+        updateSyncStatus('syncing', '동기화 중...');
+        try {
+            const { error } = await supabase
+                .from('open_projects')
+                .delete()
+                .eq('id', projectId);
+            if (error) throw error;
+            updateSyncStatus('success', '동기화 완료');
+        } catch (err) {
+            console.error('Failed to delete project from cloud:', err);
+            updateSyncStatus('error', '동기화 실패');
+        }
     }
 }
 

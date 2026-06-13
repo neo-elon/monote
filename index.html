@@ -25,6 +25,10 @@
                 <span class="logo-sub">for writers</span>
             </div>
             <div class="header-actions">
+                <div id="cloud-sync-status" class="sync-status" title="클라우드 동기화 상태">
+                    <span class="sync-dot"></span>
+                    <span class="sync-text">대기 중</span>
+                </div>
                 <button id="export-project" class="btn-icon" title="전체 백업 다운로드 (.json)" aria-label="Backup Project">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -216,6 +220,7 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
 
