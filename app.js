@@ -3078,7 +3078,7 @@ async function saveProfileToCloud(user) {
                 synopsis: `email:${user.email}`,
                 ideas: 'system-profile-record',
                 chapters: [],
-                cover_color: 'charcoal:private',
+                cover_color: 'charcoal:public',
                 updated_at: new Date().toISOString(),
                 created_at: new Date().toISOString(),
                 user_id: user.id
