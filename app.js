@@ -687,7 +687,7 @@ function renderOverview() {
 // Update Synopsis Character Count
 function updateSynopsisCount() {
     const len = project.synopsis ? project.synopsis.length : 0;
-    synopsisWordCount.textContent = `${len.toLocaleString()}자`;
+    synopsisWordCount.textContent = currentLang === 'en' ? `${len.toLocaleString()} chars` : `${len.toLocaleString()}자`;
 }
 
 // Update Ideas Character Count
@@ -697,7 +697,7 @@ function updateIdeasCount() {
         ideasText = ideasText.replace(/,?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '');
     }
     const len = ideasText.length;
-    ideasWordCount.textContent = `${len.toLocaleString()}자`;
+    ideasWordCount.textContent = currentLang === 'en' ? `${len.toLocaleString()} chars` : `${len.toLocaleString()}자`;
 }
 
 // Helper to get prefix dynamically for any chapter based on its level
@@ -809,12 +809,12 @@ function renderChapterList() {
             <div class="tree-indent-wrapper">
                 ${treeLinesHtml}
                 <span class="chapter-num-badge">${prefix}</span>
-                <span class="chapter-card-title">${chapter.title || '제목 없음'}</span>
+                <span class="chapter-card-title">${chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</span>
                 <div class="tree-controls">
-                    <button class="btn-tree-lvl rename-btn" title="이름 변경">✎</button>
+                    <button class="btn-tree-lvl rename-btn" title="${currentLang === 'en' ? 'Rename' : '이름 변경'}">✎</button>
                 </div>
             </div>
-            <span class="char-counter">${charCount.toLocaleString()}자</span>
+            <span class="char-counter">${charCount.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</span>
         `;
         
         let isDragging = false;
@@ -1187,8 +1187,8 @@ function updateEditorCounts() {
     const trimmed = combinedText.trim();
     const words = trimmed ? trimmed.split(/\s+/).length : 0;
     
-    charCountWithSpaces.textContent = `${lenWithSpaces.toLocaleString()}자`;
-    charCountNoSpaces.textContent = `${lenNoSpaces.toLocaleString()}자`;
+    charCountWithSpaces.textContent = currentLang === 'en' ? `${lenWithSpaces.toLocaleString()} chars` : `${lenWithSpaces.toLocaleString()}자`;
+    charCountNoSpaces.textContent = currentLang === 'en' ? `${lenNoSpaces.toLocaleString()} chars` : `${lenNoSpaces.toLocaleString()}자`;
     wordCountElement.textContent = words.toLocaleString();
 }
 
@@ -2444,8 +2444,8 @@ function showPreviewBookDialog(book) {
                     transition: all var(--transition-speed);
                 `;
                 item.innerHTML = `
-                    <span style="font-size: 0.85rem; font-family: var(--font-serif); color: var(--text-primary); font-weight: 500;">${ch.title || '제목 없음'}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">${((ch.title || '').length + (ch.content || '').length).toLocaleString()}자</span>
+                    <span style="font-size: 0.85rem; font-family: var(--font-serif); color: var(--text-primary); font-weight: 500;">${ch.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">${((ch.title || '').length + (ch.content || '').length).toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</span>
                 `;
                 item.addEventListener('click', () => {
                     showPreviewChapterDialog(ch);
@@ -3444,6 +3444,9 @@ function updateLanguageUI() {
         langText.textContent = currentLang === 'en' ? '한국어로 변경' : 'English로 변경';
     }
 
+    const t = i18n[currentLang];
+
+    // Menu
     const themeToggleText = document.getElementById('theme-toggle-text');
     if (themeToggleText) {
         themeToggleText.textContent = currentLang === 'en' ? 'Change Theme' : '테마 변경';
@@ -3452,12 +3455,10 @@ function updateLanguageUI() {
     if (themeToggle) {
         themeToggle.setAttribute('title', currentLang === 'en' ? 'Change Theme' : '테마 변경');
     }
-
     const langToggle = document.getElementById('lang-toggle');
     if (langToggle) {
         langToggle.setAttribute('title', currentLang === 'en' ? 'Change Language' : '언어 변경');
     }
-
     const decBtn = document.getElementById('font-size-dec');
     if (decBtn) {
         decBtn.setAttribute('title', currentLang === 'en' ? 'Decrease' : '작게');
@@ -3466,7 +3467,6 @@ function updateLanguageUI() {
     if (incBtn) {
         incBtn.setAttribute('title', currentLang === 'en' ? 'Increase' : '크게');
     }
-
     const googleLogin = document.getElementById('google-login-menu-item');
     if (googleLogin) {
         googleLogin.setAttribute('title', currentLang === 'en' ? 'Sign In' : '구글 로그인');
@@ -3475,13 +3475,11 @@ function updateLanguageUI() {
             childText.textContent = currentLang === 'en' ? ' Sign In' : ' 구글 로그인';
         }
     }
-
     const toggleManualItem = document.getElementById('toggle-manual-item');
     if (toggleManualItem) {
         toggleManualItem.setAttribute('title', currentLang === 'en' ? 'Show/Hide Guide' : '설명서 보이기/숨기기');
     }
     updateManualToggleUI();
-
     const importTrigger = document.getElementById('import-project-trigger');
     if (importTrigger) {
         importTrigger.setAttribute('title', currentLang === 'en' ? 'Import backup file' : '백업 파일 불러오기');
@@ -3490,7 +3488,6 @@ function updateLanguageUI() {
             childText.textContent = currentLang === 'en' ? ' Import Backup (.json)' : ' 백업 불러오기 (.json)';
         }
     }
-
     const exportProject = document.getElementById('export-project');
     if (exportProject) {
         exportProject.setAttribute('title', currentLang === 'en' ? 'Download full backup (.json)' : '전체 백업 다운로드 (.json)');
@@ -3499,7 +3496,6 @@ function updateLanguageUI() {
             childText.textContent = currentLang === 'en' ? ' Download Backup (.json)' : ' 백업 다운로드 (.json)';
         }
     }
-
     const exportProjectTxt = document.getElementById('export-project-txt');
     if (exportProjectTxt) {
         exportProjectTxt.setAttribute('title', currentLang === 'en' ? 'Download all manuscripts (.txt)' : '전체 원고 다운로드 (.txt)');
@@ -3508,7 +3504,6 @@ function updateLanguageUI() {
             childText.textContent = currentLang === 'en' ? ' Download Manuscript (.txt)' : ' 전체 원고 다운로드 (.txt)';
         }
     }
-
     const communityMenuItem = document.getElementById('community-menu-item');
     if (communityMenuItem) {
         communityMenuItem.setAttribute('title', currentLang === 'en' ? 'Go to Community' : '커뮤니티 이동');
@@ -3517,7 +3512,6 @@ function updateLanguageUI() {
             childText.textContent = currentLang === 'en' ? ' Community' : ' 커뮤니티';
         }
     }
-
     const editPenname = document.getElementById('edit-penname-item');
     if (editPenname) {
         editPenname.setAttribute('title', currentLang === 'en' ? 'Edit Pen Name' : '필명 수정');
@@ -3526,7 +3520,6 @@ function updateLanguageUI() {
             childText.textContent = currentLang === 'en' ? ' Edit Pen Name' : ' 필명 수정';
         }
     }
-
     const logoutMenu = document.getElementById('logout-menu-item');
     if (logoutMenu) {
         logoutMenu.setAttribute('title', currentLang === 'en' ? 'Sign Out' : '로그아웃');
@@ -3535,12 +3528,352 @@ function updateLanguageUI() {
             childText.textContent = currentLang === 'en' ? ' Sign Out' : ' 로그아웃';
         }
     }
+
+    // Bookshelf Screen
+    const bookshelfTitleEl = document.getElementById('bookshelf-title');
+    if (bookshelfTitleEl) {
+        const sub = bookshelfTitleEl.querySelector('.bookshelf-title-sub');
+        bookshelfTitleEl.childNodes[0].textContent = t.bookshelfTitle;
+        if (sub) {
+            sub.textContent = currentLang === 'en' ? ' (Guide)' : ' (가이드)';
+        }
+    }
+    const bookshelfCommunityBtn = document.getElementById('bookshelf-community-btn');
+    if (bookshelfCommunityBtn) {
+        bookshelfCommunityBtn.setAttribute('title', t.bookshelfCommunityTitle);
+        const textNode = Array.from(bookshelfCommunityBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+        if (textNode) textNode.textContent = ' ' + t.bookshelfCommunity;
+    }
+
+    // Add Book Modal
+    const addDialog = document.getElementById('new-book-dialog');
+    if (addDialog) {
+        const h3 = addDialog.querySelector('h3');
+        if (h3) h3.textContent = t.newBookDialogTitle;
+        const labels = addDialog.querySelectorAll('.dialog-field label');
+        if (labels[0]) labels[0].textContent = t.newBookTitleLabel;
+        if (labels[1]) labels[1].textContent = t.newBookCoverColorLabel;
+        if (labels[2]) labels[2].textContent = t.newBookVisibilityLabel;
+        const titleInput = document.getElementById('new-book-title');
+        if (titleInput) titleInput.setAttribute('placeholder', t.newBookTitlePlaceholder);
+        const pubSpan = addDialog.querySelector('input[value="public"] ~ span');
+        if (pubSpan) pubSpan.textContent = t.newBookVisPublic;
+        const privSpan = addDialog.querySelector('input[value="private"] ~ span');
+        if (privSpan) privSpan.textContent = t.newBookVisPrivate;
+        const cancelBtn = document.getElementById('cancel-new-book');
+        if (cancelBtn) cancelBtn.textContent = t.newBookCancel;
+        const confirmBtn = document.getElementById('confirm-new-book');
+        if (confirmBtn) confirmBtn.textContent = t.newBookConfirm;
+    }
+
+    // Edit Book Modal
+    const editDialog = document.getElementById('edit-book-dialog');
+    if (editDialog) {
+        const h3 = editDialog.querySelector('h3');
+        if (h3) h3.textContent = t.editBookDialogTitle;
+        const labels = editDialog.querySelectorAll('.dialog-field label');
+        if (labels[0]) labels[0].textContent = t.newBookTitleLabel;
+        if (labels[1]) labels[1].textContent = t.newBookCoverColorLabel;
+        if (labels[2]) labels[2].textContent = t.newBookVisibilityLabel;
+        const titleInput = document.getElementById('edit-book-title');
+        if (titleInput) titleInput.setAttribute('placeholder', t.newBookTitlePlaceholder);
+        const pubSpan = editDialog.querySelector('input[value="public"] ~ span');
+        if (pubSpan) pubSpan.textContent = t.newBookVisPublic;
+        const privSpan = editDialog.querySelector('input[value="private"] ~ span');
+        if (privSpan) privSpan.textContent = t.newBookVisPrivate;
+        const cancelBtn = document.getElementById('cancel-edit-book');
+        if (cancelBtn) cancelBtn.textContent = t.newBookCancel;
+        const confirmBtn = document.getElementById('confirm-edit-book');
+        if (confirmBtn) confirmBtn.textContent = t.editBookConfirm;
+    }
+
+    // Pen Name Modal
+    const pennameDialog = document.getElementById('penname-dialog');
+    if (pennameDialog) {
+        const h3 = pennameDialog.querySelector('h3');
+        if (h3) h3.textContent = t.pennameDialogTitle;
+        const desc = pennameDialog.querySelector('p');
+        if (desc) desc.textContent = t.pennameDialogDesc;
+        const label = pennameDialog.querySelector('.dialog-field label');
+        if (label) label.textContent = t.pennameLabel;
+        const input = document.getElementById('new-penname');
+        if (input) input.setAttribute('placeholder', t.pennamePlaceholder);
+        const confirmBtn = document.getElementById('confirm-penname');
+        if (confirmBtn) confirmBtn.textContent = t.pennameConfirm;
+    }
+
+    // Preview Book Modal
+    const previewBook = document.getElementById('preview-book-dialog');
+    if (previewBook) {
+        const closeBtn = document.getElementById('close-preview-book');
+        if (closeBtn) closeBtn.textContent = t.previewBookClose;
+        const h4s = previewBook.querySelectorAll('h4');
+        if (h4s[0]) h4s[0].textContent = t.previewBookSynopsis;
+        if (h4s[1]) h4s[1].textContent = t.previewBookChapters;
+        const syn = document.getElementById('preview-book-synopsis');
+        if (syn && (syn.textContent === '시놉시스가 없습니다.' || syn.textContent === 'No synopsis available.')) {
+            syn.textContent = t.previewBookNoSynopsis;
+        }
+    }
+
+    // Read Chapter Modal
+    const previewChapter = document.getElementById('preview-chapter-dialog');
+    if (previewChapter) {
+        const closeBtn = document.getElementById('close-preview-chapter');
+        if (closeBtn) closeBtn.textContent = t.previewChapterClose;
+    }
+
+    // Lounge Post Modal
+    const postDialog = document.getElementById('new-post-dialog');
+    if (postDialog) {
+        const h3 = postDialog.querySelector('h3');
+        if (h3) h3.textContent = t.newLoungePostTitle;
+        const label = postDialog.querySelector('.dialog-field label');
+        if (label) label.textContent = t.newLoungePostLabel;
+        const textarea = document.getElementById('new-post-content');
+        if (textarea) textarea.setAttribute('placeholder', t.newLoungePostPlaceholder);
+        const cancelBtn = document.getElementById('cancel-new-post');
+        if (cancelBtn) cancelBtn.textContent = t.newLoungePostCancel;
+        const confirmBtn = document.getElementById('confirm-new-post');
+        if (confirmBtn) confirmBtn.textContent = t.newLoungePostConfirm;
+    }
+
+    // Overview Screen
+    const projectTitleLabel = document.querySelector('label[for="project-title"]');
+    if (projectTitleLabel) projectTitleLabel.textContent = t.overviewTitleLabel;
+    if (projectTitleInput) projectTitleInput.setAttribute('placeholder', t.overviewTitlePlaceholder);
+    const editProjSettingsBtn = document.getElementById('edit-project-settings-btn');
+    if (editProjSettingsBtn) {
+        editProjSettingsBtn.textContent = t.overviewEditSettings;
+        editProjSettingsBtn.setAttribute('title', t.overviewEditSettingsTitle);
+    }
+    const projectSynopsisLabel = document.querySelector('label[for="project-synopsis"]');
+    if (projectSynopsisLabel) projectSynopsisLabel.textContent = t.overviewSynopsisLabel;
+    if (projectSynopsisTextarea) projectSynopsisTextarea.setAttribute('placeholder', t.overviewSynopsisPlaceholder);
+    const projectIdeasLabel = document.querySelector('label[for="project-ideas"]');
+    if (projectIdeasLabel) projectIdeasLabel.textContent = t.overviewIdeasLabel;
+    if (projectIdeasTextarea) projectIdeasTextarea.setAttribute('placeholder', t.overviewIdeasPlaceholder);
+    const chaptersPanelTitle = document.querySelector('#chapters-panel .panel-title');
+    if (chaptersPanelTitle) chaptersPanelTitle.textContent = t.overviewChaptersTitle;
+    const addChapterBtn = document.getElementById('add-chapter-btn');
+    if (addChapterBtn) {
+        addChapterBtn.innerHTML = `<span class="plus-icon">+</span>${t.overviewAddChapter}`;
+    }
+
+    // Writing Screen
+    const backBtn = document.getElementById('back-to-overview');
+    if (backBtn) {
+        backBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" class="arrow-icon">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            ${t.editorBack}
+        `;
+    }
+    const copyBtn = document.getElementById('copy-chapter-btn');
+    if (copyBtn) {
+        copyBtn.setAttribute('title', t.editorCopyTitle);
+        copyBtn.querySelector('span').textContent = t.editorCopy.trim();
+    }
+    const spellBtn = document.getElementById('spell-check-btn');
+    if (spellBtn) {
+        spellBtn.textContent = t.editorSpell;
+        spellBtn.setAttribute('title', t.editorSpellTitle);
+    }
+    const exportBtn = document.getElementById('export-chapter');
+    if (exportBtn) {
+        exportBtn.textContent = t.editorExport;
+        exportBtn.setAttribute('title', t.editorExportTitle);
+    }
+    const deleteBtn = document.getElementById('delete-chapter');
+    if (deleteBtn) {
+        deleteBtn.textContent = t.editorDelete;
+        deleteBtn.setAttribute('title', t.editorDeleteTitle);
+    }
+    if (chapterTitleInput) chapterTitleInput.setAttribute('placeholder', t.editorTitlePlaceholder);
+    if (chapterContentTextarea) chapterContentTextarea.setAttribute('placeholder', t.editorContentPlaceholder);
+
+    const statLabels = document.querySelectorAll('.stat-group .stat-label');
+    if (statLabels[0]) statLabels[0].textContent = t.editorStatIncl;
+    if (statLabels[1]) statLabels[1].textContent = t.editorStatExcl;
+    if (statLabels[2]) statLabels[2].textContent = t.editorStatWords;
+
+    // Community Screen
+    const communityTitleEl = document.querySelector('.community-title');
+    if (communityTitleEl) communityTitleEl.textContent = t.communityTitle;
+    const communitySubtitleEl = document.querySelector('.community-subtitle');
+    if (communitySubtitleEl) communitySubtitleEl.textContent = t.communitySubtitle;
+    const tabRankingBtn = document.getElementById('tab-ranking-btn');
+    if (tabRankingBtn) tabRankingBtn.textContent = t.communityTabRanking;
+    const tabLoungeBtn = document.getElementById('tab-lounge-btn');
+    if (tabLoungeBtn) {
+        const badge = tabLoungeBtn.querySelector('#lounge-new-badge');
+        tabLoungeBtn.childNodes[0].textContent = t.communityTabLounge;
+    }
+    const writePostBtn = document.getElementById('write-post-btn');
+    if (writePostBtn) {
+        writePostBtn.innerHTML = `<span class="plus-icon">+</span>${t.communityLoungeWrite}`;
+    }
+
+    // Refresh dynamic lists to apply new language string fallbacks
+    if (bookshelfScreen && bookshelfScreen.classList.contains('active')) {
+        renderBookshelf();
+    }
+    if (overviewScreen && overviewScreen.classList.contains('active')) {
+        renderChapterList();
+        updateSynopsisCount();
+        updateIdeasCount();
+    }
+    if (writingScreen && writingScreen.classList.contains('active')) {
+        updateEditorCounts();
+    }
 }
 
 function loadLanguage() {
     currentLang = storage.getItem('monote-lang') || 'ko';
     updateLanguageUI();
 }
+
+const i18n = {
+    ko: {
+        bookshelfTitle: "내 책장",
+        bookshelfCommunity: "커뮤니티",
+        bookshelfCommunityTitle: "커뮤니티 이동",
+        newBookDialogTitle: "새 작품 추가",
+        newBookTitleLabel: "작품 제목",
+        newBookTitlePlaceholder: "제목을 입력하세요...",
+        newBookCoverColorLabel: "표지 색상",
+        newBookVisibilityLabel: "공개 설정",
+        newBookVisPublic: "공개",
+        newBookVisPrivate: "비공개",
+        newBookCancel: "취소",
+        newBookConfirm: "생성",
+        editBookDialogTitle: "작품 설정 수정",
+        editBookConfirm: "저장",
+        pennameDialogTitle: "작가 필명 설정",
+        pennameDialogDesc: "Monote에서 작품 표지와 헤더에 구글 계정이름 대신 표시될 필명을 설정해 주세요. 언제든지 재설정할 수 있습니다.",
+        pennameLabel: "필명",
+        pennamePlaceholder: "필명을 입력하세요...",
+        pennameConfirm: "설정 완료",
+        previewBookClose: "닫기",
+        previewBookSynopsis: "전체 시놉시스",
+        previewBookChapters: "목차 및 원고 보기",
+        previewBookNoSynopsis: "시놉시스가 없습니다.",
+        previewChapterClose: "닫기",
+        newLoungePostTitle: "라운지 글쓰기",
+        newLoungePostLabel: "글 내용",
+        newLoungePostPlaceholder: "소설에 대한 피드백 요청, 글쓰기 꿀팁 등 작가들과 나누고 싶은 이야기를 적어주세요...",
+        newLoungePostCancel: "취소",
+        newLoungePostConfirm: "작성 완료",
+        overviewTitleLabel: "작품 제목",
+        overviewTitlePlaceholder: "작품의 이름을 지어주세요...",
+        overviewEditSettings: "✎ 설정",
+        overviewEditSettingsTitle: "작품 설정 수정",
+        overviewSynopsisLabel: "전체 시놉시스 / 개요",
+        overviewSynopsisPlaceholder: "여기에 이야기의 시작과 끝, 핵심 줄거리를 기록하세요...",
+        overviewIdeasLabel: "아이디어 노트",
+        overviewIdeasPlaceholder: "떠오르는 아이디어, 인물 설정, 배경 지식 등을 자유롭게 메모하세요...",
+        overviewChaptersTitle: "목차 및 챕터",
+        overviewAddChapter: " 챕터 추가",
+        overviewEmptyChapters: "아직 생성된 챕터가 없습니다. 오른쪽 상단의 '+ 챕터 추가' 버튼을 눌러 첫 글을 시작해 보세요.",
+        editorBack: " 개요",
+        editorCopy: " 복사",
+        editorCopyTitle: "제목과 본문 복사",
+        editorSpell: "맞춤법 검사",
+        editorSpellTitle: "맞춤법 검사기 열기 (본문 자동 복사)",
+        editorExport: "내보내기 (.txt)",
+        editorExportTitle: "텍스트 파일로 내보내기",
+        editorDelete: "삭제",
+        editorDeleteTitle: "챕터 삭제",
+        editorTitlePlaceholder: "챕터 제목을 입력하세요...",
+        editorContentPlaceholder: "이곳에 이야기를 펼쳐나가세요...",
+        editorStatIncl: "공백 포함:",
+        editorStatExcl: "공백 제외:",
+        editorStatWords: "단어 수:",
+        communityTitle: "Monote 커뮤니티",
+        communitySubtitle: "작가들의 교류와 작품 공유를 위한 아늑한 광장",
+        communityTabRanking: "명예의 전당 (랭킹)",
+        communityTabLounge: "작가 라운지",
+        communityLoungeWrite: " 라운지 글쓰기",
+        syncPending: "대기 중",
+        syncSynced: "동기화 완료",
+        syncSyncing: "동기화 중...",
+        syncLoading: "불러오는 중...",
+        syncFailed: "동기화 실패",
+        syncLocalMode: "로컬 모드",
+        syncUpdated: "동기화 완료"
+    },
+    en: {
+        bookshelfTitle: "My Bookshelf",
+        bookshelfCommunity: "Community",
+        bookshelfCommunityTitle: "Go to Community",
+        newBookDialogTitle: "Add New Book",
+        newBookTitleLabel: "Book Title",
+        newBookTitlePlaceholder: "Enter title...",
+        newBookCoverColorLabel: "Cover Color",
+        newBookVisibilityLabel: "Visibility Settings",
+        newBookVisPublic: "Public",
+        newBookVisPrivate: "Private",
+        newBookCancel: "Cancel",
+        newBookConfirm: "Create",
+        editBookDialogTitle: "Edit Book Settings",
+        editBookConfirm: "Save",
+        pennameDialogTitle: "Set Pen Name",
+        pennameDialogDesc: "Please set a pen name to display on book covers and the header in Monote instead of your Google account name. You can change it anytime.",
+        pennameLabel: "Pen Name",
+        pennamePlaceholder: "Enter pen name...",
+        pennameConfirm: "Save",
+        previewBookClose: "Close",
+        previewBookSynopsis: "Synopsis",
+        previewBookChapters: "Table of Contents",
+        previewBookNoSynopsis: "No synopsis available.",
+        previewChapterClose: "Close",
+        newLoungePostTitle: "Lounge Post",
+        newLoungePostLabel: "Post Content",
+        newLoungePostPlaceholder: "Share feedback requests, writing tips, or anything else you'd like to share with fellow writers...",
+        newLoungePostCancel: "Cancel",
+        newLoungePostConfirm: "Post",
+        overviewTitleLabel: "Book Title",
+        overviewTitlePlaceholder: "Give your work a title...",
+        overviewEditSettings: "✎ Settings",
+        overviewEditSettingsTitle: "Edit Book Settings",
+        overviewSynopsisLabel: "Synopsis / Outline",
+        overviewSynopsisPlaceholder: "Record the beginning, end, and core plot of your story here...",
+        overviewIdeasLabel: "Idea Note",
+        overviewIdeasPlaceholder: "Jot down rising ideas, character settings, background lore, etc. freely...",
+        overviewChaptersTitle: "Table of Contents",
+        overviewAddChapter: " Add Chapter",
+        overviewEmptyChapters: "No chapters created yet. Click '+ Add Chapter' in the top right to start your first writing.",
+        editorBack: " Overview",
+        editorCopy: " Copy",
+        editorCopyTitle: "Copy Title and Content",
+        editorSpell: "Spell Check",
+        editorSpellTitle: "Open Spell Checker (auto-copies text)",
+        editorExport: "Export (.txt)",
+        editorExportTitle: "Export as Text File",
+        editorDelete: "Delete",
+        editorDeleteTitle: "Delete Chapter",
+        editorTitlePlaceholder: "Enter chapter title...",
+        editorContentPlaceholder: "Unfold your story here...",
+        editorStatIncl: "Chars (incl. spaces):",
+        editorStatExcl: "Chars (excl. spaces):",
+        editorStatWords: "Words:",
+        communityTitle: "Monote Community",
+        communitySubtitle: "A cozy square for writers to connect and share works",
+        communityTabRanking: "Hall of Fame (Ranking)",
+        communityTabLounge: "Writers' Lounge",
+        communityLoungeWrite: " Write Lounge Post",
+        syncPending: "Pending",
+        syncSynced: "Synced",
+        syncSyncing: "Syncing...",
+        syncLoading: "Loading...",
+        syncFailed: "Sync Failed",
+        syncLocalMode: "Local Mode",
+        syncUpdated: "Synced"
+    }
+};
 
 // Show edit book dialog
 function showEditBookDialog() {
