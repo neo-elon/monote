@@ -931,7 +931,7 @@ input, textarea {
 .cover-color-picker {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: space-between;
     padding: 0.5rem 0;
 }
 
