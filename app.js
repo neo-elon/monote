@@ -500,6 +500,7 @@ function renderChapterList() {
                 <div class="tree-controls">
                     <button class="btn-tree-lvl outdent-btn" title="들여쓰기 축소">◀</button>
                     <button class="btn-tree-lvl indent-btn" title="들여쓰기 확대">▶</button>
+                    <button class="btn-tree-lvl rename-btn" title="이름 변경">✎</button>
                 </div>
                 <span class="chapter-num-badge">${prefix}</span>
                 <span class="chapter-card-title">${chapter.title || '제목 없음'}</span>
@@ -523,6 +524,7 @@ function renderChapterList() {
         // Outdent & Indent Button Event Listeners
         const outdentBtn = card.querySelector('.outdent-btn');
         const indentBtn = card.querySelector('.indent-btn');
+        const renameBtn = card.querySelector('.rename-btn');
 
         outdentBtn.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent card click
@@ -537,6 +539,26 @@ function renderChapterList() {
             e.stopPropagation(); // Prevent card click
             if (chapter.level < 2) {
                 chapter.level++;
+                triggerSave();
+                renderChapterList();
+            }
+        });
+
+        renameBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card click
+            const newTitle = prompt("챕터 제목을 변경하시겠습니까?", chapter.title || '');
+            if (newTitle !== null) {
+                const trimmed = newTitle.trim();
+                chapter.title = trimmed || '제목 없음';
+                
+                // If this chapter is currently active in the editor, update the editor's title input too
+                if (activeChapterId === chapter.id) {
+                    const chapterTitleInput = document.getElementById('chapter-title');
+                    if (chapterTitleInput) {
+                        chapterTitleInput.value = chapter.title;
+                    }
+                }
+                
                 triggerSave();
                 renderChapterList();
             }
