@@ -846,8 +846,8 @@ body {
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
     padding: 2rem;
-    width: 100%;
-    max-width: 400px;
+    width: 90%;
+    max-width: 350px;
     box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
