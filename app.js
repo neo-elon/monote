@@ -525,11 +525,11 @@ function renderChapterList() {
         card.innerHTML = `
             <div class="tree-indent-wrapper">
                 ${treeLinesHtml}
+                <span class="chapter-num-badge">${prefix}</span>
+                <span class="chapter-card-title">${chapter.title || '제목 없음'}</span>
                 <div class="tree-controls">
                     <button class="btn-tree-lvl rename-btn" title="이름 변경">✎</button>
                 </div>
-                <span class="chapter-num-badge">${prefix}</span>
-                <span class="chapter-card-title">${chapter.title || '제목 없음'}</span>
             </div>
             <span class="char-counter">${charCount.toLocaleString()}자</span>
         `;

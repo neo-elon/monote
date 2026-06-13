@@ -1085,8 +1085,8 @@ body {
     }
     .tree-controls {
         opacity: 0.85 !important;
-        margin-left: 0;
-        margin-right: 0.2rem;
+        margin-left: 0.35rem;
+        margin-right: 0;
     }
     .tree-lines {
         margin-right: 0.2rem;
