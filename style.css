@@ -808,6 +808,22 @@ body {
     color: #fbfbf9;
 }
 
+.book-cover.cover-olive {
+    background: #4d594b;
+    color: #f7f5f0;
+}
+.book-cover.cover-olive .book-cover-title {
+    color: #f7f5f0;
+}
+
+.book-cover.cover-navy {
+    background: #2e3b4e;
+    color: #f0f3f7;
+}
+.book-cover.cover-navy .book-cover-title {
+    color: #f0f3f7;
+}
+
 /* Delete Book Button on Hover */
 .delete-book-btn {
     position: absolute;
@@ -923,6 +939,8 @@ body {
 .color-option.ivory span { background-color: #f7f3e9; border-color: #e2ded5; }
 .color-option.slate span { background-color: #5d6770; }
 .color-option.terracotta span { background-color: #b56b57; }
+.color-option.olive span { background-color: #4d594b; }
+.color-option.navy span { background-color: #2e3b4e; }
 
 .color-option.active span,
 .color-option:hover span {
