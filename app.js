@@ -79,6 +79,7 @@ const themeToggle = document.getElementById('theme-toggle');
 const sunIcon = document.querySelector('.sun-icon');
 const moonIcon = document.querySelector('.moon-icon');
 const exportProjectBtn = document.getElementById('export-project');
+const exportProjectTxtBtn = document.getElementById('export-project-txt');
 const importProjectTrigger = document.getElementById('import-project-trigger');
 const importProjectFile = document.getElementById('import-project-file');
 const goToBookshelfBtn = document.getElementById('logo-area');
@@ -111,6 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProjects();
     setupEventListeners();
     renderBookshelf();
+    // Initially in bookshelf mode: show import, hide project-specific exports
+    if (importProjectTrigger) importProjectTrigger.style.display = '';
+    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+    if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
 });
 
 // Load Theme from LocalStorage
@@ -861,6 +866,11 @@ function updateEditorCounts(text) {
 
 // View Switches
 function showWritingScreen() {
+    // Hide JSON import/export in project screens, show TXT export
+    if (importProjectTrigger) importProjectTrigger.style.display = 'none';
+    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+    if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = '';
+
     // Move chapters-panel to editor sidebar
     const chaptersPanel = document.getElementById('chapters-panel');
     const editorSidebar = document.getElementById('editor-sidebar');
@@ -881,6 +891,11 @@ function showWritingScreen() {
 }
 
 function showOverviewScreen() {
+    // Hide JSON import/export in project screens, show TXT export
+    if (importProjectTrigger) importProjectTrigger.style.display = 'none';
+    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+    if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = '';
+
     // Move chapters-panel back to overview grid
     const chaptersPanel = document.getElementById('chapters-panel');
     const overviewGrid = document.querySelector('.overview-grid');
@@ -907,6 +922,10 @@ function showBookshelfScreen() {
     activeProjectId = null;
     project = null;
     
+    // In bookshelf screen: show JSON import, hide project-specific exports
+    if (importProjectTrigger) importProjectTrigger.style.display = '';
+    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+    if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
     
     overviewScreen.classList.remove('active');
     writingScreen.classList.remove('active');
