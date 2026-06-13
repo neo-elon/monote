@@ -1618,7 +1618,7 @@ async function handleLogout() {
         let offlineProjects = [];
         if (savedProjects) {
             try {
-                offlineProjects = JSON.parse(savedProjects).filter(p => !p.user_id);
+                offlineProjects = JSON.parse(savedProjects).filter(p => !p.user_id || p.id === "monote-manual-guide");
             } catch (e) {
                 console.error("Failed to parse projects during logout:", e);
             }
