@@ -113,11 +113,11 @@ const saveStatus = document.getElementById('save-status');
 // Community Elements
 const communityScreen = document.getElementById('community-screen');
 const communityMenuItem = document.getElementById('community-menu-item');
-const tabLibraryBtn = document.getElementById('tab-library-btn');
+const tabRankingBtn = document.getElementById('tab-ranking-btn');
 const tabLoungeBtn = document.getElementById('tab-lounge-btn');
-const libraryTabContent = document.getElementById('library-tab-content');
+const rankingTabContent = document.getElementById('ranking-tab-content');
 const loungeTabContent = document.getElementById('lounge-tab-content');
-const publicBooksGrid = document.getElementById('public-books-grid');
+const rankingContainer = document.getElementById('ranking-container');
 const loungeFeed = document.getElementById('lounge-feed');
 const writePostBtn = document.getElementById('write-post-btn');
 const newPostDialog = document.getElementById('new-post-dialog');
@@ -511,8 +511,8 @@ function setupEventListeners() {
     if (bookshelfCommunityBtn) {
         bookshelfCommunityBtn.addEventListener('click', showCommunityScreen);
     }
-    if (tabLibraryBtn) {
-        tabLibraryBtn.addEventListener('click', () => switchCommunityTab('library'));
+    if (tabRankingBtn) {
+        tabRankingBtn.addEventListener('click', () => switchCommunityTab('ranking'));
     }
     if (tabLoungeBtn) {
         tabLoungeBtn.addEventListener('click', () => switchCommunityTab('lounge'));
@@ -1153,35 +1153,35 @@ function showCommunityScreen() {
             communityScreen.style.display = 'block';
             setTimeout(() => {
                 communityScreen.classList.add('active');
-                switchCommunityTab('library');
+                switchCommunityTab('ranking');
             }, 50);
         }, 300);
     }
 }
 
 function switchCommunityTab(tab) {
-    if (tab === 'library') {
-        tabLibraryBtn.classList.add('active');
+    if (tab === 'ranking') {
+        tabRankingBtn.classList.add('active');
         tabLoungeBtn.classList.remove('active');
-        tabLibraryBtn.style.borderBottomColor = 'var(--text-primary)';
-        tabLibraryBtn.style.color = 'var(--text-primary)';
+        tabRankingBtn.style.borderBottomColor = 'var(--text-primary)';
+        tabRankingBtn.style.color = 'var(--text-primary)';
         tabLoungeBtn.style.borderBottomColor = 'transparent';
         tabLoungeBtn.style.color = 'var(--text-secondary)';
         
-        libraryTabContent.style.display = 'block';
+        rankingTabContent.style.display = 'block';
         loungeTabContent.style.display = 'none';
         writePostBtn.style.display = 'none';
         
-        renderPublicLibrary();
+        renderRanking();
     } else {
-        tabLibraryBtn.classList.remove('active');
+        tabRankingBtn.classList.remove('active');
         tabLoungeBtn.classList.add('active');
-        tabLibraryBtn.style.borderBottomColor = 'transparent';
-        tabLibraryBtn.style.color = 'var(--text-secondary)';
+        tabRankingBtn.style.borderBottomColor = 'transparent';
+        tabRankingBtn.style.color = 'var(--text-secondary)';
         tabLoungeBtn.style.borderBottomColor = 'var(--text-primary)';
         tabLoungeBtn.style.color = 'var(--text-primary)';
         
-        libraryTabContent.style.display = 'none';
+        rankingTabContent.style.display = 'none';
         loungeTabContent.style.display = 'block';
         writePostBtn.style.display = 'block';
         
@@ -1189,102 +1189,131 @@ function switchCommunityTab(tab) {
     }
 }
 
-const mockPublicBooks = [
-    {
-        id: "mock-book-1",
-        title: "노인과 바다 (낭독 에디션)",
-        authorName: "어니스트 헤밍웨이",
-        coverColor: "slate",
-        synopsis: "쿠바의 노령 어부 산티아고가 멕시코 만류에서 거대한 마를린과 벌이는 84일간의 사투, 그리고 바다에서의 고독한 투쟁 이야기.",
-        chapters: [
-            { id: "m1-c1", title: "1장. 바다와 노인", content: "그는 멕시코 만류에서 돛단배를 타고 홀로 고기잡이를 하는 노인이었다. 84일 동안 그는 고기를 단 한 마리도 잡지 못했다..." },
-            { id: "m1-c2", title: "2장. 거대한 물고기", content: "마침내 낚싯줄 중 하나가 팽팽하게 당겨졌다. 노인은 직감했다. 이것은 지금까지 본 적 없는 거대한 녀석이라는 것을..." }
-        ]
-    },
-    {
-        id: "mock-book-2",
-        title: "1984 (새벽의 기록)",
-        authorName: "조지 오웰",
-        coverColor: "charcoal",
-        synopsis: "전체주의 감시 사회 체제인 오세아니아에서 당의 통제에 저항하며 인간적인 감정을 지키려 애쓰는 윈스턴 스미스의 비극적 분투.",
-        chapters: [
-            { id: "m2-c1", title: "1장. 빅 브라더가 보고 있다", content: "맑고 차가운 4월의 어느 날이었고, 시계들은 13시를 치고 있었다. 윈스턴 스미스는 거센 바람을 피하려 턱을 가슴팍에 묻고..." }
-        ]
-    },
-    {
-        id: "mock-book-3",
-        title: "자기만의 방",
-        authorName: "버지니아 울프",
-        coverColor: "linen",
-        synopsis: "여성이 픽션을 쓰기 위해서 필요한 것은 무엇인가? 경제적 자립을 뜻하는 돈, 그리고 온전히 몰입할 수 있는 자기만의 방.",
-        chapters: [
-            { id: "m3-c1", title: "1장. 여성이 소설을 쓰기 위하여", content: "여성과 소설이라는 주제에 대해 생각할 때, 나는 강가에 앉아 생각에 잠겼습니다. 여성이 소설을 쓰려면 돈과 자기만의 방이 있어야 한다는 생각이 스쳤습니다..." }
-        ]
-    }
-];
+function renderRanking() {
+    if (!rankingContainer) return;
+    rankingContainer.innerHTML = '';
 
-async function renderPublicLibrary() {
-    if (!publicBooksGrid) return;
-    publicBooksGrid.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary); width: 100%;">서재를 불러오는 중...</div>';
-    
-    let dbPublicBooks = [];
-    if (supabaseClient) {
-        try {
-            const { data, error } = await supabaseClient
-                .from('open_projects')
-                .select('*');
-            if (data && !error) {
-                dbPublicBooks = data
-                    .filter(dbProj => {
-                        const dbColor = dbProj.cover_color || '';
-                        return dbColor.includes(':public') && dbProj.id !== "monote-manual-guide";
-                    })
-                    .map(dbProj => {
-                        const dbColor = dbProj.cover_color || 'charcoal';
-                        const coverColor = dbColor.split(':')[0];
-                        return {
-                            id: dbProj.id,
-                            title: dbProj.title,
-                            authorName: dbProj.author_name || "익명의 작가",
-                            coverColor: coverColor,
-                            synopsis: dbProj.synopsis || '등록된 시놉시스가 없습니다.',
-                            chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || [])
-                        };
-                    });
-            }
-        } catch (e) {
-            console.error("Failed to fetch public projects from Supabase:", e);
-        }
-    }
-    
-    const allPublicBooks = [...dbPublicBooks, ...mockPublicBooks];
-    
-    publicBooksGrid.innerHTML = '';
-    
-    allPublicBooks.forEach(book => {
-        const bookCard = document.createElement('div');
-        bookCard.className = 'book-card';
-        bookCard.style.cursor = 'pointer';
-        
-        const totalCharCount = (book.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
-        
-        bookCard.innerHTML = `
-            <div class="book-cover cover-${book.coverColor || 'charcoal'}">
-                <div class="book-cover-title">${book.title || '제목 없음'}</div>
-                <div class="book-cover-footer-group">
-                    <div class="book-cover-charcount">${totalCharCount.toLocaleString()}자</div>
-                    <div class="book-cover-author">${book.authorName || '작가 미상'}</div>
-                </div>
-            </div>
-            <div class="book-card-title-under">${book.title || '제목 없음'}</div>
-        `;
-        
-        bookCard.addEventListener('click', () => {
-            showPreviewBookDialog(book);
-        });
-        
-        publicBooksGrid.appendChild(bookCard);
+    // 1. Calculate Novel Character Count Ranking
+    const userBooks = projects.map(proj => {
+        const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+        const author = currentUser?.user_metadata?.pen_name || "나 (작가)";
+        return {
+            title: proj.title || '제목 없음',
+            author: author,
+            charCount: charCount
+        };
     });
+
+    const classicBooks = [
+        { title: "1984 (새벽의 기록)", author: "조지 오웰", charCount: 78420 },
+        { title: "자기만의 방", author: "버지니아 울프", charCount: 42150 },
+        { title: "노인과 바다 (낭독 에디션)", author: "어니스트 헤밍웨이", charCount: 35890 },
+        { title: "날개 (초판본)", author: "이상", charCount: 12450 }
+    ];
+
+    const allBooks = [...userBooks, ...classicBooks]
+        .filter(b => b.charCount > 0)
+        .sort((a, b) => b.charCount - a.charCount);
+
+    // 2. Calculate Author Likes Ranking
+    const posts = getLoungePosts();
+    const authorLikesMap = {};
+    posts.forEach(post => {
+        const author = post.author || "익명의 작가";
+        authorLikesMap[author] = (authorLikesMap[author] || 0) + (post.likes || 0);
+    });
+    const authorRankings = Object.keys(authorLikesMap).map(author => {
+        return {
+            author: author,
+            likes: authorLikesMap[author]
+        };
+    }).sort((a, b) => b.likes - a.likes);
+
+    // Build Book Ranking HTML
+    let bookRankingHtml = `
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 6px; box-shadow: var(--shadow-sm);">
+            <h3 style="font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700; margin: 0 0 1.2rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
+                ✍️ 실시간 집필량 랭킹 (명예의 전당)
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+    `;
+
+    if (allBooks.length === 0) {
+        bookRankingHtml += `<div style="text-align: center; font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 1rem;">글을 작성한 작품이 아직 없습니다.</div>`;
+    } else {
+        const maxChar = allBooks[0].charCount;
+        allBooks.forEach((book, index) => {
+            let badge = `<span style="font-weight: 700; width: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">${index + 1}</span>`;
+            if (index === 0) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥇</span>`;
+            else if (index === 1) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥈</span>`;
+            else if (index === 2) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥉</span>`;
+
+            const percentage = maxChar > 0 ? (book.charCount / maxChar) * 100 : 0;
+
+            bookRankingHtml += `
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1;">
+                            ${badge}
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-family: var(--font-serif); font-size: 0.9rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${book.title}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.05rem;">${book.author}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-primary); white-space: nowrap;">
+                            ${book.charCount.toLocaleString()}자
+                        </div>
+                    </div>
+                    <div style="height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-left: 30px;">
+                        <div style="height: 100%; width: ${percentage}%; background: var(--text-primary); opacity: 0.25; border-radius: 3px; transition: width 0.5s ease-out;"></div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    bookRankingHtml += `
+            </div>
+        </div>
+    `;
+
+    // Build Author Likes Ranking HTML
+    let authorRankingHtml = `
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 6px; box-shadow: var(--shadow-sm); margin-top: 1.5rem;">
+            <h3 style="font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700; margin: 0 0 1.2rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
+                ❤️ 인기 작가 랭킹 (라운지 추천 수)
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+    `;
+
+    if (authorRankings.length === 0) {
+        authorRankingHtml += `<div style="text-align: center; font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 1rem;">라운지에 활성화된 작가가 없습니다.</div>`;
+    } else {
+        authorRankings.forEach((author, index) => {
+            let badge = `<span style="font-weight: 700; width: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">${index + 1}</span>`;
+            if (index === 0) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥇</span>`;
+            else if (index === 1) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥈</span>`;
+            else if (index === 2) badge = `<span style="font-size: 1.15rem; width: 24px; text-align: center;">🥉</span>`;
+
+            authorRankingHtml += `
+                <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        ${badge}
+                        <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${author.author}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.2rem;">
+                        <span>추천</span>
+                        <strong style="color: var(--accent-color); font-weight: 600;">${author.likes}</strong>개
+                    </div>
+                </div>
+            `;
+        });
+    }
+    authorRankingHtml += `
+            </div>
+        </div>
+    `;
+
+    rankingContainer.innerHTML = bookRankingHtml + authorRankingHtml;
 }
 
 const defaultLoungePosts = [
