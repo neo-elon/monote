@@ -33,6 +33,7 @@ let activeProjectId = null;
 let project = null; // Active project reference
 let activeChapterId = null;
 let saveTimeout = null;
+let currentUser = null;
 
 // Supabase Config & Initialization
 const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
@@ -109,6 +110,9 @@ const saveStatus = document.getElementById('save-status');
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async () => {
     loadTheme();
+    if (supabaseClient) {
+        await checkAuthState();
+    }
     await loadProjects();
     setupEventListeners();
     renderBookshelf();
@@ -1363,5 +1367,111 @@ function restoreActiveState() {
                 showOverviewScreen();
             }
         }
+    }
+}
+
+// Google Auth State Management
+async function checkAuthState() {
+    if (!supabaseClient) return;
+
+    try {
+        // Get initial session
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        
+        updateAuthUI(session ? session.user : null);
+
+        // Listen for auth changes
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            const user = session ? session.user : null;
+            updateAuthUI(user);
+            
+            if (event === 'SIGNED_IN') {
+                await loadProjects();
+            } else if (event === 'SIGNED_OUT') {
+                await loadProjects();
+            }
+        });
+    } catch (err) {
+        console.error('Error checking auth state:', err);
+    }
+}
+
+function updateAuthUI(user) {
+    currentUser = user;
+    const authContainer = document.getElementById('auth-container');
+    if (!authContainer) return;
+
+    if (user) {
+        // User logged in
+        const name = user.user_metadata?.full_name || user.email || '사용자';
+        const avatarUrl = user.user_metadata?.avatar_url;
+
+        let avatarHtml = '';
+        if (avatarUrl) {
+            avatarHtml = `<img src="${avatarUrl}" alt="${name}" class="user-avatar" />`;
+        } else {
+            avatarHtml = `<div class="user-avatar-placeholder">${name.charAt(0)}</div>`;
+        }
+
+        authContainer.innerHTML = `
+            <div class="user-profile">
+                ${avatarHtml}
+                <span class="user-name">${name}</span>
+            </div>
+            <button id="logout-btn" class="btn-flat btn-sm btn-danger-outline" title="로그아웃">
+                로그아웃
+            </button>
+        `;
+
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', handleLogout);
+        }
+    } else {
+        // User logged out
+        authContainer.innerHTML = `
+            <button id="google-login-btn" class="btn-flat btn-sm google-login-btn">
+                <svg class="google-icon" viewBox="0 0 24 24" width="16" height="16">
+                    <path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.11 0-5.626-2.515-5.626-5.629 0-3.11 2.516-5.63 5.626-5.63 1.346 0 2.578.472 3.55 1.258l3.12-3.12C18.665 3.55 15.65 2.25 12.24 2.25 6.86 2.25 2.5 6.61 2.5 12s4.36 9.75 9.74 9.75c5.31 0 9.74-3.9 9.74-9.75 0-.585-.06-1.17-.18-1.715H12.24z"/>
+                </svg>
+                구글 로그인
+            </button>
+        `;
+
+        const loginBtn = document.getElementById('google-login-btn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', handleGoogleLogin);
+        }
+    }
+}
+
+async function handleGoogleLogin() {
+    if (!supabaseClient) {
+        alert("Supabase Client가 초기화되지 않았습니다.");
+        return;
+    }
+    try {
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) throw error;
+    } catch (err) {
+        console.error("Login failed:", err);
+        alert(`로그인에 실패했습니다: ${err.message || err}`);
+    }
+}
+
+async function handleLogout() {
+    if (!supabaseClient) return;
+    try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+    } catch (err) {
+        console.error("Logout failed:", err);
+        alert(`로그아웃에 실패했습니다: ${err.message || err}`);
     }
 }
