@@ -878,7 +878,8 @@ function updateEditorCounts(text) {
 function adjustTitleHeight() {
     if (chapterTitleInput) {
         chapterTitleInput.style.height = 'auto';
-        chapterTitleInput.style.height = chapterTitleInput.scrollHeight + 'px';
+        // Add 4px buffer to prevent vertical clipping of serif fonts
+        chapterTitleInput.style.height = (chapterTitleInput.scrollHeight + 4) + 'px';
     }
 }
 

@@ -454,8 +454,10 @@ body {
     resize: none;
     overflow: hidden;
     height: auto;
-    line-height: 1.4;
+    line-height: 1.5;
     word-break: keep-all;
+    padding: 6px 0;
+    box-sizing: border-box;
 }
 
 .chapter-title-input:focus {
