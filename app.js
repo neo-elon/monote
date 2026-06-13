@@ -1562,3 +1562,23 @@ async function handleLogout() {
         alert(`로그아웃에 실패했습니다: ${err.message || err}`);
     }
 }
+
+async function updateUserPenName(newVal) {
+    if (!supabaseClient) return;
+    try {
+        updateSyncStatus('syncing', '필명 업데이트 중...');
+        const { data, error } = await supabaseClient.auth.updateUser({
+            data: { pen_name: newVal }
+        });
+        if (error) throw error;
+        
+        updateAuthUI(data.user);
+        renderBookshelf(); // Refresh book covers with the new pen name
+        updateSyncStatus('success', '필명 업데이트 완료');
+        alert(`필명이 "${newVal}"(으)로 변경되었습니다.`);
+    } catch (err) {
+        console.error("Failed to update pen name:", err);
+        alert(`필명 변경에 실패했습니다: ${err.message || err}`);
+        updateSyncStatus('error', '업데이트 실패');
+    }
+}
