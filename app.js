@@ -1485,24 +1485,18 @@ function updateAuthUI(user) {
 
     const logoutMenuItem = document.getElementById('logout-menu-item');
     const toggleManualItem = document.getElementById('toggle-manual-item');
+    const editPennameItem = document.getElementById('edit-penname-item');
 
     if (user) {
         // Run check to prompt for pen name if not set
         checkPenName(user);
 
-        // Display pen name or fallback to full name/email
-        const name = user.user_metadata?.pen_name || user.user_metadata?.full_name || user.email || '사용자';
+        // Remove the profile icon completely
+        authContainer.innerHTML = '';
 
-        const firstChar = name.charAt(0).toUpperCase();
-        authContainer.innerHTML = `
-            <div class="user-profile" id="user-profile-avatar" title="${name} (클릭하여 필명 수정)">
-                <div class="user-avatar-placeholder">${firstChar}</div>
-            </div>
-        `;
-
-        const profileBtn = document.getElementById('user-profile-avatar');
-        if (profileBtn) {
-            profileBtn.onclick = () => {
+        if (editPennameItem) {
+            editPennameItem.style.display = 'flex';
+            editPennameItem.onclick = () => {
                 const currentPenName = user.user_metadata?.pen_name || '';
                 const newPenName = prompt("작가 필명을 수정하시겠습니까?", currentPenName);
                 if (newPenName === null) return; // Cancelled
@@ -1540,6 +1534,11 @@ function updateAuthUI(user) {
                 </svg>
             </button>
         `;
+
+        if (editPennameItem) {
+            editPennameItem.style.display = 'none';
+            editPennameItem.onclick = null;
+        }
 
         if (toggleManualItem) {
             toggleManualItem.style.display = 'none';
