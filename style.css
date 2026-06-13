@@ -388,6 +388,7 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     margin: 0;
+    min-width: 0;
 }
 
 .char-counter {
