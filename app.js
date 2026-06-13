@@ -675,8 +675,9 @@ function renderChapterList() {
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             
             // If user moves finger significantly before long press, cancel it (they are scrolling)
-            if (!isLongPress && distance > 8) {
-                if (touchTimeout) {
+            if (distance > 8) {
+                hasMovedThreshold = true;
+                if (!isLongPress && touchTimeout) {
                     clearTimeout(touchTimeout);
                     touchTimeout = null;
                 }
@@ -742,7 +743,7 @@ function renderChapterList() {
                     isDragging = false;
                     isLongPress = false;
                 }, 100);
-            } else {
+            } else if (!hasMovedThreshold) {
                 // It was a simple tap, open the editor immediately
                 openChapterEditor(chapter.id);
             }
