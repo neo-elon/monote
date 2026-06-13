@@ -932,7 +932,7 @@ function renderChapterList() {
         font-weight: 600;
     `;
     totalRow.innerHTML = `
-        <span>랭킹 반영 글자수</span>
+        <span>총 글자수</span>
         <span style="font-family: var(--font-sans); color: var(--text-primary); font-weight: 700;">${rankingChars.toLocaleString()}자${!isPublic ? '<span style="font-size: 0.7rem; font-weight: 400; color: var(--text-secondary); margin-left: 0.25rem;">(비공개 작품 제외)</span>' : ''}</span>
     `;
     chaptersList.appendChild(totalRow);
@@ -1578,15 +1578,17 @@ function renderRanking() {
         renderEnhancedLeaderboard(leaderboardEl, "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, "자", true);
         
     } else if (activeRankingTab === 'cumulative') {
-        const userBooks = projects.map(proj => {
-            const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
-            return {
-                title: proj.title || '제목 없음',
-                author: userAuthorName,
-                value: charCount,
-                isMe: true
-            };
-        });
+        const userBooks = projects
+            .filter(proj => !proj.isPrivate && proj.id !== "monote-manual-guide")
+            .map(proj => {
+                const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+                return {
+                    title: proj.title || '제목 없음',
+                    author: userAuthorName,
+                    value: charCount,
+                    isMe: true
+                };
+            });
 
         const classicBooks = [
             { title: "1984 (새벽의 기록)", author: "조지 오웰", value: 78420 },
@@ -1863,6 +1865,29 @@ function trackWritingProgress(oldVal, newVal) {
         stats.lastWrittenDate = todayStr;
     }
     
+    storage.setItem('monote-writing-stats', JSON.stringify(stats));
+}
+
+function adjustDailyStats(amount) {
+    if (!amount) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    let stats = {
+        dailyLogs: {},
+        lastWrittenDate: "",
+        currentStreak: 0
+    };
+    
+    const saved = storage.getItem('monote-writing-stats');
+    if (saved) {
+        try {
+            stats = JSON.parse(saved);
+        } catch (e) {
+            console.error("Failed to parse writing stats:", e);
+        }
+    }
+    if (!stats.dailyLogs) stats.dailyLogs = {};
+    
+    stats.dailyLogs[todayStr] = Math.max(0, (stats.dailyLogs[todayStr] || 0) + amount);
     storage.setItem('monote-writing-stats', JSON.stringify(stats));
 }
 
@@ -2569,6 +2594,11 @@ function openProject(projectId) {
 
 // Delete project
 async function deleteProject(projectId) {
+    const proj = projects.find(p => p.id === projectId);
+    if (proj && !proj.isPrivate && proj.id !== "monote-manual-guide") {
+        const totalChars = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+        adjustDailyStats(-totalChars);
+    }
     projects = projects.filter(p => p.id !== projectId);
     storage.setItem('monote-projects', JSON.stringify(projects));
     
@@ -2619,6 +2649,14 @@ function exportChapter(chapterId) {
 
 // Delete Chapter
 function deleteChapter(chapterId) {
+    const isPublic = project && !project.isPrivate && project.id !== "monote-manual-guide";
+    if (isPublic) {
+        const ch = project.chapters.find(c => c.id === chapterId);
+        if (ch) {
+            const charCount = (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0);
+            adjustDailyStats(-charCount);
+        }
+    }
     project.chapters = project.chapters.filter(c => c.id !== chapterId);
     triggerSave();
     showOverviewScreen();
