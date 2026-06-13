@@ -1422,18 +1422,9 @@ function updateAuthUI(user) {
 
         // Display pen name or fallback to full name/email
         const name = user.user_metadata?.pen_name || user.user_metadata?.full_name || user.email || '사용자';
-        const avatarUrl = user.user_metadata?.avatar_url;
-
-        let avatarHtml = '';
-        if (avatarUrl) {
-            avatarHtml = `<img src="${avatarUrl}" alt="${name}" class="user-avatar" />`;
-        } else {
-            avatarHtml = `<div class="user-avatar-placeholder">${name.charAt(0)}</div>`;
-        }
 
         authContainer.innerHTML = `
             <div class="user-profile" id="user-profile-avatar" title="${name} (클릭하여 필명 수정)">
-                ${avatarHtml}
                 <span class="user-name">${name}</span>
             </div>
         `;
