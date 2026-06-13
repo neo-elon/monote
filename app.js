@@ -914,8 +914,11 @@ function renderChapterList() {
         chaptersList.appendChild(card);
     });
 
-    // Calculate total character count (including titles)
-    const totalChars = project.chapters.reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+    // Calculate total character count (including titles) only if it is public
+    const isPublic = !project.isPrivate && project.id !== "monote-manual-guide";
+    const rankingChars = isPublic 
+        ? project.chapters.reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0)
+        : 0;
     
     const totalRow = document.createElement('div');
     totalRow.className = 'chapters-total-row';
@@ -931,8 +934,8 @@ function renderChapterList() {
         font-weight: 600;
     `;
     totalRow.innerHTML = `
-        <span>총 글자수 (제목 포함)</span>
-        <span style="font-family: var(--font-sans); color: var(--text-primary); font-weight: 700;">${totalChars.toLocaleString()}자</span>
+        <span>랭킹 반영 글자수</span>
+        <span style="font-family: var(--font-sans); color: var(--text-primary); font-weight: 700;">${rankingChars.toLocaleString()}자${!isPublic ? '<span style="font-size: 0.7rem; font-weight: 400; color: var(--text-secondary); margin-left: 0.25rem;">(비공개 작품 제외)</span>' : ''}</span>
     `;
     chaptersList.appendChild(totalRow);
 }
@@ -1243,6 +1246,7 @@ function renderRanking() {
     const userStreak = getUserStreak();
     
     const userTotalCumulative = projects.reduce((total, proj) => {
+        if (proj.isPrivate || proj.id === "monote-manual-guide") return total;
         return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
     }, 0);
 
