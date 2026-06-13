@@ -320,8 +320,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    max-height: 400px;
-    overflow-y: auto;
     padding-right: 0.5rem;
 }
 
@@ -914,9 +912,9 @@ body {
     align-self: start;
 }
 
-/* Make chapters list taller when in the sidebar */
+/* Make chapters list fully expand when in the sidebar */
 .editor-sidebar .chapters-list {
-    max-height: calc(100vh - 200px);
+    max-height: none;
 }
 
 @media (max-width: 900px) {
