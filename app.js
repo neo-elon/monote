@@ -36,6 +36,7 @@ let saveTimeout = null;
 let currentUser = null;
 let hideManual = false;
 let activeRankingTab = 'daily';
+let activeBadgeTab = 'cumulative';
 
 // Supabase Config & Initialization
 const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
@@ -1307,50 +1308,156 @@ function renderRanking() {
     
     // Check achievements
     const activeProjects = projects.filter(p => p.id !== "monote-manual-guide");
-    const hasProject = activeProjects.length > 0;
-    const hasStreak3 = userStreak >= 3;
-    const hasDaily1000 = userDailyChars >= 1000;
-    const hasLongChapter = activeProjects.some(p => (p.chapters || []).some(ch => (ch.content || '').length >= 3000));
-    const hasCumulative10k = userTotalCumulative >= 10000;
-    const hasCumulative50k = userTotalCumulative >= 50000;
-
-    const badges = [
-        { id: 'start', name: '새싹의 시작', icon: '🌱', desc: '첫 작품 쓰기 시작', unlocked: hasProject },
-        { id: 'streak', name: '꾸준한 펜 끝', icon: '🔥', desc: '연속 집필 3일 달성', unlocked: hasStreak3 },
-        { id: 'daily', name: '열정의 폭주', icon: '⚡', desc: '하루 1,000자 집필', unlocked: hasDaily1000 },
-        { id: 'chapter', name: '첫 장 완성', icon: '📖', desc: '한 챕터 3,000자 작성', unlocked: hasLongChapter },
-        { id: 'writer', name: '단편 소설가', icon: '✒️', desc: '누적 10,000자 달성', unlocked: hasCumulative10k },
-        { id: 'master', name: '창작의 거장', icon: '👑', desc: '누적 50,000자 달성', unlocked: hasCumulative50k }
-    ];
-
-    const unlockedCount = badges.filter(b => b.unlocked).length;
     
+    const allBadgeCategories = {
+        cumulative: {
+            title: "📚 누적 집필량",
+            badges: [
+                { name: "원고의 시작", icon: "🌱", desc: "누적 1,000자 달성", unlocked: userTotalCumulative >= 1000 },
+                { name: "글자 채우기", icon: "🍀", desc: "누적 3,000자 달성", unlocked: userTotalCumulative >= 3000 },
+                { name: "첫 묘사", icon: "🌿", desc: "누적 5,000자 달성", unlocked: userTotalCumulative >= 5000 },
+                { name: "동네 작가", icon: "✒️", desc: "누적 10,000자 달성", unlocked: userTotalCumulative >= 10000 },
+                { name: "풍부한 서사", icon: "🖋️", desc: "누적 20,000자 달성", unlocked: userTotalCumulative >= 20000 },
+                { name: "프로 작가", icon: "🪶", desc: "누적 30,000자 달성", unlocked: userTotalCumulative >= 30000 },
+                { name: "거장 작가", icon: "👑", desc: "누적 50,000자 달성", unlocked: userTotalCumulative >= 50000 },
+                { name: "대문호", icon: "📚", desc: "누적 100,000자 달성", unlocked: userTotalCumulative >= 100000 },
+                { name: "불멸의 기록", icon: "✨", desc: "누적 200,000자 달성", unlocked: userTotalCumulative >= 200000 },
+                { name: "우주의 서사시", icon: "🌌", desc: "누적 500,000자 달성", unlocked: userTotalCumulative >= 500000 }
+            ]
+        },
+        streak: {
+            title: "🔥 연속 집필 스트릭",
+            badges: [
+                { name: "시작의 불씨", icon: "🪵", desc: "연속 집필 1일 달성", unlocked: userStreak >= 1 },
+                { name: "작은 실천", icon: "🕯️", desc: "연속 집필 2일 달성", unlocked: userStreak >= 2 },
+                { name: "꾸준한 펜 끝", icon: "🔥", desc: "연속 집필 3일 달성", unlocked: userStreak >= 3 },
+                { name: "작가의 일상", icon: "☕", desc: "연속 집필 5일 달성", unlocked: userStreak >= 5 },
+                { name: "집필의 습관", icon: "📆", desc: "연속 집필 7일 달성", unlocked: userStreak >= 7 },
+                { name: "일주일의 너머", icon: "🎯", desc: "연속 집필 10일 달성", unlocked: userStreak >= 10 },
+                { name: "창작의 궤도", icon: "🚀", desc: "연속 집필 14일 달성", unlocked: userStreak >= 14 },
+                { name: "습관의 완성", icon: "💎", desc: "연속 집필 21일 달성", unlocked: userStreak >= 21 },
+                { name: "집필의 달인", icon: "🏆", desc: "연속 집필 30일 달성", unlocked: userStreak >= 30 },
+                { name: "집필의 화신", icon: "☄️", desc: "연속 집필 100일 달성", unlocked: userStreak >= 100 }
+            ]
+        },
+        daily: {
+            title: "⚡ 일일 집필 한계 돌파",
+            badges: [
+                { name: "한 장의 메모", icon: "📝", desc: "하루 100자 집필", unlocked: userDailyChars >= 100 },
+                { name: "생각의 기록", icon: "✏️", desc: "하루 300자 집필", unlocked: userDailyChars >= 300 },
+                { name: "짧은 에세이", icon: "📄", desc: "하루 500자 집필", unlocked: userDailyChars >= 500 },
+                { name: "열정의 시작", icon: "⚡", desc: "하루 1,000자 집필", unlocked: userDailyChars >= 1000 },
+                { name: "집중의 순간", icon: "🧠", desc: "하루 2,000자 집필", unlocked: userDailyChars >= 2000 },
+                { name: "창작의 가속", icon: "🏃", desc: "하루 3,000자 집필", unlocked: userDailyChars >= 3000 },
+                { name: "영감의 현신", icon: "💥", desc: "하루 5,000자 집필", unlocked: userDailyChars >= 5000 },
+                { name: "무아지경", icon: "🌀", desc: "하루 8,000자 집필", unlocked: userDailyChars >= 8000 },
+                { name: "창작의 폭풍", icon: "🌪️", desc: "하루 10,000자 집필", unlocked: userDailyChars >= 10000 },
+                { name: "신의 서기", icon: "✨", desc: "하루 20,000자 집필", unlocked: userDailyChars >= 20000 }
+            ]
+        },
+        projects: {
+            title: "🏛️ 창작 작품 수",
+            badges: [
+                { name: "첫 책장 채우기", icon: "📖", desc: "작품 1개 등록", unlocked: activeProjects.length >= 1 },
+                { name: "이야기의 확장", icon: "📕", desc: "작품 2개 등록", unlocked: activeProjects.length >= 2 },
+                { name: "다채로운 세계", icon: "📘", desc: "작품 3개 등록", unlocked: activeProjects.length >= 3 },
+                { name: "소설가의 서재", icon: "📙", desc: "작품 4개 등록", unlocked: activeProjects.length >= 4 },
+                { name: "창조의 선물", icon: "🎁", desc: "작품 5개 등록", unlocked: activeProjects.length >= 5 },
+                { name: "풍요로운 상상", icon: "🌈", desc: "작품 7개 등록", unlocked: activeProjects.length >= 7 },
+                { name: "다작 작가", icon: "🎓", desc: "작품 10개 등록", unlocked: activeProjects.length >= 10 },
+                { name: "세계관 창조자", icon: "🌍", desc: "작품 15개 등록", unlocked: activeProjects.length >= 15 },
+                { name: "이야기 보따리", icon: "🎒", desc: "작품 20개 등록", unlocked: activeProjects.length >= 20 },
+                { name: "창작의 도서관", icon: "🏛️", desc: "작품 30개 등록", unlocked: activeProjects.length >= 30 }
+            ]
+        }
+    };
+
+    // Calculate total achievements stats
+    let totalBadgesCount = 0;
+    let unlockedBadgesCount = 0;
+    Object.values(allBadgeCategories).forEach(cat => {
+        totalBadgesCount += cat.badges.length;
+        unlockedBadgesCount += cat.badges.filter(b => b.unlocked).length;
+    });
+
+    const currentCategory = allBadgeCategories[activeBadgeTab];
+    const categoryUnlockedCount = currentCategory.badges.filter(b => b.unlocked).length;
+    
+    // Render Badge tabs
+    let badgeTabsHtml = '<div style="display: flex; gap: 0.3rem; margin-bottom: 0.4rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch;">';
+    Object.keys(allBadgeCategories).forEach(tabKey => {
+        const isActive = activeBadgeTab === tabKey;
+        const catUnlocked = allBadgeCategories[tabKey].badges.filter(b => b.unlocked).length;
+        badgeTabsHtml += `
+            <button class="badge-tab-btn" data-tab="${tabKey}" style="
+                background: ${isActive ? 'var(--text-primary)' : 'var(--bg-secondary)'};
+                color: ${isActive ? 'var(--bg-primary)' : 'var(--text-secondary)'};
+                border: none;
+                padding: 0.3rem 0.6rem;
+                border-radius: 12px;
+                font-size: 0.7rem;
+                font-weight: ${isActive ? '600' : '400'};
+                cursor: pointer;
+                white-space: nowrap;
+                transition: all var(--transition-speed);
+            ">${allBadgeCategories[tabKey].title.split(" ")[1]} (${catUnlocked}/10)</button>
+        `;
+    });
+    badgeTabsHtml += '</div>';
+
     let badgesHtml = `
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.6rem; margin-bottom: 0.4rem;">
-            <div style="font-family: var(--font-serif); font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">나의 집필 뱃지 (${unlockedCount}/${badges.length})</div>
-            <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">집필을 통해 뱃지를 획득하세요</div>
+            <div style="font-family: var(--font-serif); font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">나의 집필 뱃지 (${unlockedBadgesCount}/${totalBadgesCount})</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">전체 획득률 ${Math.round((unlockedBadgesCount/totalBadgesCount)*100)}%</div>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+        ${badgeTabsHtml}
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.2rem;">
     `;
 
-    badges.forEach(b => {
-        const opacity = b.unlocked ? '1' : '0.4';
+    currentCategory.badges.forEach((b, idx) => {
+        const opacity = b.unlocked ? '1' : '0.35';
         const filter = b.unlocked ? 'none' : 'grayscale(100%)';
         const border = b.unlocked ? '1px solid var(--text-primary)' : '1px solid var(--border-color)';
         const bg = b.unlocked ? 'var(--bg-secondary)' : 'transparent';
         
         badgesHtml += `
-            <div title="${b.desc}" style="background: ${bg}; border: ${border}; opacity: ${opacity}; filter: ${filter}; border-radius: 6px; padding: 0.6rem 0.4rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.3rem; transition: all 0.3s ease; position: relative;">
-                <span style="font-size: 1.5rem; line-height: 1;">${b.icon}</span>
-                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${b.name}</span>
-                <span style="font-size: 0.6rem; color: var(--text-secondary); line-height: 1.2; display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${b.desc}</span>
-                ${!b.unlocked ? '<span style="position: absolute; top: 4px; right: 4px; font-size: 0.65rem; opacity: 0.8;">🔒</span>' : ''}
+            <div title="${b.desc}" style="
+                background: ${bg};
+                border: ${border};
+                opacity: ${opacity};
+                filter: ${filter};
+                border-radius: 6px;
+                padding: 0.5rem 0.25rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 0.25rem;
+                transition: all 0.3s ease;
+                position: relative;
+                min-width: 0;
+            ">
+                <span style="font-size: 1.4rem; line-height: 1;">${b.icon}</span>
+                <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;" title="${b.name}">${b.name}</span>
+                <span style="font-size: 0.55rem; color: var(--text-secondary); line-height: 1.1; display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${b.desc.split(" ")[1]}</span>
+                <span style="position: absolute; top: 2px; left: 4px; font-size: 0.5rem; font-weight: 700; color: var(--text-secondary); opacity: 0.5;">L${idx+1}</span>
+                ${!b.unlocked ? '<span style="position: absolute; top: 2px; right: 4px; font-size: 0.55rem; opacity: 0.7;">🔒</span>' : ''}
             </div>
         `;
     });
 
     badgesHtml += `</div>`;
     badgesSection.innerHTML = badgesHtml;
+    
+    // Add Click listeners for badge tabs
+    badgesSection.querySelectorAll('.badge-tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            activeBadgeTab = btn.getAttribute('data-tab');
+            renderRanking();
+        });
+    });
+
     rankingContainer.appendChild(badgesSection);
 
     // 3. Render Sub-tabs
