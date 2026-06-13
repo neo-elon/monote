@@ -640,6 +640,13 @@ body {
     font-weight: 500;
 }
 
+.bookshelf-title-sub {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-left: 0.3rem;
+}
+
 .books-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

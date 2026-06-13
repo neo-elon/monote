@@ -1047,7 +1047,7 @@ function renderBookshelf() {
     if (bookshelfTitleEl) {
         const authorName = currentUser?.user_metadata?.pen_name || currentUser?.user_metadata?.full_name || currentUser?.email || '';
         if (authorName) {
-            bookshelfTitleEl.textContent = `작가 ${authorName}님의 책장`;
+            bookshelfTitleEl.innerHTML = `작가 ${authorName}<span class="bookshelf-title-sub">님의 책장</span>`;
         } else {
             bookshelfTitleEl.textContent = '내 책장';
         }
