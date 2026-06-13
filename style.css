@@ -126,6 +126,10 @@ body {
 }
 
 /* Buttons and Inputs */
+input, textarea {
+    caret-shape: block;
+}
+
 .btn-icon {
     background: none;
     border: none;
