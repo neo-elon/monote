@@ -183,7 +183,7 @@ async function loadProjects() {
     let localProjects = [];
     if (savedProjects) {
         try {
-            localProjects = JSON.parse(savedProjects);
+            localProjects = JSON.parse(savedProjects).filter(p => !p.id.startsWith("user-profile-"));
         } catch (e) {
             console.error("Failed to parse projects data:", e);
         }
@@ -296,9 +296,11 @@ async function loadProjects() {
                     user_id: dbProj.user_id
                 };
             }) : [];
+            
+            const filteredDbProjects = dbProjects.filter(p => !p.id.startsWith("user-profile-"));
 
             // Merge local offline projects into account projects
-            const mergedProjects = [...dbProjects];
+            const mergedProjects = [...filteredDbProjects];
             const offlineProjects = projects.filter(p => !p.user_id && p.id !== "monote-manual-guide");
 
             for (const localProj of offlineProjects) {
@@ -1310,32 +1312,19 @@ function renderRanking() {
     
     // Fetch registered user count asynchronously
     if (supabaseClient) {
-        // Try profiles table first to get registered user count
-        supabaseClient.from('profiles').select('id', { count: 'exact', head: true })
-            .then(({ count, error }) => {
-                if (!error && count !== null) {
-                    const countSpan = banner.querySelector('.live-writer-count');
-                    if (countSpan) countSpan.textContent = count;
-                } else {
-                    throw new Error("profiles table not queryable, try projects");
+        supabaseClient.from('open_projects').select('user_id')
+            .then(({ data, error }) => {
+                let count = 1;
+                if (!error && data) {
+                    const uniqueUsers = new Set(data.map(d => d.user_id).filter(Boolean));
+                    count = Math.max(1, uniqueUsers.size);
                 }
+                const countSpan = banner.querySelector('.live-writer-count');
+                if (countSpan) countSpan.textContent = count;
             })
             .catch(() => {
-                // Fallback: unique user_id count from open_projects
-                supabaseClient.from('open_projects').select('user_id')
-                    .then(({ data, error }) => {
-                        let count = 1;
-                        if (!error && data) {
-                            const uniqueUsers = new Set(data.map(d => d.user_id).filter(Boolean));
-                            count = Math.max(1, uniqueUsers.size);
-                        }
-                        const countSpan = banner.querySelector('.live-writer-count');
-                        if (countSpan) countSpan.textContent = count;
-                    })
-                    .catch(() => {
-                        const countSpan = banner.querySelector('.live-writer-count');
-                        if (countSpan) countSpan.textContent = "1";
-                    });
+                const countSpan = banner.querySelector('.live-writer-count');
+                if (countSpan) countSpan.textContent = "1";
             });
     } else {
         const countSpan = banner.querySelector('.live-writer-count');
@@ -3082,12 +3071,17 @@ async function saveProfileToCloud(user) {
     try {
         const penName = user.user_metadata?.pen_name || user.user_metadata?.full_name || user.email?.split('@')[0] || "익명의 작가";
         await supabaseClient
-            .from('profiles')
+            .from('open_projects')
             .upsert({
-                id: user.id,
-                email: user.email,
-                pen_name: penName,
-                updated_at: new Date().toISOString()
+                id: `user-profile-${user.id}`,
+                title: `[Profile] ${penName}`,
+                synopsis: `email:${user.email}`,
+                ideas: 'system-profile-record',
+                chapters: [],
+                cover_color: 'charcoal:private',
+                updated_at: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                user_id: user.id
             });
     } catch (e) {
         console.error("Failed to save profile to cloud:", e);
