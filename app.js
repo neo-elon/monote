@@ -37,6 +37,7 @@ let currentUser = null;
 let hideManual = false;
 let activeRankingTab = 'daily';
 let activeBadgeTab = 'cumulative';
+let currentLang = 'ko';
 
 function isAdmin() {
     return currentUser && currentUser.email === 'parkyangkyu@gmail.com';
@@ -140,6 +141,7 @@ const previewChapterDialog = document.getElementById('preview-chapter-dialog');
 document.addEventListener('DOMContentLoaded', async () => {
     loadTheme();
     loadFontSize();
+    loadLanguage();
     hideManual = storage.getItem('monote-hide-manual') === 'true';
     updateManualToggleUI();
     
@@ -457,6 +459,16 @@ function setupEventListeners() {
             updateThemeIcons('light-mode');
         }
     });
+
+    // Language Toggle
+    const langToggle = document.getElementById('lang-toggle');
+    if (langToggle) {
+        langToggle.addEventListener('click', () => {
+            currentLang = currentLang === 'ko' ? 'en' : 'ko';
+            storage.setItem('monote-lang', currentLang);
+            updateLanguageUI();
+        });
+    }
 
     // Project Info Listeners
     projectTitleInput.addEventListener('input', (e) => {
@@ -3418,8 +3430,116 @@ async function updateUserPenName(newVal) {
 function updateManualToggleUI() {
     const textSpan = document.getElementById('toggle-manual-text');
     if (textSpan) {
-        textSpan.textContent = hideManual ? '설명서 보이기' : '설명서 숨기기';
+        if (currentLang === 'en') {
+            textSpan.textContent = hideManual ? 'Show Guide' : 'Hide Guide';
+        } else {
+            textSpan.textContent = hideManual ? '설명서 보이기' : '설명서 숨기기';
+        }
     }
+}
+
+function updateLanguageUI() {
+    const langText = document.getElementById('lang-toggle-text');
+    if (langText) {
+        langText.textContent = currentLang === 'en' ? '한국어로 변경' : 'English로 변경';
+    }
+
+    const themeToggleText = document.getElementById('theme-toggle-text');
+    if (themeToggleText) {
+        themeToggleText.textContent = currentLang === 'en' ? 'Change Theme' : '테마 변경';
+    }
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.setAttribute('title', currentLang === 'en' ? 'Change Theme' : '테마 변경');
+    }
+
+    const langToggle = document.getElementById('lang-toggle');
+    if (langToggle) {
+        langToggle.setAttribute('title', currentLang === 'en' ? 'Change Language' : '언어 변경');
+    }
+
+    const decBtn = document.getElementById('font-size-dec');
+    if (decBtn) {
+        decBtn.setAttribute('title', currentLang === 'en' ? 'Decrease' : '작게');
+    }
+    const incBtn = document.getElementById('font-size-inc');
+    if (incBtn) {
+        incBtn.setAttribute('title', currentLang === 'en' ? 'Increase' : '크게');
+    }
+
+    const googleLogin = document.getElementById('google-login-menu-item');
+    if (googleLogin) {
+        googleLogin.setAttribute('title', currentLang === 'en' ? 'Sign In' : '구글 로그인');
+        const childText = googleLogin.childNodes[googleLogin.childNodes.length - 1];
+        if (childText && childText.nodeType === Node.TEXT_NODE) {
+            childText.textContent = currentLang === 'en' ? ' Sign In' : ' 구글 로그인';
+        }
+    }
+
+    const toggleManualItem = document.getElementById('toggle-manual-item');
+    if (toggleManualItem) {
+        toggleManualItem.setAttribute('title', currentLang === 'en' ? 'Show/Hide Guide' : '설명서 보이기/숨기기');
+    }
+    updateManualToggleUI();
+
+    const importTrigger = document.getElementById('import-project-trigger');
+    if (importTrigger) {
+        importTrigger.setAttribute('title', currentLang === 'en' ? 'Import backup file' : '백업 파일 불러오기');
+        const childText = importTrigger.childNodes[importTrigger.childNodes.length - 1];
+        if (childText && childText.nodeType === Node.TEXT_NODE) {
+            childText.textContent = currentLang === 'en' ? ' Import Backup (.json)' : ' 백업 불러오기 (.json)';
+        }
+    }
+
+    const exportProject = document.getElementById('export-project');
+    if (exportProject) {
+        exportProject.setAttribute('title', currentLang === 'en' ? 'Download full backup (.json)' : '전체 백업 다운로드 (.json)');
+        const childText = exportProject.childNodes[exportProject.childNodes.length - 1];
+        if (childText && childText.nodeType === Node.TEXT_NODE) {
+            childText.textContent = currentLang === 'en' ? ' Download Backup (.json)' : ' 백업 다운로드 (.json)';
+        }
+    }
+
+    const exportProjectTxt = document.getElementById('export-project-txt');
+    if (exportProjectTxt) {
+        exportProjectTxt.setAttribute('title', currentLang === 'en' ? 'Download all manuscripts (.txt)' : '전체 원고 다운로드 (.txt)');
+        const childText = exportProjectTxt.childNodes[exportProjectTxt.childNodes.length - 1];
+        if (childText && childText.nodeType === Node.TEXT_NODE) {
+            childText.textContent = currentLang === 'en' ? ' Download Manuscript (.txt)' : ' 전체 원고 다운로드 (.txt)';
+        }
+    }
+
+    const communityMenuItem = document.getElementById('community-menu-item');
+    if (communityMenuItem) {
+        communityMenuItem.setAttribute('title', currentLang === 'en' ? 'Go to Community' : '커뮤니티 이동');
+        const childText = communityMenuItem.childNodes[communityMenuItem.childNodes.length - 1];
+        if (childText && childText.nodeType === Node.TEXT_NODE) {
+            childText.textContent = currentLang === 'en' ? ' Community' : ' 커뮤니티';
+        }
+    }
+
+    const editPenname = document.getElementById('edit-penname-item');
+    if (editPenname) {
+        editPenname.setAttribute('title', currentLang === 'en' ? 'Edit Pen Name' : '필명 수정');
+        const childText = editPenname.childNodes[editPenname.childNodes.length - 1];
+        if (childText && childText.nodeType === Node.TEXT_NODE) {
+            childText.textContent = currentLang === 'en' ? ' Edit Pen Name' : ' 필명 수정';
+        }
+    }
+
+    const logoutMenu = document.getElementById('logout-menu-item');
+    if (logoutMenu) {
+        logoutMenu.setAttribute('title', currentLang === 'en' ? 'Sign Out' : '로그아웃');
+        const childText = logoutMenu.childNodes[logoutMenu.childNodes.length - 1];
+        if (childText && childText.nodeType === Node.TEXT_NODE) {
+            childText.textContent = currentLang === 'en' ? ' Sign Out' : ' 로그아웃';
+        }
+    }
+}
+
+function loadLanguage() {
+    currentLang = storage.getItem('monote-lang') || 'ko';
+    updateLanguageUI();
 }
 
 // Show edit book dialog
