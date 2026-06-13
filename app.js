@@ -737,6 +737,8 @@ function renderChapterList() {
             }
             
             if (isLongPress && isDragging) {
+                e.preventDefault(); // Prevent synthetic mouse/click events
+                
                 // Save final touch level shift
                 const deltaX = lastTouchX - dragStartX;
                 let levelShift = Math.round(deltaX / 24);
@@ -774,12 +776,16 @@ function renderChapterList() {
 // Helper to save order and refresh
 function saveAndRefreshOrder() {
     const newChaptersOrder = [];
+    const seenIds = new Set();
     const renderedCards = chaptersList.querySelectorAll('.chapter-card');
     renderedCards.forEach(cardEl => {
         const id = cardEl.dataset.id;
-        const ch = project.chapters.find(c => c.id === id);
-        if (ch) {
-            newChaptersOrder.push(ch);
+        if (id && !seenIds.has(id)) {
+            const ch = project.chapters.find(c => c.id === id);
+            if (ch) {
+                newChaptersOrder.push(ch);
+                seenIds.add(id);
+            }
         }
     });
     project.chapters = newChaptersOrder;
