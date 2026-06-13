@@ -1022,7 +1022,7 @@ input, textarea {
     font-size: 0.75rem;
     font-weight: 500;
     color: var(--text-secondary);
-    margin-right: 0.5rem;
+    margin-right: 0;
     transition: all var(--transition-speed);
 }
 
@@ -1082,6 +1082,10 @@ input, textarea {
 .menu-dropdown-container {
     position: relative;
     display: inline-block;
+}
+
+#menu-btn {
+    margin-right: -0.4rem;
 }
 
 .menu-dropdown {
