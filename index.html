@@ -270,11 +270,6 @@
                         <h2 class="community-title" style="font-size: 1.25rem; font-weight: 600; font-family: var(--font-serif); margin-bottom: 0.25rem;">Monote 커뮤니티</h2>
                         <p class="community-subtitle" style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">작가들의 교류와 작품 공유를 위한 아늑한 광장</p>
                     </div>
-                    <div class="community-actions">
-                        <button id="write-post-btn" class="btn-flat btn-sm" style="display: none; border-color: var(--accent-color); font-weight: 500;">
-                            <span class="plus-icon">+</span> 라운지 글쓰기
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Tabs -->
@@ -292,6 +287,11 @@
 
                 <!-- Tab Content 2: Lounge -->
                 <div id="lounge-tab-content" class="tab-content" style="display: none;">
+                    <div style="max-width: 600px; margin: 0 auto 1rem auto; display: flex; justify-content: flex-end;">
+                        <button id="write-post-btn" class="btn-flat btn-sm" style="display: none; border-color: var(--accent-color); font-weight: 500;">
+                            <span class="plus-icon">+</span> 라운지 글쓰기
+                        </button>
+                    </div>
                     <div id="lounge-feed" class="lounge-feed" style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px; margin: 0 auto;">
                         <!-- Community posts will be generated dynamically -->
                     </div>
