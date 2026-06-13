@@ -258,14 +258,23 @@
                     <!-- Right Main Editor -->
                     <div class="editor-main-content">
                         <div class="editor-header">
-                            <button id="back-to-overview" class="btn-flat btn-sm back-btn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round" class="arrow-icon">
-                                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                                    <polyline points="12 19 5 12 12 5"></polyline>
-                                </svg>
-                                개요로 돌아가기
-                            </button>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button id="back-to-overview" class="btn-flat btn-sm back-btn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" class="arrow-icon">
+                                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                                        <polyline points="12 19 5 12 12 5"></polyline>
+                                    </svg>
+                                    개요
+                                </button>
+                                <button id="copy-chapter-btn" class="btn-flat btn-sm" title="제목과 본문 복사" style="background: transparent; color: var(--text-primary); border-color: var(--border-color); display: flex; align-items: center; gap: 0.25rem;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>복사</span>
+                                </button>
+                            </div>
                             <div class="editor-actions">
                                 <button id="spell-check-btn" class="btn-flat btn-sm" title="맞춤법 검사기 열기 (본문 자동 복사)">
                                     맞춤법 검사

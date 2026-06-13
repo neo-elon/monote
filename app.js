@@ -110,6 +110,7 @@ const chaptersList = document.getElementById('chapters-list');
 
 // Editor Elements
 const backToOverviewBtn = document.getElementById('back-to-overview');
+const copyChapterBtn = document.getElementById('copy-chapter-btn');
 const spellCheckBtn = document.getElementById('spell-check-btn');
 const exportChapterBtn = document.getElementById('export-chapter');
 const deleteChapterBtn = document.getElementById('delete-chapter');
@@ -511,6 +512,31 @@ function setupEventListeners() {
             exportChapter(activeChapterId);
         }
     });
+
+    if (copyChapterBtn) {
+        copyChapterBtn.addEventListener('click', async () => {
+            if (activeChapterId !== null) {
+                const ch = project.chapters.find(c => c.id === activeChapterId);
+                if (ch) {
+                    const titleText = ch.title || '';
+                    const contentText = ch.content || '';
+                    const fullText = `${titleText}\n\n${contentText}`;
+                    try {
+                        await navigator.clipboard.writeText(fullText);
+                        const labelSpan = copyChapterBtn.querySelector('span');
+                        if (labelSpan) {
+                            labelSpan.textContent = '복사됨!';
+                            setTimeout(() => {
+                                labelSpan.textContent = '복사';
+                            }, 1500);
+                        }
+                    } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                    }
+                }
+            }
+        });
+    }
 
     spellCheckBtn.addEventListener('click', () => {
         if (activeChapterId !== null) {
