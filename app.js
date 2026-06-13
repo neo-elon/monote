@@ -2678,6 +2678,7 @@ function createNewPost() {
     }
     
     const author = currentUser?.user_metadata?.pen_name || currentUser?.email?.split('@')[0] || (currentLang === 'en' ? "Anonymous Writer" : "익명의 작가");
+    const posts = getLoungePosts();
     posts.unshift({
         id: "post-" + Date.now(),
         author: author,
