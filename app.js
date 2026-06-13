@@ -37,10 +37,10 @@ let saveTimeout = null;
 // Supabase Config & Initialization
 const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdWN2ZnFpYXZ2Y3VqdHp3enZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODE3NzksImV4cCI6MjA5Njg1Nzc3OX0.-zLSHjeHvaW5eHRTH9eC7CcFWnwlWBKbgzlc-9Fzceg';
-let supabase = null;
+let supabaseClient = null;
 
 if (typeof window.supabase !== 'undefined') {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 }
 
 // Sync Status UI helper
@@ -55,8 +55,8 @@ function updateSyncStatus(status, message) {
 }
 
 async function saveProjectToCloud(proj) {
-    if (!supabase) return;
-    const { error } = await supabase
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient
         .from('open_projects')
         .upsert({
             id: proj.id,
@@ -175,10 +175,10 @@ async function loadProjects() {
     renderBookshelf();
 
     // Fetch from Supabase
-    if (supabase) {
+    if (supabaseClient) {
         updateSyncStatus('syncing', '불러오는 중...');
         try {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('open_projects')
                 .select('*')
                 .order('updated_at', { ascending: false });
@@ -238,7 +238,7 @@ function triggerSave() {
         saveStatus.textContent = "저장 완료";
         
         // Sync to Supabase
-        if (supabase) {
+        if (supabaseClient) {
             updateSyncStatus('syncing', '동기화 중...');
             try {
                 await saveProjectToCloud(project);
@@ -982,7 +982,7 @@ async function createNewProject() {
     openProject(newProj.id);
 
     // Sync to Supabase
-    if (supabase) {
+    if (supabaseClient) {
         updateSyncStatus('syncing', '동기화 중...');
         try {
             await saveProjectToCloud(newProj);
@@ -1025,10 +1025,10 @@ async function deleteProject(projectId) {
     }
 
     // Delete from Supabase
-    if (supabase) {
+    if (supabaseClient) {
         updateSyncStatus('syncing', '동기화 중...');
         try {
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('open_projects')
                 .delete()
                 .eq('id', projectId);
