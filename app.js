@@ -3277,9 +3277,17 @@ async function handleGoogleLogin() {
 async function handleLogout() {
     if (!supabaseClient) return;
     try {
+        // Try calling signOut. Even if it fails (e.g. 403 Forbidden due to session expiration), we proceed.
         const { error } = await supabaseClient.auth.signOut();
-        if (error) throw error;
-        
+        if (error) {
+            console.warn("Supabase auth.signOut returned an error (likely already expired/invalid session):", error);
+        }
+    } catch (err) {
+        console.warn("Supabase auth.signOut exception occurred:", err);
+    }
+
+    // Always perform local logout cleanup
+    try {
         // Filter out logged-in user's projects and keep only offline local projects (no user_id)
         const savedProjects = storage.getItem('monote-projects');
         let offlineProjects = [];
@@ -3301,11 +3309,13 @@ async function handleLogout() {
         activeChapterId = null;
         project = null;
         
+        // Ensure UI is updated to logged-out state
+        updateAuthUI(null);
+        
         showBookshelfScreen();
         renderBookshelf();
     } catch (err) {
-        console.error("Logout failed:", err);
-        alert(`로그아웃에 실패했습니다: ${err.message || err}`);
+        console.error("Local logout cleanup failed:", err);
     }
 }
 
