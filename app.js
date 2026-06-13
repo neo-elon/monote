@@ -498,8 +498,6 @@ function renderChapterList() {
             <div class="tree-indent-wrapper">
                 ${treeLinesHtml}
                 <div class="tree-controls">
-                    <button class="btn-tree-lvl outdent-btn" title="들여쓰기 축소">◀</button>
-                    <button class="btn-tree-lvl indent-btn" title="들여쓰기 확대">▶</button>
                     <button class="btn-tree-lvl rename-btn" title="이름 변경">✎</button>
                 </div>
                 <span class="chapter-num-badge">${prefix}</span>
@@ -521,28 +519,8 @@ function renderChapterList() {
             openChapterEditor(chapter.id);
         });
 
-        // Outdent & Indent Button Event Listeners
-        const outdentBtn = card.querySelector('.outdent-btn');
-        const indentBtn = card.querySelector('.indent-btn');
+        // Rename Button Event Listener
         const renameBtn = card.querySelector('.rename-btn');
-
-        outdentBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card click
-            if (chapter.level > 0) {
-                chapter.level--;
-                triggerSave();
-                renderChapterList();
-            }
-        });
-
-        indentBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card click
-            if (chapter.level < 2) {
-                chapter.level++;
-                triggerSave();
-                renderChapterList();
-            }
-        });
 
         renameBtn.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent card click
