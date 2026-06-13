@@ -3007,6 +3007,7 @@ function updateAuthUI(user) {
     const logoutMenuItem = document.getElementById('logout-menu-item');
     const toggleManualItem = document.getElementById('toggle-manual-item');
     const editPennameItem = document.getElementById('edit-penname-item');
+    const googleLoginMenuItem = document.getElementById('google-login-menu-item');
 
     if (user) {
         // Run check to prompt for pen name if not set
@@ -3015,6 +3016,11 @@ function updateAuthUI(user) {
         // Remove the profile icon completely
         authContainer.innerHTML = '';
         authContainer.style.display = 'none';
+
+        if (googleLoginMenuItem) {
+            googleLoginMenuItem.style.display = 'none';
+            googleLoginMenuItem.onclick = null;
+        }
 
         if (editPennameItem) {
             editPennameItem.style.display = 'flex';
@@ -3057,6 +3063,14 @@ function updateAuthUI(user) {
                 </svg>
             </button>
         `;
+
+        if (googleLoginMenuItem) {
+            googleLoginMenuItem.style.display = 'flex';
+            googleLoginMenuItem.onclick = (e) => {
+                e.preventDefault();
+                handleGoogleLogin();
+            };
+        }
 
         if (editPennameItem) {
             editPennameItem.style.display = 'none';
