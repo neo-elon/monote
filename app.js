@@ -1129,7 +1129,7 @@ function renderBookshelf() {
             ? ""
             : (proj.isPrivate 
                 ? `<div class="book-visibility-icon private" title="비공개 (로컬 저장)">🔒</div>`
-                : `<div class="book-visibility-icon public" title="공개 (클라우드 동기화)">☁️</div>`);
+                : "");
 
         const totalCharCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
 
