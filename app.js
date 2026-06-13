@@ -328,6 +328,7 @@ function setupEventListeners() {
                 triggerSave();
             }
         }
+        adjustTitleHeight();
     });
 
     chapterContentTextarea.addEventListener('input', (e) => {
@@ -847,9 +848,11 @@ function openChapterEditor(chapterId) {
     
     // Update Character & Word Counts
     updateEditorCounts(chapter.content || '');
-    
     // Switch Screen View
     showWritingScreen();
+
+    // Adjust title height
+    adjustTitleHeight();
 
     // Focus on the chapter title input so user can type immediately
     setTimeout(() => {
@@ -869,6 +872,14 @@ function updateEditorCounts(text) {
     charCountWithSpaces.textContent = `${lenWithSpaces.toLocaleString()}자`;
     charCountNoSpaces.textContent = `${lenNoSpaces.toLocaleString()}자`;
     wordCountElement.textContent = words.toLocaleString();
+}
+
+// Adjust chapter title textarea height dynamically to prevent scrollbars
+function adjustTitleHeight() {
+    if (chapterTitleInput) {
+        chapterTitleInput.style.height = 'auto';
+        chapterTitleInput.style.height = chapterTitleInput.scrollHeight + 'px';
+    }
 }
 
 // View Switches
