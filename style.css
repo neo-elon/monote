@@ -29,6 +29,10 @@
 }
 
 /* Reset & Base Elements */
+html {
+    font-size: var(--font-scale, 100%);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -1109,6 +1113,53 @@ input, textarea {
 
 .menu-dropdown.show {
     display: block;
+}
+
+.font-size-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.65rem 1.1rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.font-size-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+}
+
+.font-btn {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    color: var(--text-primary);
+    padding: 0.15rem 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transition-speed), border-color var(--transition-speed);
+}
+
+.font-btn:hover {
+    background: var(--bg-secondary);
+    border-color: var(--text-secondary);
+}
+
+.font-label {
+    font-size: 0.75rem;
+    min-width: 38px;
+    text-align: center;
+    font-weight: 500;
+    color: var(--text-secondary);
 }
 
 .dropdown-item {

@@ -138,6 +138,7 @@ const previewChapterDialog = document.getElementById('preview-chapter-dialog');
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async () => {
     loadTheme();
+    loadFontSize();
     hideManual = storage.getItem('monote-hide-manual') === 'true';
     updateManualToggleUI();
     
@@ -166,7 +167,6 @@ function loadTheme() {
     updateThemeIcons(savedTheme);
 }
 
-// Update Theme Icons
 function updateThemeIcons(theme) {
     if (theme === 'dark-mode') {
         sunIcon.style.display = 'none';
@@ -175,6 +175,34 @@ function updateThemeIcons(theme) {
         sunIcon.style.display = 'block';
         moonIcon.style.display = 'none';
     }
+}
+
+// Load Font Size from LocalStorage
+function loadFontSize() {
+    const savedScale = storage.getItem('monote-font-scale') || '100';
+    document.documentElement.style.setProperty('--font-scale', savedScale + '%');
+    updateFontSizeUI(savedScale);
+}
+
+// Update the text in the Font Size UI label
+function updateFontSizeUI(scale) {
+    const label = document.getElementById('font-size-label');
+    if (label) {
+        label.textContent = scale + '%';
+    }
+}
+
+// Adjust font size by a positive or negative percentage step
+function changeFontSize(amount) {
+    let currentScale = parseInt(storage.getItem('monote-font-scale') || '100', 10);
+    currentScale += amount;
+    // Limit between 80% and 150%
+    if (currentScale < 80) currentScale = 80;
+    if (currentScale > 150) currentScale = 150;
+    
+    storage.setItem('monote-font-scale', currentScale.toString());
+    document.documentElement.style.setProperty('--font-scale', currentScale + '%');
+    updateFontSizeUI(currentScale);
 }
 
 // Load Projects and handle Migration
@@ -399,6 +427,20 @@ function setupEventListeners() {
             item.addEventListener('click', () => {
                 menuDropdown.classList.remove('show');
             });
+        });
+    }
+
+    // Font Size Adjustments
+    const fontDecBtn = document.getElementById('font-size-dec');
+    const fontIncBtn = document.getElementById('font-size-inc');
+    if (fontDecBtn && fontIncBtn) {
+        fontDecBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            changeFontSize(-10);
+        });
+        fontIncBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            changeFontSize(10);
         });
     }
 
