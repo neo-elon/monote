@@ -145,6 +145,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Restore previous active project/chapter state
     restoreActiveState();
+    
+    // Start Lounge post simulation
+    initLoungeSimulation();
 });
 
 // Load Theme from LocalStorage
@@ -1214,6 +1217,10 @@ function switchCommunityTab(tab) {
         tabLoungeBtn.style.borderBottomColor = 'var(--text-primary)';
         tabLoungeBtn.style.color = 'var(--text-primary)';
         
+        // Hide badge when switching to lounge tab
+        const badge = document.getElementById('lounge-new-badge');
+        if (badge) badge.style.display = 'none';
+        
         rankingTabContent.style.display = 'none';
         loungeTabContent.style.display = 'block';
         writePostBtn.style.display = 'block';
@@ -1977,6 +1984,107 @@ function getLoungePosts() {
 
 function saveLoungePosts(posts) {
     storage.setItem('monote-lounge-posts', JSON.stringify(posts));
+}
+
+const simulatedLoungePosts = [
+    { author: "윤동주", content: "오늘 밤에도 별이 바람에 스치웁니다. 마음이 차분해지는 저녁이네요. 다들 집필은 잘 되시나요?" },
+    { author: "이상", content: "박제가 되어버린 천재를 아시오? 나는 유쾌하오. 새로운 이상의 깊이를 더하고 있소." },
+    { author: "김유정", content: "점순이가 오늘도 닭을 데리고 우리 집 마당으로 들어왔습니다. 참 얄밉기도 하지만 글의 재미있는 소재가 되네요." },
+    { author: "백석", content: "눈이 가득 내리는 밤, 따뜻한 화로 옆에서 나타샤를 생각하며 시를 씁니다. 겨울은 참 아름다운 계절입니다." },
+    { author: "한용운", content: "아아, 사랑하는 나의 님은 갔지마는 나는 님을 보내지 아니하였습니다. 이 밤, 님의 침묵을 깨는 글을 씁니다." },
+    { author: "정지용", content: "넓은 벌 동쪽 끝으로 옛이야기 지줄대는 실개천이 휘돌아 나가고, 얼룩백이 황소가 해설피 금빛 게으른 울음을 우는 곳이 그립습니다." }
+];
+
+function showLoungeToast(author) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--border-color);
+        padding: 0.85rem 1.25rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        transform: translateY(20px);
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    `;
+    
+    const isDark = document.body.classList.contains('dark-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) {
+        toast.style.background = 'rgba(30, 30, 30, 0.9)';
+    }
+
+    toast.innerHTML = `
+        <span style="font-size: 1.1rem;">💬</span>
+        <div style="text-align: left;">
+            <strong>${author}</strong> 작가의 새 글이 라운지에 등록되었습니다.
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+    }, 10);
+    
+    setTimeout(() => {
+        toast.style.transform = 'translateY(20px)';
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.remove();
+        }, 400);
+    }, 4500);
+}
+
+function initLoungeSimulation() {
+    let nextPostIndex = 0;
+    
+    // Simulate first post after 20 seconds, then randomized intervals between 45 and 90 seconds
+    setTimeout(simulateNewPost, 20000);
+    
+    function simulateNewPost() {
+        const postData = simulatedLoungePosts[nextPostIndex];
+        nextPostIndex = (nextPostIndex + 1) % simulatedLoungePosts.length;
+        
+        const posts = getLoungePosts();
+        const newPost = {
+            id: "post-sim-" + Date.now(),
+            author: postData.author,
+            content: postData.content,
+            timestamp: Date.now(),
+            likes: 0,
+            likedByMe: false,
+            comments: []
+        };
+        posts.unshift(newPost);
+        saveLoungePosts(posts);
+        
+        const currentTabActive = tabLoungeBtn && tabLoungeBtn.classList.contains('active');
+        const communityScreenActive = communityScreen && communityScreen.style.display !== 'none';
+        
+        if (currentTabActive && communityScreenActive) {
+            renderLoungeFeed();
+        } else {
+            const badge = document.getElementById('lounge-new-badge');
+            if (badge) badge.style.display = 'block';
+        }
+        
+        showLoungeToast(postData.author);
+        
+        const nextInterval = 45000 + Math.random() * 45000;
+        setTimeout(simulateNewPost, nextInterval);
+    }
 }
 
 function formatTimeElapsed(timestamp) {
