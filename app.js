@@ -1408,6 +1408,8 @@ function updateAuthUI(user) {
     const authContainer = document.getElementById('auth-container');
     if (!authContainer) return;
 
+    const logoutMenuItem = document.getElementById('logout-menu-item');
+
     if (user) {
         // User logged in
         const name = user.user_metadata?.full_name || user.email || '사용자';
@@ -1421,18 +1423,19 @@ function updateAuthUI(user) {
         }
 
         authContainer.innerHTML = `
-            <div class="user-profile" id="user-avatar-btn" title="${name} (클릭하여 로그아웃)">
+            <div class="user-profile" title="${name}">
                 ${avatarHtml}
             </div>
         `;
 
-        const avatarBtn = document.getElementById('user-avatar-btn');
-        if (avatarBtn) {
-            avatarBtn.addEventListener('click', () => {
+        if (logoutMenuItem) {
+            logoutMenuItem.style.display = 'flex';
+            logoutMenuItem.onclick = (e) => {
+                e.preventDefault();
                 if (confirm("로그아웃 하시겠습니까?")) {
                     handleLogout();
                 }
-            });
+            };
         }
     } else {
         // User logged out
@@ -1446,6 +1449,11 @@ function updateAuthUI(user) {
                 </svg>
             </button>
         `;
+
+        if (logoutMenuItem) {
+            logoutMenuItem.style.display = 'none';
+            logoutMenuItem.onclick = null;
+        }
 
         const loginBtn = document.getElementById('google-login-btn');
         if (loginBtn) {
