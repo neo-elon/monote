@@ -57,7 +57,7 @@ function updateSyncStatus(status, message) {
 
 async function saveProjectToCloud(proj) {
     if (!supabaseClient || !currentUser) return;
-    if (proj.title === "모노트로 책 쓰기") return; // Protect global user manual from overwrite
+    if (proj.id === "monote-manual-guide") return; // Protect global user manual from overwrite
     const { error } = await supabaseClient
         .from('open_projects')
         .upsert({
@@ -159,10 +159,10 @@ async function loadProjects() {
 
     if (currentUser) {
         // Keep only projects belonging to this user OR offline projects (no user_id) OR public user manual
-        projects = localProjects.filter(p => !p.user_id || p.user_id === currentUser.id || p.title === "모노트로 책 쓰기");
+        projects = localProjects.filter(p => !p.user_id || p.user_id === currentUser.id || p.id === "monote-manual-guide");
     } else {
         // Offline mode: keep only offline projects (no user_id) OR public user manual
-        projects = localProjects.filter(p => !p.user_id || p.title === "모노트로 책 쓰기");
+        projects = localProjects.filter(p => !p.user_id || p.id === "monote-manual-guide");
     }
 
     // Migration from old single-project structure
@@ -203,9 +203,9 @@ async function loadProjects() {
         try {
             let query = supabaseClient.from('open_projects').select('*');
             if (currentUser) {
-                query = query.or(`user_id.eq.${currentUser.id},title.eq.모노트로 책 쓰기`);
+                query = query.or(`user_id.eq.${currentUser.id},id.eq.monote-manual-guide`);
             } else {
-                query = query.eq('title', '모노트로 책 쓰기');
+                query = query.eq('id', 'monote-manual-guide');
             }
             const { data, error } = await query.order('updated_at', { ascending: false });
 
@@ -225,7 +225,7 @@ async function loadProjects() {
 
             // Merge local offline projects into account projects
             const mergedProjects = [...dbProjects];
-            const offlineProjects = projects.filter(p => !p.user_id && p.title !== "모노트로 책 쓰기");
+            const offlineProjects = projects.filter(p => !p.user_id && p.id !== "monote-manual-guide");
 
             for (const localProj of offlineProjects) {
                 // Check for duplicates
