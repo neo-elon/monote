@@ -397,6 +397,7 @@ function setupEventListeners() {
             const ch = project.chapters.find(c => c.id === activeChapterId);
             if (ch) {
                 ch.title = e.target.value;
+                updateEditorCounts();
                 triggerSave();
             }
         }
@@ -410,7 +411,7 @@ function setupEventListeners() {
                 const oldContent = ch.content || '';
                 const newContent = e.target.value;
                 ch.content = newContent;
-                updateEditorCounts(newContent);
+                updateEditorCounts();
                 triggerSave();
                 trackWritingProgress(oldContent, newContent);
             }
@@ -625,7 +626,7 @@ function renderChapterList() {
         card.setAttribute('draggable', 'true');
         
         // Calculate length details
-        const charCount = chapter.content ? chapter.content.length : 0;
+        const charCount = (chapter.title ? chapter.title.length : 0) + (chapter.content ? chapter.content.length : 0);
         const prefix = getChapterPrefix(chapter.id);
         
         // Generate tree dotted guide lines
@@ -1003,7 +1004,7 @@ function openChapterEditor(chapterId) {
     chapterContentTextarea.value = chapter.content || '';
     
     // Update Character & Word Counts
-    updateEditorCounts(chapter.content || '');
+    updateEditorCounts();
     // Switch Screen View
     showWritingScreen();
 
@@ -1017,12 +1018,16 @@ function openChapterEditor(chapterId) {
 }
 
 // Update Editor Counts (With Space, No Space, Word Count)
-function updateEditorCounts(text) {
-    const lenWithSpaces = text.length;
-    const lenNoSpaces = text.replace(/\s/g, '').length;
+function updateEditorCounts() {
+    const titleText = chapterTitleInput.value || '';
+    const contentText = chapterContentTextarea.value || '';
+    const combinedText = titleText + (titleText && contentText ? '\n' : '') + contentText;
+
+    const lenWithSpaces = combinedText.length;
+    const lenNoSpaces = combinedText.replace(/\s/g, '').length;
     
     // Calculate Word Count (using standard regex matching words/syllables)
-    const trimmed = text.trim();
+    const trimmed = combinedText.trim();
     const words = trimmed ? trimmed.split(/\s+/).length : 0;
     
     charCountWithSpaces.textContent = `${lenWithSpaces.toLocaleString()}자`;
@@ -1216,7 +1221,7 @@ function renderRanking() {
     const userStreak = getUserStreak();
     
     const userTotalCumulative = projects.reduce((total, proj) => {
-        return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+        return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
     }, 0);
 
     const tier = getUserWritingTier(userTotalCumulative);
@@ -2124,7 +2129,7 @@ function showPreviewBookDialog(book) {
                 `;
                 item.innerHTML = `
                     <span style="font-size: 0.85rem; font-family: var(--font-serif); color: var(--text-primary); font-weight: 500;">${ch.title || '제목 없음'}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">${ch.content ? ch.content.length.toLocaleString() : 0}자</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">${((ch.title || '').length + (ch.content || '').length).toLocaleString()}자</span>
                 `;
                 item.addEventListener('click', () => {
                     showPreviewChapterDialog(ch);
@@ -2228,7 +2233,7 @@ function renderBookshelf() {
                 ? `<div class="book-visibility-icon private" title="비공개 (로컬 저장)">🔒</div>`
                 : "");
 
-        const totalCharCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+        const totalCharCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
         const dateObj = new Date(proj.updatedAt || proj.createdAt || Date.now());
         const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')}`;
 
