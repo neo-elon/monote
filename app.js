@@ -627,6 +627,8 @@ function renderChapterList() {
 
         let touchStartY = 0;
         let hasMovedThreshold = false;
+        let touchTimeout = null;
+        let isLongPress = false;
 
         // Touch Drag & Drop event handlers (Mobile / Finger)
         card.addEventListener('touchstart', (e) => {
@@ -638,8 +640,21 @@ function renderChapterList() {
             touchStartIndex = Array.from(chaptersList.children).indexOf(card);
             hasMovedThreshold = false;
             isDragging = false;
+            isLongPress = false;
+            
             // Clear text selection
             window.getSelection().removeAllRanges();
+
+            // Start long press timeout (500ms)
+            if (touchTimeout) clearTimeout(touchTimeout);
+            touchTimeout = setTimeout(() => {
+                isLongPress = true;
+                isDragging = true;
+                card.classList.add('dragging');
+                if (navigator.vibrate) {
+                    navigator.vibrate(40); // Subtle haptic feedback
+                }
+            }, 500);
         }, { passive: true });
 
         card.addEventListener('touchmove', (e) => {
@@ -653,14 +668,18 @@ function renderChapterList() {
             const deltaY = touch.clientY - touchStartY;
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             
-            // Apply threshold (e.g. 6px) to distinguish drag from tap
-            if (!hasMovedThreshold && distance > 6) {
-                hasMovedThreshold = true;
-                isDragging = true;
-                card.classList.add('dragging');
+            // If user moves finger significantly before long press, cancel it (they are scrolling)
+            if (!isLongPress && distance > 8) {
+                if (touchTimeout) {
+                    clearTimeout(touchTimeout);
+                    touchTimeout = null;
+                }
             }
             
-            if (isDragging) {
+            if (isLongPress && isDragging) {
+                // Prevent standard screen scroll while reordering
+                if (e.cancelable) e.preventDefault();
+                
                 // Prevent text selection highlight on move
                 window.getSelection().removeAllRanges();
                 
@@ -676,9 +695,6 @@ function renderChapterList() {
                 if (elementUnder) {
                     const targetCard = elementUnder.closest('.chapter-card');
                     if (targetCard && targetCard !== card) {
-                        // Prevent standard screen scroll while reordering
-                        if (e.cancelable) e.preventDefault();
-                        
                         const rect = targetCard.getBoundingClientRect();
                         const next = (currentY - rect.top) / (rect.bottom - rect.top) > 0.5;
                         
@@ -689,12 +705,17 @@ function renderChapterList() {
         }, { passive: false });
 
         card.addEventListener('touchend', (e) => {
+            if (touchTimeout) {
+                clearTimeout(touchTimeout);
+                touchTimeout = null;
+            }
+            
             if (!touchStartCard) return;
             
             card.classList.remove('dragging');
             touchStartCard = null;
             
-            if (isDragging) {
+            if (isLongPress && isDragging) {
                 // Save final touch level shift
                 const deltaX = lastTouchX - dragStartX;
                 let levelShift = Math.round(deltaX / 24);
@@ -706,11 +727,23 @@ function renderChapterList() {
                 
                 setTimeout(() => {
                     isDragging = false;
+                    isLongPress = false;
                 }, 100);
             } else {
                 // It was a simple tap, open the editor immediately
                 openChapterEditor(chapter.id);
             }
+        });
+
+        card.addEventListener('touchcancel', (e) => {
+            if (touchTimeout) {
+                clearTimeout(touchTimeout);
+                touchTimeout = null;
+            }
+            card.classList.remove('dragging');
+            touchStartCard = null;
+            isDragging = false;
+            isLongPress = false;
         });
         
         chaptersList.appendChild(card);
