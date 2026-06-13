@@ -112,9 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProjects();
     setupEventListeners();
     renderBookshelf();
-    // Initially in bookshelf mode: show import, hide project-specific exports
+    // Initially in bookshelf mode: show import/export, hide txt export
     if (importProjectTrigger) importProjectTrigger.style.display = '';
-    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+    if (exportProjectBtn) exportProjectBtn.style.display = '';
     if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
 });
 
@@ -922,9 +922,9 @@ function showBookshelfScreen() {
     activeProjectId = null;
     project = null;
     
-    // In bookshelf screen: show JSON import, hide project-specific exports
+    // In bookshelf screen: show JSON import/export, hide txt export
     if (importProjectTrigger) importProjectTrigger.style.display = '';
-    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+    if (exportProjectBtn) exportProjectBtn.style.display = '';
     if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
     
     overviewScreen.classList.remove('active');
@@ -1140,10 +1140,15 @@ function deleteChapter(chapterId) {
     showOverviewScreen();
 }
 
-// Export entire project to JSON backup file
+// Export entire project or all projects to JSON backup file
 function exportProject() {
-    const filename = `${project.title || 'monote-backup'}-${new Date().toISOString().slice(0,10)}.json`;
-    const jsonStr = JSON.stringify(project, null, 4);
+    const isSingleProject = project !== null;
+    const filename = isSingleProject 
+        ? `${project.title || 'monote-backup'}-${new Date().toISOString().slice(0,10)}.json`
+        : `monote-all-projects-${new Date().toISOString().slice(0,10)}.json`;
+        
+    const dataToExport = isSingleProject ? project : projects;
+    const jsonStr = JSON.stringify(dataToExport, null, 4);
     const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     
@@ -1158,7 +1163,7 @@ function exportProject() {
 
 // Export entire project to single TXT file (all chapters compiled)
 function exportProjectTxt() {
-    if (!project.chapters || project.chapters.length === 0) {
+    if (!project || !project.chapters || project.chapters.length === 0) {
         alert("내보낼 챕터가 없습니다.");
         return;
     }
@@ -1195,18 +1200,53 @@ function exportProjectTxt() {
     URL.revokeObjectURL(url);
 }
 
-// Import project from JSON backup file
+// Import project or all projects from JSON backup file
 function importProject(file) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
-            if (importedData && typeof importedData === 'object' && ('title' in importedData || 'chapters' in importedData)) {
-                if (confirm("백업 파일을 불러오시겠습니까? 불러오게 되면 현재 작성 중인 내용은 덮어써집니다.")) {
-                    project = importedData;
-                    triggerSave();
-                    renderOverview();
-                    alert("성공적으로 백업 데이터를 불러왔습니다.");
+            if (Array.isArray(importedData)) {
+                // It's all projects backup
+                if (confirm("모든 작품 백업 파일을 불러오시겠습니까? 현재 책장의 모든 작품이 백업 파일의 내용으로 대체됩니다. (기존 작품은 덮어써집니다)")) {
+                    projects = importedData;
+                    storage.setItem('monote-projects', JSON.stringify(projects));
+                    renderBookshelf();
+                    
+                    // Sync all to Supabase if client is initialized
+                    if (supabaseClient) {
+                        updateSyncStatus('syncing', '동기화 중...');
+                        (async () => {
+                            try {
+                                for (const proj of projects) {
+                                    await saveProjectToCloud(proj);
+                                }
+                                updateSyncStatus('success', '동기화 완료');
+                            } catch (err) {
+                                console.error('Failed to sync imported projects to cloud:', err);
+                                updateSyncStatus('error', '동기화 실패');
+                            }
+                        })();
+                    }
+                    alert("성공적으로 모든 작품 데이터를 불러왔습니다.");
+                }
+            } else if (importedData && typeof importedData === 'object' && ('title' in importedData || 'chapters' in importedData)) {
+                // It's a single project backup
+                if (confirm("작품 백업 파일을 책장에 추가하시겠습니까?")) {
+                    const idx = projects.findIndex(p => p.id === importedData.id);
+                    if (idx !== -1) {
+                        if (confirm(`"${importedData.title || '제목 없음'}" 작품이 이미 책장에 존재합니다. 덮어쓰시겠습니까?`)) {
+                            projects[idx] = importedData;
+                        }
+                    } else {
+                        projects.push(importedData);
+                    }
+                    storage.setItem('monote-projects', JSON.stringify(projects));
+                    renderBookshelf();
+                    if (supabaseClient) {
+                        saveProjectToCloud(importedData).catch(console.error);
+                    }
+                    alert("성공적으로 작품을 불러왔습니다.");
                 }
             } else {
                 alert("올바른 Monote 백업 파일(.json)이 아닙니다.");
