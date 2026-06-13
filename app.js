@@ -453,6 +453,31 @@ function setupEventListeners() {
         });
     });
 
+    // Edit Project Settings Listeners
+    const editProjSettingsBtn = document.getElementById('edit-project-settings-btn');
+    if (editProjSettingsBtn) {
+        editProjSettingsBtn.addEventListener('click', showEditBookDialog);
+    }
+    const cancelEditBookBtn = document.getElementById('cancel-edit-book');
+    if (cancelEditBookBtn) {
+        cancelEditBookBtn.addEventListener('click', hideEditBookDialog);
+    }
+    const confirmEditBookBtn = document.getElementById('confirm-edit-book');
+    if (confirmEditBookBtn) {
+        confirmEditBookBtn.addEventListener('click', saveEditBookSettings);
+    }
+
+    // Color picker active state toggle for edit dialog
+    document.querySelectorAll('.cover-color-picker input[name="edit-cover-color"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const picker = e.target.closest('.cover-color-picker');
+            picker.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            e.target.closest('.color-option').classList.add('active');
+        });
+    });
+
     // Toggle manual visibility listener
     const toggleManualItem = document.getElementById('toggle-manual-item');
     if (toggleManualItem) {
@@ -1308,6 +1333,8 @@ function sortProjectsByOrder() {
 // Dialog elements references helper
 const newBookDialog = document.getElementById('new-book-dialog');
 const newBookTitleInput = document.getElementById('new-book-title');
+const editBookDialog = document.getElementById('edit-book-dialog');
+const editBookTitleInput = document.getElementById('edit-book-title');
 
 // Show dialog
 function showNewBookDialog() {
@@ -1887,5 +1914,91 @@ function updateManualToggleUI() {
     const textSpan = document.getElementById('toggle-manual-text');
     if (textSpan) {
         textSpan.textContent = hideManual ? '설명서 보이기' : '설명서 숨기기';
+    }
+}
+
+// Show edit book dialog
+function showEditBookDialog() {
+    if (!project) return;
+    editBookTitleInput.value = project.title || '';
+
+    // Reset color option active class in edit color picker
+    document.querySelectorAll('#edit-book-dialog .cover-color-picker .color-option').forEach(opt => {
+        opt.classList.remove('active');
+    });
+
+    const activeColor = project.coverColor || 'charcoal';
+    const targetOpt = document.querySelector(`#edit-book-dialog .cover-color-picker .color-option.${activeColor}`);
+    if (targetOpt) targetOpt.classList.add('active');
+
+    const colorRadio = document.querySelector(`#edit-book-dialog input[name="edit-cover-color"][value="${activeColor}"]`);
+    if (colorRadio) colorRadio.checked = true;
+
+    const activeVisibility = project.isPrivate ? 'private' : 'public';
+    const visibilityRadio = document.querySelector(`#edit-book-dialog input[name="edit-book-visibility"][value="${activeVisibility}"]`);
+    if (visibilityRadio) visibilityRadio.checked = true;
+
+    editBookDialog.style.display = 'flex';
+    setTimeout(() => {
+        editBookTitleInput.focus();
+    }, 100);
+}
+
+// Hide edit book dialog
+function hideEditBookDialog() {
+    editBookDialog.style.display = 'none';
+}
+
+// Save edited project settings
+async function saveEditBookSettings() {
+    const title = editBookTitleInput.value.trim();
+    if (!title) {
+        alert("작품 제목을 입력해 주세요.");
+        editBookTitleInput.focus();
+        return;
+    }
+
+    const selectedColorRadio = document.querySelector('#edit-book-dialog input[name="edit-cover-color"]:checked');
+    const coverColor = selectedColorRadio ? selectedColorRadio.value : 'charcoal';
+
+    const visibilityRadio = document.querySelector('#edit-book-dialog input[name="edit-book-visibility"]:checked');
+    const isPrivate = visibilityRadio ? (visibilityRadio.value === 'private') : false;
+
+    // Update active project copy
+    project.title = title;
+    project.coverColor = coverColor;
+    project.isPrivate = isPrivate;
+    project.updatedAt = new Date().toISOString();
+
+    // Sync back to projects list
+    const idx = projects.findIndex(p => p.id === activeProjectId);
+    if (idx !== -1) {
+        projects[idx].title = title;
+        projects[idx].coverColor = coverColor;
+        projects[idx].isPrivate = isPrivate;
+        projects[idx].updatedAt = project.updatedAt;
+        if (currentUser) {
+            projects[idx].user_id = currentUser.id;
+        }
+        storage.setItem('monote-projects', JSON.stringify(projects));
+    }
+
+    // Update Overview screen inputs
+    projectTitleInput.value = title;
+
+    hideEditBookDialog();
+    renderOverview();
+    renderBookshelf();
+
+    // Sync to Supabase
+    if (supabaseClient && currentUser) {
+        updateSyncStatus('syncing', '동기화 중...');
+        try {
+            await saveProjectToCloud(project);
+            updateSyncStatus('success', '동기화 완료');
+        } catch (err) {
+            console.error('Failed to sync project settings to cloud:', err);
+            updateSyncStatus('error', '동기화 실패');
+        }
     }
 }

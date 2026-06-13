@@ -139,7 +139,10 @@
                     <!-- Left Column: Novel Info & Synopsis -->
                     <div class="project-info-panel">
                         <div class="panel-section">
-                            <label for="project-title" class="section-label">작품 제목</label>
+                            <div class="label-row">
+                                <label for="project-title" class="section-label">작품 제목</label>
+                                <button id="edit-project-settings-btn" class="btn-flat btn-sm btn-danger" style="border: none; padding: 0.2rem 0.5rem;" title="작품 설정 수정">✎ 설정</button>
+                            </div>
                             <input type="text" id="project-title" class="input-flat title-input"
                                 placeholder="작품의 이름을 지어주세요..." autocomplete="off">
                         </div>
@@ -276,6 +279,44 @@
             <div class="dialog-actions">
                 <button id="cancel-new-book" class="btn-flat btn-sm btn-danger">취소</button>
                 <button id="confirm-new-book" class="btn-flat btn-sm">생성</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Book Settings Edit Modal (Hidden by default) -->
+    <div id="edit-book-dialog" class="book-dialog" style="display: none;">
+        <div class="dialog-content">
+            <h3>작품 설정 수정</h3>
+            <div class="dialog-field">
+                <label for="edit-book-title">작품 제목</label>
+                <input type="text" id="edit-book-title" class="input-flat" placeholder="제목을 입력하세요..." autocomplete="off">
+            </div>
+            <div class="dialog-field">
+                <label>표지 색상</label>
+                <div class="cover-color-picker">
+                    <label class="color-option charcoal"><input type="radio" name="edit-cover-color" value="charcoal"><span></span></label>
+                    <label class="color-option linen"><input type="radio" name="edit-cover-color" value="linen"><span></span></label>
+                    <label class="color-option ivory"><input type="radio" name="edit-cover-color" value="ivory"><span></span></label>
+                    <label class="color-option slate"><input type="radio" name="edit-cover-color" value="slate"><span></span></label>
+                    <label class="color-option terracotta"><input type="radio" name="edit-cover-color" value="terracotta"><span></span></label>
+                </div>
+            </div>
+            <div class="dialog-field">
+                <label>공개 설정</label>
+                <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                        <input type="radio" name="edit-book-visibility" value="public" style="cursor: pointer;">
+                        <span>공개</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                        <input type="radio" name="edit-book-visibility" value="private" style="cursor: pointer;">
+                        <span>비공개</span>
+                    </label>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button id="cancel-edit-book" class="btn-flat btn-sm btn-danger">취소</button>
+                <button id="confirm-edit-book" class="btn-flat btn-sm">저장</button>
             </div>
         </div>
     </div>
