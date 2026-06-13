@@ -1305,6 +1305,7 @@ function sortProjectsByOrder() {
             return idxA - idxB;
         });
     }
+}
 
 // Dialog elements references helper
 const newBookDialog = document.getElementById('new-book-dialog');
