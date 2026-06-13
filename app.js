@@ -3077,6 +3077,23 @@ async function checkAuthState() {
     }
 }
 
+async function saveProfileToCloud(user) {
+    if (!supabaseClient || !user) return;
+    try {
+        const penName = user.user_metadata?.pen_name || user.user_metadata?.full_name || user.email?.split('@')[0] || "익명의 작가";
+        await supabaseClient
+            .from('profiles')
+            .upsert({
+                id: user.id,
+                email: user.email,
+                pen_name: penName,
+                updated_at: new Date().toISOString()
+            });
+    } catch (e) {
+        console.error("Failed to save profile to cloud:", e);
+    }
+}
+
 function updateAuthUI(user) {
     currentUser = user;
     const authContainer = document.getElementById('auth-container');
@@ -3090,6 +3107,9 @@ function updateAuthUI(user) {
     if (user) {
         // Run check to prompt for pen name if not set
         checkPenName(user);
+        
+        // Sync profile to cloud database
+        saveProfileToCloud(user);
 
         // Remove the profile icon completely
         authContainer.innerHTML = '';
