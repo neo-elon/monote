@@ -1165,6 +1165,12 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    cursor: pointer;
+    transition: transform var(--transition-speed);
+}
+
+.user-profile:hover {
+    transform: scale(1.05);
 }
 
 .user-name {

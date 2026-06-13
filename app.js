@@ -1432,11 +1432,26 @@ function updateAuthUI(user) {
         }
 
         authContainer.innerHTML = `
-            <div class="user-profile" title="${name}">
+            <div class="user-profile" id="user-profile-avatar" title="${name} (클릭하여 필명 수정)">
                 ${avatarHtml}
                 <span class="user-name">${name}</span>
             </div>
         `;
+
+        const profileBtn = document.getElementById('user-profile-avatar');
+        if (profileBtn) {
+            profileBtn.onclick = () => {
+                const currentPenName = user.user_metadata?.pen_name || '';
+                const newPenName = prompt("작가 필명을 수정하시겠습니까?", currentPenName);
+                if (newPenName === null) return; // Cancelled
+                const trimmed = newPenName.trim();
+                if (!trimmed) {
+                    alert("사용할 필명을 입력해 주세요.");
+                    return;
+                }
+                updateUserPenName(trimmed);
+            };
+        }
 
         if (logoutMenuItem) {
             logoutMenuItem.style.display = 'flex';
