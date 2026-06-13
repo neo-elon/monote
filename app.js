@@ -1042,6 +1042,17 @@ function renderBookshelf() {
     
     booksGrid.innerHTML = '';
     
+    // Update bookshelf title dynamically with user's pen name
+    const bookshelfTitleEl = document.getElementById('bookshelf-title');
+    if (bookshelfTitleEl) {
+        const authorName = currentUser?.user_metadata?.pen_name || currentUser?.user_metadata?.full_name || currentUser?.email || '';
+        if (authorName) {
+            bookshelfTitleEl.textContent = `작가 ${authorName}님의 책장`;
+        } else {
+            bookshelfTitleEl.textContent = '내 책장';
+        }
+    }
+    
     // Add new project card
     const addCard = document.createElement('div');
     addCard.className = 'book-card';
@@ -1482,9 +1493,10 @@ function updateAuthUI(user) {
         // Display pen name or fallback to full name/email
         const name = user.user_metadata?.pen_name || user.user_metadata?.full_name || user.email || '사용자';
 
+        const firstChar = name.charAt(0).toUpperCase();
         authContainer.innerHTML = `
             <div class="user-profile" id="user-profile-avatar" title="${name} (클릭하여 필명 수정)">
-                <span class="user-name">${name}</span>
+                <div class="user-avatar-placeholder">${firstChar}</div>
             </div>
         `;
 
