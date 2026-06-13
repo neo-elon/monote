@@ -930,6 +930,7 @@ input, textarea {
 
 .cover-color-picker {
     display: flex;
+    align-items: center;
     gap: 0.75rem;
     padding: 0.5rem 0;
 }
@@ -937,7 +938,9 @@ input, textarea {
 .color-option {
     cursor: pointer;
     position: relative;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .color-option input {
