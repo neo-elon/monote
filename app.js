@@ -3633,7 +3633,7 @@ function updateManualToggleUI() {
 function updateLanguageUI() {
     const langText = document.getElementById('lang-toggle-text');
     if (langText) {
-        langText.textContent = currentLang === 'en' ? '한국어로 변경' : 'English로 변경';
+        langText.textContent = currentLang === 'en' ? '한국어로 변경' : 'Switch to English';
     }
 
     const t = i18n[currentLang];
