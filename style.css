@@ -630,7 +630,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.25rem;
 }
 
 .bookshelf-title {
@@ -649,7 +649,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 1.8rem 2rem;
-    padding: 1rem 0;
+    padding: 0.25rem 0 1rem 0;
     align-items: end;
 }
 
