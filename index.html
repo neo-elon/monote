@@ -135,6 +135,22 @@
                             <button id="cancel-new-book" class="btn-flat btn-sm btn-danger">취소</button>
                             <button id="confirm-new-book" class="btn-flat btn-sm">생성</button>
                         </div>
+                </div>
+                
+                <!-- Pen Name Registration Dialog -->
+                <div id="penname-dialog" class="book-dialog" style="display: none;">
+                    <div class="dialog-content">
+                        <h3>작가 필명 설정</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.5rem;">
+                            Monote에서 작품 표지와 헤더에 구글 계정이름 대신 표시될 필명을 설정해 주세요. 언제든지 재설정할 수 있습니다.
+                        </p>
+                        <div class="dialog-field">
+                            <label for="new-penname">필명</label>
+                            <input type="text" id="new-penname" class="input-flat" placeholder="필명을 입력하세요..." autocomplete="off">
+                        </div>
+                        <div class="dialog-actions">
+                            <button id="confirm-penname" class="btn-flat btn-sm">설정 완료</button>
+                        </div>
                     </div>
                 </div>
 

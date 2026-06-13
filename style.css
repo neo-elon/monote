@@ -1161,6 +1161,24 @@ body {
     border: 1.5px solid var(--border-color);
 }
 
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .user-name {
-    display: none; /* Hide name completely as requested */
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .user-name {
+        display: none;
+    }
 }

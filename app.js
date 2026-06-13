@@ -1005,6 +1005,8 @@ function renderBookshelf() {
     });
     booksGrid.appendChild(addCard);
     
+    const authorName = currentUser?.user_metadata?.pen_name || 'Monote';
+    
     projects.forEach((proj) => {
         const bookCard = document.createElement('div');
         bookCard.className = 'book-card';
@@ -1016,7 +1018,7 @@ function renderBookshelf() {
             <button class="delete-book-btn" title="작품 삭제">×</button>
             <div class="book-cover cover-${coverColor}">
                 <div class="book-cover-title">${proj.title || '제목 없음'}</div>
-                <div class="book-cover-author">Monote</div>
+                <div class="book-cover-author">${authorName}</div>
             </div>
             <div class="book-card-title-under">${proj.title || '제목 없음'}</div>
         `;
@@ -1414,8 +1416,11 @@ function updateAuthUI(user) {
     const logoutMenuItem = document.getElementById('logout-menu-item');
 
     if (user) {
-        // User logged in
-        const name = user.user_metadata?.full_name || user.email || '사용자';
+        // Run check to prompt for pen name if not set
+        checkPenName(user);
+
+        // Display pen name or fallback to full name/email
+        const name = user.user_metadata?.pen_name || user.user_metadata?.full_name || user.email || '사용자';
         const avatarUrl = user.user_metadata?.avatar_url;
 
         let avatarHtml = '';
@@ -1428,6 +1433,7 @@ function updateAuthUI(user) {
         authContainer.innerHTML = `
             <div class="user-profile" title="${name}">
                 ${avatarHtml}
+                <span class="user-name">${name}</span>
             </div>
         `;
 
@@ -1461,6 +1467,52 @@ function updateAuthUI(user) {
         const loginBtn = document.getElementById('google-login-btn');
         if (loginBtn) {
             loginBtn.addEventListener('click', handleGoogleLogin);
+        }
+    }
+}
+
+// Prompt user to enter their Pen name if not set in metadata
+function checkPenName(user) {
+    if (!user) return;
+    const penName = user.user_metadata?.pen_name;
+    if (!penName) {
+        const dialog = document.getElementById('penname-dialog');
+        const input = document.getElementById('new-penname');
+        const confirmBtn = document.getElementById('confirm-penname');
+
+        if (dialog && input && confirmBtn) {
+            dialog.style.display = 'flex';
+            input.value = '';
+            input.focus();
+
+            confirmBtn.onclick = async () => {
+                const value = input.value.trim();
+                if (!value) {
+                    alert("사용할 필명을 입력해 주세요.");
+                    return;
+                }
+
+                try {
+                    confirmBtn.disabled = true;
+                    confirmBtn.textContent = "설정 중...";
+
+                    const { data, error } = await supabaseClient.auth.updateUser({
+                        data: { pen_name: value }
+                    });
+
+                    if (error) throw error;
+
+                    dialog.style.display = 'none';
+                    updateAuthUI(data.user);
+                    renderBookshelf(); // Refresh book covers with the new pen name
+                } catch (err) {
+                    console.error("Failed to update pen name:", err);
+                    alert(`필명 등록에 실패했습니다: ${err.message || err}`);
+                } finally {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = "설정 완료";
+                }
+            };
         }
     }
 }
