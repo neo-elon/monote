@@ -1294,6 +1294,68 @@ function renderRanking() {
     `;
     rankingContainer.appendChild(statsRow);
 
+    // 2.5. Render Badges Section
+    const badgesSection = document.createElement('div');
+    badgesSection.style.cssText = `
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 1.25rem;
+        border-radius: 8px;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    `;
+    
+    // Check achievements
+    const activeProjects = projects.filter(p => p.id !== "monote-manual-guide");
+    const hasProject = activeProjects.length > 0;
+    const hasStreak3 = userStreak >= 3;
+    const hasDaily1000 = userDailyChars >= 1000;
+    const hasLongChapter = activeProjects.some(p => (p.chapters || []).some(ch => (ch.content || '').length >= 3000));
+    const hasCumulative10k = userTotalCumulative >= 10000;
+    const hasCumulative50k = userTotalCumulative >= 50000;
+
+    const badges = [
+        { id: 'start', name: '새싹의 시작', icon: '🌱', desc: '첫 작품 쓰기 시작', unlocked: hasProject },
+        { id: 'streak', name: '꾸준한 펜 끝', icon: '🔥', desc: '연속 집필 3일 달성', unlocked: hasStreak3 },
+        { id: 'daily', name: '열정의 폭주', icon: '⚡', desc: '하루 1,000자 집필', unlocked: hasDaily1000 },
+        { id: 'chapter', name: '첫 장 완성', icon: '📖', desc: '한 챕터 3,000자 작성', unlocked: hasLongChapter },
+        { id: 'writer', name: '단편 소설가', icon: '✒️', desc: '누적 10,000자 달성', unlocked: hasCumulative10k },
+        { id: 'master', name: '창작의 거장', icon: '👑', desc: '누적 50,000자 달성', unlocked: hasCumulative50k }
+    ];
+
+    const unlockedCount = badges.filter(b => b.unlocked).length;
+    
+    let badgesHtml = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.6rem; margin-bottom: 0.4rem;">
+            <div style="font-family: var(--font-serif); font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">나의 집필 뱃지 (${unlockedCount}/${badges.length})</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">집필을 통해 뱃지를 획득하세요</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+    `;
+
+    badges.forEach(b => {
+        const opacity = b.unlocked ? '1' : '0.4';
+        const filter = b.unlocked ? 'none' : 'grayscale(100%)';
+        const border = b.unlocked ? '1px solid var(--text-primary)' : '1px solid var(--border-color)';
+        const bg = b.unlocked ? 'var(--bg-secondary)' : 'transparent';
+        
+        badgesHtml += `
+            <div title="${b.desc}" style="background: ${bg}; border: ${border}; opacity: ${opacity}; filter: ${filter}; border-radius: 6px; padding: 0.6rem 0.4rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.3rem; transition: all 0.3s ease; position: relative;">
+                <span style="font-size: 1.5rem; line-height: 1;">${b.icon}</span>
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${b.name}</span>
+                <span style="font-size: 0.6rem; color: var(--text-secondary); line-height: 1.2; display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${b.desc}</span>
+                ${!b.unlocked ? '<span style="position: absolute; top: 4px; right: 4px; font-size: 0.65rem; opacity: 0.8;">🔒</span>' : ''}
+            </div>
+        `;
+    });
+
+    badgesHtml += `</div>`;
+    badgesSection.innerHTML = badgesHtml;
+    rankingContainer.appendChild(badgesSection);
+
     // 3. Render Sub-tabs
     const subTabsEl = document.createElement('div');
     subTabsEl.style.cssText = `
