@@ -1937,22 +1937,14 @@ function renderRanking() {
 
     if (activeRankingTab === 'daily') {
         const dailyRankingList = [
-            { author: userAuthorName, value: userDailyChars, isMe: true },
-            { author: "백석", value: 2450 },
-            { author: "윤동주", value: 1850 },
-            { author: "이상", value: 920 },
-            { author: "김유정", value: 450 }
+            { author: userAuthorName, value: userDailyChars, isMe: true }
         ].sort((a, b) => b.value - a.value);
 
         renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "✍️ Today's Writing Volume Ranking" : "✍️ 오늘 하루 집필량 랭킹", dailyRankingList, currentLang === 'en' ? " chars" : "자", true);
         
     } else if (activeRankingTab === 'weekly') {
         const weeklyRankingList = [
-            { author: userAuthorName, value: userWeeklyChars, isMe: true },
-            { author: "윤동주", value: 14850 },
-            { author: "백석", value: 12400 },
-            { author: "이상", value: 8750 },
-            { author: "김유정", value: 5200 }
+            { author: userAuthorName, value: userWeeklyChars, isMe: true }
         ].sort((a, b) => b.value - a.value);
 
         renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "📅 Weekly Writing Volume Ranking (7 Days Total)" : "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, currentLang === 'en' ? " chars" : "자", true);
@@ -1970,19 +1962,7 @@ function renderRanking() {
                 };
             });
 
-        const classicBooks = currentLang === 'en' ? [
-            { title: "1984", author: "George Orwell", value: 78420 },
-            { title: "A Room of One's Own", author: "Virginia Woolf", value: 42150 },
-            { title: "The Old Man and the Sea", author: "Ernest Hemingway", value: 35890 },
-            { title: "Wings", author: "Yi Sang", value: 12450 }
-        ] : [
-            { title: "1984 (새벽의 기록)", author: "조지 오웰", value: 78420 },
-            { title: "자기만의 방", author: "버지니아 울프", value: 42150 },
-            { title: "노인과 바다 (낭독 에디션)", author: "어니스트 헤밍웨이", value: 35890 },
-            { title: "날개 (초판본)", author: "이상", value: 12450 }
-        ];
-
-        const allBooks = [...userBooks, ...classicBooks]
+        const allBooks = [...userBooks]
             .filter(b => b.value > 0)
             .sort((a, b) => b.value - a.value);
 
@@ -1990,11 +1970,7 @@ function renderRanking() {
         
     } else if (activeRankingTab === 'streak') {
         const streakRankingList = [
-            { author: userAuthorName, value: userStreak, isMe: true },
-            { author: "윤동주", value: 18 },
-            { author: "백석", value: 11 },
-            { author: "김유정", value: 6 },
-            { author: "이상", value: 3 }
+            { author: userAuthorName, value: userStreak, isMe: true }
         ].sort((a, b) => b.value - a.value);
 
         renderEnhancedLeaderboard(leaderboardEl, currentLang === 'en' ? "🔥 Writing Streak Ranking" : "🔥 연속 집필 스트릭 랭킹", streakRankingList, currentLang === 'en' ? " days streak" : "일 연속", false);
