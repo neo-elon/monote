@@ -1193,11 +1193,108 @@ function switchCommunityTab(tab) {
     }
 }
 
+function getUserWritingTier(totalChars) {
+    if (totalChars <= 5000) {
+        return { name: "새싹 작가 🌱", next: 5000, nextName: "동네 작가", prev: 0, icon: "🌱" };
+    } else if (totalChars <= 15000) {
+        return { name: "동네 작가 ✒️", next: 15000, nextName: "프로 작가", prev: 5000, icon: "✒️" };
+    } else if (totalChars <= 50000) {
+        return { name: "프로 작가 🪶", next: 50000, nextName: "거장 작가", prev: 15000, icon: "🪶" };
+    } else {
+        return { name: "거장 작가 👑", next: Infinity, nextName: "", prev: 50000, icon: "👑" };
+    }
+}
+
 function renderRanking() {
     if (!rankingContainer) return;
     rankingContainer.innerHTML = '';
 
-    // Sub-tab Navigation
+    // Calculate user stats
+    const userDailyChars = getUserDailyWritingCount();
+    const userWeeklyChars = getUserWeeklyWritingCount();
+    const userStreak = getUserStreak();
+    
+    const userTotalCumulative = projects.reduce((total, proj) => {
+        return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+    }, 0);
+
+    const tier = getUserWritingTier(userTotalCumulative);
+
+    // 1. Render Writer Tier Card
+    const tierCard = document.createElement('div');
+    tierCard.style.cssText = `
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 1.25rem;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1.5rem;
+    `;
+
+    let progressText = "";
+    let progressPercent = 100;
+    if (tier.next !== Infinity) {
+        const nextDiff = tier.next - userTotalCumulative;
+        progressText = `다음 등급인 [${tier.nextName}]까지 <strong>${nextDiff.toLocaleString()}자</strong> 남음`;
+        const totalTierRange = tier.next - tier.prev;
+        const currentTierProgress = userTotalCumulative - tier.prev;
+        progressPercent = Math.min(100, Math.max(0, (currentTierProgress / totalTierRange) * 100));
+    } else {
+        progressText = "축하합니다! 최고 등급에 도달했습니다.";
+    }
+
+    tierCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span style="font-size: 1.5rem;">${tier.icon}</span>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">나의 작가 등급</div>
+                    <div style="font-family: var(--font-serif); font-size: 1rem; font-weight: 700; color: var(--text-primary);">${tier.name}</div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">총 집필량</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">${userTotalCumulative.toLocaleString()}자</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 0.25rem;">
+            <div style="height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-bottom: 0.4rem;">
+                <div style="height: 100%; width: ${progressPercent}%; background: var(--text-primary); opacity: 0.4; border-radius: 3px; transition: width 0.5s ease;"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">${progressText}</div>
+        </div>
+    `;
+    rankingContainer.appendChild(tierCard);
+
+    // 2. Render Mini Stats Dashboard Row
+    const statsRow = document.createElement('div');
+    statsRow.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    `;
+    statsRow.innerHTML = `
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 6px; text-align: center; box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">오늘 집필</div>
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${userDailyChars.toLocaleString()}자</div>
+        </div>
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 6px; text-align: center; box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">주간 누적</div>
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">${userWeeklyChars.toLocaleString()}자</div>
+        </div>
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 6px; text-align: center; box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500;">연속 집필</div>
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--accent-color);">${userStreak}일 🔥</div>
+        </div>
+    `;
+    rankingContainer.appendChild(statsRow);
+
+    // 3. Render Sub-tabs
     const subTabsEl = document.createElement('div');
     subTabsEl.style.cssText = `
         display: flex;
@@ -1241,10 +1338,9 @@ function renderRanking() {
         };
         subTabsEl.appendChild(btn);
     });
-
     rankingContainer.appendChild(subTabsEl);
 
-    // Leaderboard Container
+    // 4. Leaderboard Container
     const leaderboardEl = document.createElement('div');
     leaderboardEl.style.cssText = `
         display: flex;
@@ -1256,7 +1352,6 @@ function renderRanking() {
     const userAuthorName = currentUser?.user_metadata?.pen_name || "나 (작가)";
 
     if (activeRankingTab === 'daily') {
-        const userDailyChars = getUserDailyWritingCount();
         const dailyRankingList = [
             { author: userAuthorName, value: userDailyChars, isMe: true },
             { author: "백석", value: 2450 },
@@ -1265,10 +1360,9 @@ function renderRanking() {
             { author: "김유정", value: 450 }
         ].sort((a, b) => b.value - a.value);
 
-        renderLeaderboardSection(leaderboardEl, "✍️ 오늘 하루 집필량 랭킹", dailyRankingList, "자", true);
+        renderEnhancedLeaderboard(leaderboardEl, "✍️ 오늘 하루 집필량 랭킹", dailyRankingList, "자", true);
         
     } else if (activeRankingTab === 'weekly') {
-        const userWeeklyChars = getUserWeeklyWritingCount();
         const weeklyRankingList = [
             { author: userAuthorName, value: userWeeklyChars, isMe: true },
             { author: "윤동주", value: 14850 },
@@ -1277,7 +1371,7 @@ function renderRanking() {
             { author: "김유정", value: 5200 }
         ].sort((a, b) => b.value - a.value);
 
-        renderLeaderboardSection(leaderboardEl, "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, "자", true);
+        renderEnhancedLeaderboard(leaderboardEl, "📅 이번 주 집필량 랭킹 (7일 합산)", weeklyRankingList, "자", true);
         
     } else if (activeRankingTab === 'cumulative') {
         const userBooks = projects.map(proj => {
@@ -1304,7 +1398,6 @@ function renderRanking() {
         renderBookLeaderboardSection(leaderboardEl, "🏆 명예의 전당 (누적 글자수 랭킹)", allBooks);
         
     } else if (activeRankingTab === 'streak') {
-        const userStreak = getUserStreak();
         const streakRankingList = [
             { author: userAuthorName, value: userStreak, isMe: true },
             { author: "윤동주", value: 18 },
@@ -1313,8 +1406,103 @@ function renderRanking() {
             { author: "이상", value: 3 }
         ].sort((a, b) => b.value - a.value);
 
-        renderLeaderboardSection(leaderboardEl, "🔥 연속 집필 스트릭 랭킹", streakRankingList, "일 연속", false);
+        renderEnhancedLeaderboard(leaderboardEl, "🔥 연속 집필 스트릭 랭킹", streakRankingList, "일 연속", false);
     }
+}
+
+function renderEnhancedLeaderboard(container, title, list, unit, showBar) {
+    const section = document.createElement('div');
+    section.style.cssText = `
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        border-radius: 6px;
+        box-shadow: var(--shadow-sm);
+    `;
+
+    // 1. Render Top 3 Podium
+    let podiumHtml = '';
+    if (list.length >= 3) {
+        const gold = list[0];
+        const silver = list[1];
+        const bronze = list[2];
+
+        podiumHtml = `
+            <div style="display: flex; justify-content: center; align-items: flex-end; gap: 0.5rem; margin-bottom: 2rem; padding: 1rem 0; border-bottom: 1px dashed var(--border-color);">
+                <!-- 2nd Place (Silver) -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                    <span style="font-size: 1.3rem;">🥈</span>
+                    <span style="font-size: 0.8rem; font-weight: ${silver.isMe ? '700' : '500'}; color: var(--text-primary); text-align: center; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${silver.author}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">${silver.value.toLocaleString()}${unit}</span>
+                    <div style="width: 100%; height: 45px; background: var(--bg-secondary); border-radius: 4px 4px 0 0; border: 1px solid var(--border-color); border-bottom: none; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">2</div>
+                </div>
+                
+                <!-- 1st Place (Gold) -->
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; transform: translateY(-8px);">
+                    <span style="font-size: 1.8rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">👑</span>
+                    <span style="font-size: 0.85rem; font-weight: ${gold.isMe ? '700' : '600'}; color: var(--text-primary); text-align: center; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${gold.author}</span>
+                    <span style="font-size: 0.8rem; color: var(--accent-color); font-weight: 600;">${gold.value.toLocaleString()}${unit}</span>
+                    <div style="width: 100%; height: 65px; background: var(--text-primary); opacity: 0.9; border-radius: 4px 4px 0 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 800; color: var(--bg-primary);">1</div>
+                </div>
+                
+                <!-- 3rd Place (Bronze) -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                    <span style="font-size: 1.3rem;">🥉</span>
+                    <span style="font-size: 0.8rem; font-weight: ${bronze.isMe ? '700' : '500'}; color: var(--text-primary); text-align: center; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${bronze.author}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">${bronze.value.toLocaleString()}${unit}</span>
+                    <div style="width: 100%; height: 35px; background: var(--bg-secondary); border-radius: 4px 4px 0 0; border: 1px solid var(--border-color); border-bottom: none; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">3</div>
+                </div>
+            </div>
+        `;
+    }
+
+    let listHtml = '';
+    const startIdx = list.length >= 3 ? 3 : 0;
+    const maxValue = list.length > 0 ? list[0].value : 0;
+
+    for (let i = startIdx; i < list.length; i++) {
+        const item = list[i];
+        const itemBg = item.isMe ? 'rgba(0,0,0,0.02)' : 'transparent';
+        const borderStyle = item.isMe ? '1px dashed var(--border-color)' : 'none';
+        const paddingStyle = item.isMe ? '0.4rem 0.5rem' : '0';
+        const borderRadiusStyle = item.isMe ? '4px' : '0';
+
+        let itemBarHtml = '';
+        if (showBar && maxValue > 0) {
+            const percentage = (item.value / maxValue) * 100;
+            itemBarHtml = `
+                <div style="height: 5px; background: var(--bg-secondary); border-radius: 2.5px; overflow: hidden; margin-left: 30px;">
+                    <div style="height: 100%; width: ${percentage}%; background: var(--text-primary); opacity: 0.25; border-radius: 2.5px;"></div>
+                </div>
+            `;
+        }
+
+        listHtml += `
+            <div style="display: flex; flex-direction: column; gap: 0.35rem; background: ${itemBg}; border: ${borderStyle}; padding: ${paddingStyle}; border-radius: ${borderRadiusStyle};">
+                <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <span style="font-weight: 700; width: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">${i + 1}</span>
+                        <span style="font-size: 0.9rem; font-weight: ${item.isMe ? '700' : '600'}; color: var(--text-primary);">${item.author} ${item.isMe ? '<span style="font-size: 0.7rem; font-weight:normal; color:var(--text-secondary);">(나)</span>' : ''}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">
+                        ${item.value.toLocaleString()}${unit}
+                    </div>
+                </div>
+                ${itemBarHtml}
+            </div>
+        `;
+    }
+
+    section.innerHTML = `
+        <h3 style="font-family: var(--font-serif); font-size: 1rem; font-weight: 700; margin: 0 0 1.2rem 0; color: var(--text-primary);">
+            ${title}
+        </h3>
+        ${podiumHtml}
+        <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+            ${listHtml || `<div style="text-align: center; font-size: 0.8rem; color: var(--text-secondary); font-style: italic; padding: 0.5rem 0;">4위 이하 순위가 없습니다.</div>`}
+        </div>
+    `;
+    container.appendChild(section);
 }
 
 function renderLeaderboardSection(container, title, list, unit, showBar) {
