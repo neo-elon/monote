@@ -1223,11 +1223,10 @@ body {
         display: none;
     }
 }
-
 .book-visibility-icon {
     position: absolute;
     top: 8px;
-    left: 20px; /* Offset to clear the 12px book spine simulation on the left edge */
+    left: 12px; /* Offset to align with the 12px book spine simulation edge */
     font-size: 0.8rem;
     line-height: 1;
     z-index: 5;
