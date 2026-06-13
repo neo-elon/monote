@@ -720,6 +720,13 @@ function renderChapterList() {
             card.classList.remove('dragging');
             touchStartCard = null;
             
+            // Check if the user tapped inside the card controls (like the rename button)
+            if (e.target.closest('.tree-controls')) {
+                isDragging = false;
+                isLongPress = false;
+                return;
+            }
+            
             if (isLongPress && isDragging) {
                 // Save final touch level shift
                 const deltaX = lastTouchX - dragStartX;

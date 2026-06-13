@@ -1067,3 +1067,23 @@ body {
     color: var(--text-secondary);
     display: block;
 }
+
+/* Mobile chapter edit button enhancements */
+@media (max-width: 768px) {
+    .btn-tree-lvl {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.9rem !important;
+    }
+    .tree-controls {
+        opacity: 0.85 !important;
+        margin-left: 0;
+        margin-right: 0.2rem;
+    }
+    .tree-lines {
+        margin-right: 0.2rem;
+    }
+    .tree-indent-wrapper {
+        gap: 0.3rem;
+    }
+}
