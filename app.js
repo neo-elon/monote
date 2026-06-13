@@ -1131,12 +1131,17 @@ function renderBookshelf() {
                 ? `<div class="book-visibility-icon private" title="비공개 (로컬 저장)">🔒</div>`
                 : `<div class="book-visibility-icon public" title="공개 (클라우드 동기화)">☁️</div>`);
 
+        const totalCharCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+
         bookCard.innerHTML = `
             ${deleteBtnHtml}
             <div class="book-cover cover-${coverColor}">
                 ${visibilityIconHtml}
                 <div class="book-cover-title">${proj.title || '제목 없음'}</div>
-                <div class="book-cover-author">${authorName}</div>
+                <div class="book-cover-footer-group">
+                    <div class="book-cover-charcount">${totalCharCount.toLocaleString()}자</div>
+                    <div class="book-cover-author">${authorName}</div>
+                </div>
             </div>
             <div class="book-card-title-under">${proj.title || '제목 없음'}</div>
         `;
