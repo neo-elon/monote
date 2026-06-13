@@ -824,6 +824,19 @@ body {
     color: #f0f3f7;
 }
 
+.book-cover.cover-add {
+    background: var(--bg-secondary);
+    border: 1.5px dashed var(--border-color);
+    box-shadow: none;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-secondary);
+}
+
+.book-cover.cover-add::before {
+    display: none;
+}
+
 /* Delete Book Button on Hover */
 .delete-book-btn {
     position: absolute;

@@ -2012,11 +2012,12 @@ function renderBookshelf() {
     const addCard = document.createElement('div');
     addCard.className = 'book-card';
     addCard.innerHTML = `
-        <div class="book-cover" style="background: var(--bg-secondary); border: 1.5px dashed var(--border-color); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); box-shadow: none;">
-            <div style="font-size: 2rem; font-weight: 300;">+</div>
-            <div style="font-size: 0.8rem; margin-top: 0.5rem;">새 작품 쓰기</div>
+        <div class="book-cover cover-add">
+            <div style="font-size: 2rem; font-weight: 300; line-height: 1;">+</div>
+            <div style="font-size: 0.8rem; margin-top: 0.25rem;">새 작품 쓰기</div>
         </div>
         <div class="book-card-title-under" style="color: var(--text-secondary);">새 작품 추가</div>
+        <div class="book-card-date-under" style="font-size: 0.75rem; color: transparent; margin-top: 0.15rem; font-weight: 300; user-select: none;">&nbsp;</div>
     `;
     addCard.addEventListener('click', () => {
         showNewBookDialog();
