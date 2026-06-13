@@ -257,6 +257,28 @@ function triggerSave() {
 
 // Set up UI Event Listeners
 function setupEventListeners() {
+    // Menu Dropdown Logic
+    const menuBtn = document.getElementById('menu-btn');
+    const menuDropdown = document.getElementById('menu-dropdown');
+    if (menuBtn && menuDropdown) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.menu-dropdown-container')) {
+                menuDropdown.classList.remove('show');
+            }
+        });
+
+        menuDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                menuDropdown.classList.remove('show');
+            });
+        });
+    }
+
     // Theme Toggle
     themeToggle.addEventListener('click', () => {
         if (document.body.classList.contains('light-mode')) {
