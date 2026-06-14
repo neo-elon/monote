@@ -43,6 +43,271 @@ function isAdmin() {
     return currentUser && currentUser.email === 'parkyangkyu@gmail.com';
 }
 
+// --- Offline-First Sync Configuration & Helpers ---
+const OFFLINE_DB_NAME = 'MonoteOfflineDB';
+const OFFLINE_DB_VERSION = 1;
+const OFFLINE_STORES = {
+    OUTBOX: 'outbox'
+};
+let offlineDb = null;
+let isOfflineSyncing = false;
+let consecutiveSyncFailures = 0;
+const baseRetryDelay = 1000;
+const maxRetryDelay = 30000;
+window.pendingSyncCount = 0;
+
+// Initialize IndexedDB Database
+function initOfflineDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VERSION);
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(OFFLINE_STORES.OUTBOX)) {
+                db.createObjectStore(OFFLINE_STORES.OUTBOX, { keyPath: 'queueId', autoIncrement: true });
+            }
+        };
+        request.onsuccess = (event) => {
+            offlineDb = event.target.result;
+            resolve(offlineDb);
+        };
+        request.onerror = (event) => {
+            console.error('IndexedDB open failed:', event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
+
+// Perform active network connection ping test to verify DNS + API reachability
+async function verifyNetworkConnection() {
+    if (!navigator.onLine) return false;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        // Ping supabase endpoint to verify actual connection reachability
+        const response = await fetch(supabaseUrl, {
+            method: 'HEAD',
+            mode: 'no-cors',
+            signal: controller.signal,
+            cache: 'no-store'
+        });
+        clearTimeout(timeoutId);
+        return true;
+    } catch (e) {
+        console.warn('Real network verification ping failed:', e);
+        return false;
+    }
+}
+
+// Add saving action to IndexedDB outbox queue
+function addToOutbox(action, projectId, payload) {
+    if (!offlineDb) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const transaction = offlineDb.transaction([OFFLINE_STORES.OUTBOX], 'readwrite');
+        const store = transaction.objectStore(OFFLINE_STORES.OUTBOX);
+        const item = {
+            action,
+            projectId,
+            payload: JSON.parse(JSON.stringify(payload)), // Deep copy to prevent side effects
+            timestamp: payload.updatedAt || new Date().toISOString()
+        };
+        const request = store.add(item);
+        request.onsuccess = () => {
+            window.pendingSyncCount = (window.pendingSyncCount || 0) + 1;
+            resolve(request.result);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Retrieve oldest item from outbox queue (FIFO)
+function getOldestOutboxItem() {
+    if (!offlineDb) return Promise.resolve(null);
+    return new Promise((resolve, reject) => {
+        const transaction = offlineDb.transaction([OFFLINE_STORES.OUTBOX], 'readonly');
+        const store = transaction.objectStore(OFFLINE_STORES.OUTBOX);
+        const request = store.openCursor();
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            resolve(cursor ? cursor.value : null);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Delete item from outbox queue
+function deleteFromOutbox(queueId) {
+    if (!offlineDb) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const transaction = offlineDb.transaction([OFFLINE_STORES.OUTBOX], 'readwrite');
+        const store = transaction.objectStore(OFFLINE_STORES.OUTBOX);
+        const request = store.delete(queueId);
+        request.onsuccess = () => {
+            window.pendingSyncCount = Math.max(0, (window.pendingSyncCount || 0) - 1);
+            resolve();
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Get count of pending sync items
+function getOutboxCount() {
+    if (!offlineDb) return Promise.resolve(0);
+    return new Promise((resolve, reject) => {
+        const transaction = offlineDb.transaction([OFFLINE_STORES.OUTBOX], 'readonly');
+        const store = transaction.objectStore(OFFLINE_STORES.OUTBOX);
+        const request = store.count();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Sync Queue Processor (FIFO with Exponential Backoff & conflict resolution)
+async function processOfflineQueue() {
+    if (isOfflineSyncing) return;
+    isOfflineSyncing = true;
+    
+    try {
+        while (true) {
+            const item = await getOldestOutboxItem();
+            if (!item) {
+                consecutiveSyncFailures = 0;
+                if (currentUser) {
+                    updateSyncStatus('success', '동기화 완료');
+                } else {
+                    updateSyncStatus('error', '로컬 모드');
+                }
+                break;
+            }
+            
+            const isReallyOnline = await verifyNetworkConnection();
+            if (!isReallyOnline) {
+                updateSyncStatus('error', '오프라인 모드');
+                scheduleQueueRetry();
+                break;
+            }
+            
+            updateSyncStatus('syncing', '동기화 중...');
+            
+            try {
+                if (item.action === 'SAVE') {
+                    // Fetch existing cloud metadata to resolve conflict
+                    const { data: serverProj, error: fetchError } = await supabaseClient
+                        .from('open_projects')
+                        .select('updated_at, title, synopsis, ideas, chapters, cover_color')
+                        .eq('id', item.projectId)
+                        .maybeSingle();
+                        
+                    if (fetchError) throw fetchError;
+                    
+                    if (serverProj) {
+                        const localTime = new Date(item.payload.updatedAt || 0).getTime();
+                        const serverTime = new Date(serverProj.updated_at || 0).getTime();
+                        
+                        if (serverTime > localTime) {
+                            console.warn(`Sync conflict detected: Server version of ${item.projectId} is newer. Overwriting local.`);
+                            // Server is newer. Merge and overwrite local.
+                            const dbColor = serverProj.cover_color || 'charcoal';
+                            const colorParts = dbColor.split(':');
+                            const coverColor = colorParts[0];
+                            const isPrivate = colorParts[1] === 'private';
+                            
+                            const resolvedProj = {
+                                id: item.projectId,
+                                title: serverProj.title,
+                                synopsis: serverProj.synopsis || '',
+                                ideas: serverProj.ideas || '',
+                                chapters: typeof serverProj.chapters === 'string' ? JSON.parse(serverProj.chapters) : (serverProj.chapters || []),
+                                coverColor: coverColor,
+                                isPrivate: isPrivate,
+                                createdAt: serverProj.created_at || item.payload.createdAt,
+                                updatedAt: serverProj.updated_at,
+                                user_id: currentUser.id
+                            };
+                            
+                            const idx = projects.findIndex(p => p.id === item.projectId);
+                            if (idx !== -1) {
+                                projects[idx] = resolvedProj;
+                                storage.setItem('monote-projects', JSON.stringify(projects));
+                            }
+                            
+                            if (activeProjectId === item.projectId) {
+                                project = resolvedProj;
+                                if (writingScreen && writingScreen.classList.contains('active')) {
+                                    renderChapterList();
+                                    if (activeChapterId !== null) {
+                                        const ch = project.chapters.find(c => c.id === activeChapterId);
+                                        if (ch) {
+                                            chapterTitleInput.value = ch.title || '';
+                                            chapterContentTextarea.value = ch.content || '';
+                                            updateEditorCounts();
+                                        }
+                                    }
+                                } else if (overviewScreen && overviewScreen.classList.contains('active')) {
+                                    renderOverview();
+                                }
+                            }
+                        } else {
+                            // Local version is newer or equal. Save to cloud.
+                            await saveProjectToCloud(item.payload);
+                        }
+                    } else {
+                        // No version exists on the server. Save directly.
+                        await saveProjectToCloud(item.payload);
+                    }
+                }
+                
+                await deleteFromOutbox(item.queueId);
+                consecutiveSyncFailures = 0;
+            } catch (err) {
+                console.error('Failed to sync queue item:', err);
+                scheduleQueueRetry();
+                break;
+            }
+        }
+    } catch (e) {
+        console.error('Queue processing failed:', e);
+    } finally {
+        isOfflineSyncing = false;
+    }
+}
+
+function scheduleQueueRetry() {
+    consecutiveSyncFailures++;
+    const delay = Math.min(baseRetryDelay * Math.pow(2, consecutiveSyncFailures - 1), maxRetryDelay) + Math.random() * 200;
+    setTimeout(() => {
+        verifyNetworkConnection().then(online => {
+            if (online) {
+                processOfflineQueue();
+            }
+        });
+    }, delay);
+}
+
+// Network Online/Offline Change Event Listeners
+window.addEventListener('online', async () => {
+    const isReallyOnline = await verifyNetworkConnection();
+    if (isReallyOnline) {
+        updateSyncStatus('success', '동기화 완료');
+        processOfflineQueue();
+    } else {
+        updateSyncStatus('error', '동기화 실패');
+    }
+});
+
+window.addEventListener('offline', () => {
+    updateSyncStatus('error', '오프라인 모드로 전환되었습니다. 작성하신 내용은 기기에 안전하게 저장됩니다.');
+});
+
+// Warn user before closing if sync queue is not empty
+window.addEventListener('beforeunload', (event) => {
+    if (window.pendingSyncCount && window.pendingSyncCount > 0) {
+        event.preventDefault();
+        event.returnValue = '서버에 저장되지 않은 변경사항이 있습니다. 정말 종료하시겠습니까?';
+        return event.returnValue;
+    }
+});
+// ----------------------------------------------------
+
 // Supabase Config & Initialization
 const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdWN2ZnFpYXZ2Y3VqdHp3enZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODE3NzksImV4cCI6MjA5Njg1Nzc3OX0.-zLSHjeHvaW5eHRTH9eC7CcFWnwlWBKbgzlc-9Fzceg';
@@ -162,12 +427,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     hideManual = storage.getItem('monote-hide-manual') === 'true';
     updateManualToggleUI();
     
+    // Initialize Offline IndexedDB Database & fetch initial queue counts
+    try {
+        await initOfflineDB();
+        const initialCount = await getOutboxCount();
+        window.pendingSyncCount = initialCount;
+    } catch (err) {
+        console.error('Could not initialize offline DB on startup:', err);
+    }
+    
     if (supabaseClient) {
         await checkAuthState();
     }
     await loadProjects();
     setupEventListeners();
     renderBookshelf();
+    
+    // Auto-process queue on startup if online
+    if (navigator.onLine) {
+        processOfflineQueue();
+    }
+    
     // Initially in bookshelf mode: show import/export, hide txt export
     if (importProjectTrigger) importProjectTrigger.style.display = '';
     if (exportProjectBtn) exportProjectBtn.style.display = '';
@@ -347,30 +627,31 @@ async function loadProjects() {
             
             const filteredDbProjects = dbProjects.filter(p => !p.id.startsWith("user-profile-"));
 
-            // Merge local offline projects into account projects
-            const mergedProjects = [...filteredDbProjects];
-            const offlineProjects = projects.filter(p => !p.user_id && p.id !== "monote-manual-guide");
-
-            for (const localProj of offlineProjects) {
-                // Check for duplicates
-                if (!mergedProjects.some(dbP => dbP.id === localProj.id)) {
-                    if (currentUser) {
-                        localProj.user_id = currentUser.id;
-                        await saveProjectToCloud(localProj);
+            // Merge local and server projects by comparing updatedAt timestamps
+            const finalProjectsMap = new Map();
+            for (const dbProj of filteredDbProjects) {
+                finalProjectsMap.set(dbProj.id, dbProj);
+            }
+            
+            for (const localProj of projects) {
+                if (localProj.id === "monote-manual-guide") continue;
+                
+                const existing = finalProjectsMap.get(localProj.id);
+                if (existing) {
+                    const localTime = new Date(localProj.updatedAt || 0).getTime();
+                    const serverTime = new Date(existing.updatedAt || 0).getTime();
+                    if (localTime > serverTime) {
+                        finalProjectsMap.set(localProj.id, localProj);
                     }
-                    mergedProjects.push(localProj);
+                } else {
+                    if (currentUser && !localProj.user_id) {
+                        localProj.user_id = currentUser.id;
+                    }
+                    finalProjectsMap.set(localProj.id, localProj);
                 }
             }
-
-            // Final deduplication on merged projects
-            const finalProjects = [];
-            const finalSeen = new Set();
-            for (const p of mergedProjects) {
-                if (!finalSeen.has(p.id)) {
-                    finalSeen.add(p.id);
-                    finalProjects.push(p);
-                }
-            }
+            
+            const finalProjects = Array.from(finalProjectsMap.values());
 
             projects = finalProjects;
             sortProjectsByOrder();
@@ -408,15 +689,14 @@ function triggerSave() {
         }
         saveStatus.textContent = currentLang === 'en' ? "Saved" : "저장 완료";
         
-        // Sync to Supabase
+        // Enqueue sync operation to IndexedDB Outbox
         if (supabaseClient && currentUser) {
             updateSyncStatus('syncing', '동기화 중...');
             try {
-                await saveProjectToCloud(project);
-                await saveProfileToCloud(currentUser);
-                updateSyncStatus('success', '동기화 완료');
+                await addToOutbox('SAVE', activeProjectId, project);
+                processOfflineQueue();
             } catch (err) {
-                console.error('Failed to save to cloud:', err);
+                console.error('Failed to enqueue project save:', err);
                 updateSyncStatus('error', '동기화 실패');
             }
         }
