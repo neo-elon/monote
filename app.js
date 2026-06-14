@@ -479,6 +479,11 @@ async function saveProjectToCloud(proj) {
             user_id: projectUserId
         });
     if (error) throw error;
+    
+    // Update profile statistics in the cloud in real-time
+    if (!proj.id.startsWith("user-profile-")) {
+        saveProfileToCloud(currentUser).catch(console.error);
+    }
 }
 
 // DOM Elements
@@ -2005,7 +2010,7 @@ function renderRanking() {
     const userStreak = getUserStreak();
     
     const userTotalCumulative = projects.reduce((total, proj) => {
-        if (proj.isPrivate || proj.id === "monote-manual-guide") return total;
+        if (proj.id === "monote-manual-guide") return total;
         return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
     }, 0);
 
@@ -3567,6 +3572,7 @@ async function deleteProject(projectId) {
                 .eq('user_id', currentUser.id);
             if (error) throw error;
             updateSyncStatus('success', '동기화 완료');
+            saveProfileToCloud(currentUser).catch(console.error);
         } catch (err) {
             console.error('Failed to delete project from cloud:', err);
             updateSyncStatus('error', '동기화 실패');
@@ -3882,7 +3888,7 @@ async function saveProfileToCloud(user) {
         const userWeeklyChars = getUserWeeklyWritingCount();
         const userStreak = getUserStreak();
         const userTotalCumulative = projects.reduce((total, proj) => {
-            if (proj.isPrivate || proj.id === "monote-manual-guide" || proj.id.startsWith("user-profile-")) return total;
+            if (proj.id === "monote-manual-guide" || proj.id.startsWith("user-profile-")) return total;
             return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
         }, 0);
 
