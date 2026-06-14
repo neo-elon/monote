@@ -161,6 +161,130 @@ function getOutboxCount() {
     });
 }
 
+// Git-style line-by-line Diff3 text merger
+function mergeText(localText, serverText) {
+    const localLines = (localText || '').split('\n');
+    const serverLines = (serverText || '').split('\n');
+    const merged = [];
+    
+    let i = 0, j = 0;
+    const lookAhead = 5;
+    
+    while (i < localLines.length || j < serverLines.length) {
+        if (i < localLines.length && j < serverLines.length) {
+            if (localLines[i] === serverLines[j]) {
+                merged.push(localLines[i]);
+                i++;
+                j++;
+            } else {
+                let foundMatch = false;
+                for (let k = 1; k <= lookAhead; k++) {
+                    if (i + k < localLines.length && localLines[i + k] === serverLines[j]) {
+                        merged.push(`<<<<<<< 현재 기기 수정본`);
+                        for (let m = 0; m < k; m++) {
+                            merged.push(localLines[i + m]);
+                        }
+                        merged.push(`=======`);
+                        merged.push(`>>>>>>> 다른 기기 수정본`);
+                        i += k;
+                        foundMatch = true;
+                        break;
+                    }
+                    if (j + k < serverLines.length && localLines[i] === serverLines[j + k]) {
+                        merged.push(`<<<<<<< 현재 기기 수정본`);
+                        merged.push(`=======`);
+                        for (let m = 0; m < k; m++) {
+                            merged.push(serverLines[j + m]);
+                        }
+                        merged.push(`>>>>>>> 다른 기기 수정본`);
+                        j += k;
+                        foundMatch = true;
+                        break;
+                    }
+                }
+                
+                if (!foundMatch) {
+                    merged.push(`<<<<<<< 현재 기기 수정본`);
+                    merged.push(localLines[i]);
+                    merged.push(`=======`);
+                    merged.push(serverLines[j]);
+                    merged.push(`>>>>>>> 다른 기기 수정본`);
+                    i++;
+                    j++;
+                }
+            }
+        } else if (i < localLines.length) {
+            merged.push(`<<<<<<< 현재 기기 수정본`);
+            merged.push(localLines[i]);
+            merged.push(`=======`);
+            merged.push(`>>>>>>> 다른 기기 수정본`);
+            i++;
+        } else if (j < serverLines.length) {
+            merged.push(`<<<<<<< 현재 기기 수정본`);
+            merged.push(`=======`);
+            merged.push(serverLines[j]);
+            merged.push(`>>>>>>> 다른 기기 수정본`);
+            j++;
+        }
+    }
+    return merged.join('\n');
+}
+
+// Merge two project objects by merging titles, synopsis, ideas, and chapters
+function mergeProjects(localProj, serverProj) {
+    const mergedProj = { ...localProj };
+    
+    // 1. Merge Title
+    if (localProj.title !== serverProj.title) {
+        mergedProj.title = `[충돌] ${localProj.title} / ${serverProj.title}`;
+    }
+    
+    // 2. Merge Synopsis
+    if (localProj.synopsis !== serverProj.synopsis) {
+        mergedProj.synopsis = mergeText(localProj.synopsis, serverProj.synopsis);
+    }
+    
+    // 3. Merge Ideas
+    if (localProj.ideas !== serverProj.ideas) {
+        mergedProj.ideas = mergeText(localProj.ideas, serverProj.ideas);
+    }
+    
+    // 4. Merge Chapters
+    const mergedChapters = [];
+    const localChapters = localProj.chapters || [];
+    const serverChapters = serverProj.chapters || [];
+    const serverChMap = new Map();
+    
+    serverChapters.forEach(c => serverChMap.set(c.id, c));
+    
+    localChapters.forEach(localCh => {
+        const serverCh = serverChMap.get(localCh.id);
+        if (serverCh) {
+            const mergedCh = { ...localCh };
+            if (localCh.title !== serverCh.title) {
+                mergedCh.title = `[충돌] ${localCh.title} vs ${serverCh.title}`;
+            }
+            if (localCh.content !== serverCh.content) {
+                mergedCh.content = mergeText(localCh.content, serverCh.content);
+            }
+            mergedChapters.push(mergedCh);
+            serverChMap.delete(localCh.id);
+        } else {
+            // Keep locally-only chapter
+            mergedChapters.push(localCh);
+        }
+    });
+    
+    // Keep server-only chapters
+    serverChMap.forEach(serverCh => {
+        mergedChapters.push(serverCh);
+    });
+    
+    mergedProj.chapters = mergedChapters;
+    mergedProj.updatedAt = new Date().toISOString();
+    return mergedProj;
+}
+
 // Sync Queue Processor (FIFO with Exponential Backoff & conflict resolution)
 async function processOfflineQueue() {
     if (isOfflineSyncing) return;
@@ -204,31 +328,19 @@ async function processOfflineQueue() {
                         const serverTime = new Date(serverProj.updated_at || 0).getTime();
                         
                         if (serverTime > localTime) {
-                            console.warn(`Sync conflict detected: Server version of ${item.projectId} is newer. Overwriting local.`);
-                            // Server is newer. Merge and overwrite local.
-                            const dbColor = serverProj.cover_color || 'charcoal';
-                            const colorParts = dbColor.split(':');
-                            const coverColor = colorParts[0];
-                            const isPrivate = colorParts[1] === 'private';
+                            console.warn(`Sync conflict detected: Server version of ${item.projectId} is newer. Merging both versions.`);
                             
-                            const resolvedProj = {
-                                id: item.projectId,
-                                title: serverProj.title,
-                                synopsis: serverProj.synopsis || '',
-                                ideas: serverProj.ideas || '',
-                                chapters: typeof serverProj.chapters === 'string' ? JSON.parse(serverProj.chapters) : (serverProj.chapters || []),
-                                coverColor: coverColor,
-                                isPrivate: isPrivate,
-                                createdAt: serverProj.created_at || item.payload.createdAt,
-                                updatedAt: serverProj.updated_at,
-                                user_id: currentUser.id
-                            };
+                            // Merge and overwrite local with merged copy
+                            const resolvedProj = mergeProjects(item.payload, serverProj);
                             
                             const idx = projects.findIndex(p => p.id === item.projectId);
                             if (idx !== -1) {
                                 projects[idx] = resolvedProj;
                                 storage.setItem('monote-projects', JSON.stringify(projects));
                             }
+                            
+                            // Force push the merged version to Supabase
+                            await saveProjectToCloud(resolvedProj);
                             
                             if (activeProjectId === item.projectId) {
                                 project = resolvedProj;
