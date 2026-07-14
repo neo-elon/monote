@@ -286,7 +286,9 @@
             <section id="writing-screen" class="view-section">
                 <div class="writing-container-layout">
                     <!-- Left Sidebar (Chapters Panel will be dynamically moved here in JS) -->
-                    <div id="editor-sidebar" class="editor-sidebar"></div>
+                    <div id="editor-sidebar" class="editor-sidebar">
+                        <div id="editor-sidebar-project-title" style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700; color: var(--text-primary); padding: 1.25rem 1.25rem 0.5rem 1.25rem; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all;">작품 제목</div>
+                    </div>
 
                     <!-- Right Main Editor -->
                     <div class="editor-main-content">
@@ -323,7 +325,6 @@
 
                         <div class="editor-container">
                             <div class="editor-meta">
-                                <div id="editor-project-title" style="font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.4rem; font-family: var(--font-serif); font-style: italic;">작품 제목</div>
                                 <div class="chapter-badge" id="chapter-number-badge">CHAPTER 01</div>
                                 <textarea id="chapter-title" class="input-flat chapter-title-input"
                                     placeholder="챕터 제목을 입력하세요..." rows="1"></textarea>

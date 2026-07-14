@@ -918,7 +918,7 @@ function setupEventListeners() {
     // Project Info Listeners
     projectTitleInput.addEventListener('input', (e) => {
         project.title = e.target.value;
-        const editorProjectTitle = document.getElementById('editor-project-title');
+        const editorProjectTitle = document.getElementById('editor-sidebar-project-title');
         if (editorProjectTitle) {
             editorProjectTitle.textContent = e.target.value || (currentLang === 'en' ? 'Untitled' : '제목 없음');
         }
@@ -1612,7 +1612,7 @@ function openChapterEditor(chapterId) {
     storage.setItem('monote-active-chapter-id', chapterId);
     
     // Set UI Values
-    const editorProjectTitle = document.getElementById('editor-project-title');
+    const editorProjectTitle = document.getElementById('editor-sidebar-project-title');
     if (editorProjectTitle) {
         editorProjectTitle.textContent = project.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
     }
@@ -4045,7 +4045,7 @@ function restoreActiveState() {
                     activeChapterId = savedChapterId;
                     
                     // Directly load values
-                    const editorProjectTitle = document.getElementById('editor-project-title');
+                    const editorProjectTitle = document.getElementById('editor-sidebar-project-title');
                     if (editorProjectTitle) {
                         editorProjectTitle.textContent = project.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
                     }
@@ -5027,7 +5027,7 @@ async function saveEditBookSettings() {
 
     // Update Overview screen inputs
     projectTitleInput.value = title;
-    const editorProjectTitle = document.getElementById('editor-project-title');
+    const editorProjectTitle = document.getElementById('editor-sidebar-project-title');
     if (editorProjectTitle) {
         editorProjectTitle.textContent = title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
     }
