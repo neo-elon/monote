@@ -3512,6 +3512,7 @@ function initBookDialogController(prefix) {
     const titleInput = document.getElementById(`${prefix}-title`);
     const customColorInput = document.getElementById(`${prefix}-custom-color`);
     const customColorRadio = document.getElementById(`${prefix}-color-radio-custom`);
+    const customColorLabel = document.getElementById(`${prefix}-custom-color-label`);
     
     // Title Input Event
     titleInput.addEventListener('input', () => {
@@ -3532,6 +3533,7 @@ function initBookDialogController(prefix) {
                 
                 if (e.target.value === 'custom') {
                     state.color = customColorInput.value;
+                    customColorInput.click();
                 } else {
                     state.color = e.target.value;
                 }
@@ -3544,11 +3546,34 @@ function initBookDialogController(prefix) {
     if (customColorInput) {
         customColorInput.addEventListener('input', () => {
             customColorRadio.checked = true;
-            customColorRadio.dispatchEvent(new Event('change'));
+            state.color = customColorInput.value;
+            updateDialogPreview(prefix);
+            
+            // Ensure correct active class is set
+            document.querySelectorAll(`#${prefix}-dialog .cover-color-picker .color-option`).forEach(opt => {
+                opt.classList.remove('active');
+            });
+            if (customColorLabel) {
+                customColorLabel.classList.add('active');
+            }
         });
         
         customColorInput.addEventListener('click', (e) => {
             e.stopPropagation();
+        });
+    }
+
+    // Click event on custom color label to open palette even when already active
+    if (customColorLabel) {
+        customColorLabel.addEventListener('click', (e) => {
+            if (e.target !== customColorInput) {
+                if (customColorRadio && !customColorRadio.checked) {
+                    customColorRadio.checked = true;
+                    customColorRadio.dispatchEvent(new Event('change'));
+                } else {
+                    customColorInput.click();
+                }
+            }
         });
     }
 }
