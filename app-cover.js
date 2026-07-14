@@ -3510,9 +3510,6 @@ function updateDialogPreview(prefix) {
 function initBookDialogController(prefix) {
     const state = dialogStates[prefix];
     const titleInput = document.getElementById(`${prefix}-title`);
-    const customColorInput = document.getElementById(`${prefix}-custom-color`);
-    const customColorRadio = document.getElementById(`${prefix}-color-radio-custom`);
-    const customColorLabel = document.getElementById(`${prefix}-custom-color-label`);
     
     // Title Input Event
     titleInput.addEventListener('input', () => {
@@ -3531,51 +3528,11 @@ function initBookDialogController(prefix) {
                 });
                 label.classList.add('active');
                 
-                if (e.target.value === 'custom') {
-                    state.color = customColorInput.value;
-                    customColorInput.click();
-                } else {
-                    state.color = e.target.value;
-                }
+                state.color = e.target.value;
                 updateDialogPreview(prefix);
             });
         }
     });
-    
-    // Custom Color picker input event
-    if (customColorInput) {
-        customColorInput.addEventListener('input', () => {
-            customColorRadio.checked = true;
-            state.color = customColorInput.value;
-            updateDialogPreview(prefix);
-            
-            // Ensure correct active class is set
-            document.querySelectorAll(`#${prefix}-dialog .cover-color-picker .color-option`).forEach(opt => {
-                opt.classList.remove('active');
-            });
-            if (customColorLabel) {
-                customColorLabel.classList.add('active');
-            }
-        });
-        
-        customColorInput.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-    }
-
-    // Click event on custom color label to open palette even when already active
-    if (customColorLabel) {
-        customColorLabel.addEventListener('click', (e) => {
-            if (e.target !== customColorInput) {
-                if (customColorRadio && !customColorRadio.checked) {
-                    customColorRadio.checked = true;
-                    customColorRadio.dispatchEvent(new Event('change'));
-                } else {
-                    customColorInput.click();
-                }
-            }
-        });
-    }
 }
 
 // Dialog elements references helper
@@ -3602,10 +3559,6 @@ function showNewBookDialog() {
     const defaultVisibilityRadio = document.querySelector('#new-book-dialog input[name="book-visibility"][value="public"]');
     if (defaultVisibilityRadio) defaultVisibilityRadio.checked = true;
 
-    // Reset custom color picker default color
-    const customColorInput = document.getElementById('new-book-custom-color');
-    if (customColorInput) customColorInput.value = '#707070';
-    
     updateDialogPreview('new-book');
 
     newBookDialog.style.display = 'flex';
@@ -4809,7 +4762,10 @@ function showEditBookDialog() {
     if (!project) return;
     editBookTitleInput.value = project.title || '';
 
-    const activeColor = project.coverColor || 'charcoal';
+    let activeColor = project.coverColor || 'charcoal';
+    if (activeColor.startsWith('#')) {
+        activeColor = 'charcoal';
+    }
     
     dialogStates['edit-book'] = {
         color: activeColor
@@ -4820,27 +4776,11 @@ function showEditBookDialog() {
         opt.classList.remove('active');
     });
 
-    const isCustomColor = activeColor.startsWith('#');
-    
-    if (isCustomColor) {
-        const customColorLabel = document.getElementById('edit-book-custom-color-label');
-        if (customColorLabel) customColorLabel.classList.add('active');
-        
-        const customColorRadio = document.getElementById('edit-book-color-radio-custom');
-        if (customColorRadio) customColorRadio.checked = true;
-        
-        const customColorInput = document.getElementById('edit-book-custom-color');
-        if (customColorInput) customColorInput.value = activeColor;
-    } else {
-        const targetOpt = document.querySelector(`#edit-book-dialog .cover-color-picker .color-option.${activeColor}`);
-        if (targetOpt) targetOpt.classList.add('active');
+    const targetOpt = document.querySelector(`#edit-book-dialog .cover-color-picker .color-option.${activeColor}`);
+    if (targetOpt) targetOpt.classList.add('active');
 
-        const colorRadio = document.querySelector(`#edit-book-dialog input[name="edit-cover-color"][value="${activeColor}"]`);
-        if (colorRadio) colorRadio.checked = true;
-        
-        const customColorInput = document.getElementById('edit-book-custom-color');
-        if (customColorInput) customColorInput.value = '#707070';
-    }
+    const colorRadio = document.querySelector(`#edit-book-dialog input[name="edit-cover-color"][value="${activeColor}"]`);
+    if (colorRadio) colorRadio.checked = true;
 
     const activeVisibility = project.isPrivate ? 'private' : 'public';
     const visibilityRadio = document.querySelector(`#edit-book-dialog input[name="edit-book-visibility"][value="${activeVisibility}"]`);
