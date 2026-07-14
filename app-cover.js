@@ -5114,8 +5114,7 @@ function showEditBookDialog() {
     const gridContainer = document.getElementById('edit-book-recommend-grid');
     if (gridContainer) {
         gridContainer.querySelectorAll('.recommend-thumb').forEach(t => {
-            // Check if thumb background url matches activeImage
-            const bgUrl = t.style.backgroundImage.slice(5, -2);
+            const bgUrl = t.style.backgroundImage.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
             if (activeImage && bgUrl === activeImage) {
                 t.classList.add('active');
             } else {

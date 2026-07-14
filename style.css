@@ -721,6 +721,8 @@ input, textarea {
 
 /* Minimalist Cover Layout */
 .book-cover-title {
+    position: relative;
+    z-index: 3;
     font-family: var(--font-serif);
     font-size: 1.05rem;
     font-weight: 700;
@@ -736,6 +738,8 @@ input, textarea {
 }
 
 .book-cover-author {
+    position: relative;
+    z-index: 3;
     font-size: 0.7rem;
     font-weight: 300;
     letter-spacing: 0.1em;
@@ -746,6 +750,8 @@ input, textarea {
 }
 
 .book-cover-footer-group {
+    position: relative;
+    z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -754,6 +760,8 @@ input, textarea {
 }
 
 .book-cover-charcount {
+    position: relative;
+    z-index: 3;
     font-size: 0.65rem;
     font-weight: 300;
     letter-spacing: 0.05em;
@@ -776,7 +784,7 @@ input, textarea {
 
 /* Cover Color Schemes */
 .book-cover.cover-charcoal {
-    background: #2b2b2a;
+    background-color: #2b2b2a;
     color: #f4f4f0;
 }
 .book-cover.cover-charcoal .book-cover-title {
@@ -784,7 +792,7 @@ input, textarea {
 }
 
 .book-cover.cover-linen {
-    background: #e1dacb;
+    background-color: #e1dacb;
     color: #3e3b32;
 }
 .book-cover.cover-linen .book-cover-title {
@@ -792,7 +800,7 @@ input, textarea {
 }
 
 .book-cover.cover-ivory {
-    background: #f7f3e9;
+    background-color: #f7f3e9;
     color: #4c4a45;
     border: 1px solid #e2ded5;
 }
@@ -801,7 +809,7 @@ input, textarea {
 }
 
 .book-cover.cover-slate {
-    background: #5d6770;
+    background-color: #5d6770;
     color: #fbfbf9;
 }
 .book-cover.cover-slate .book-cover-title {
@@ -809,7 +817,7 @@ input, textarea {
 }
 
 .book-cover.cover-terracotta {
-    background: #b56b57;
+    background-color: #b56b57;
     color: #fbfbf9;
 }
 .book-cover.cover-terracotta .book-cover-title {
@@ -817,7 +825,7 @@ input, textarea {
 }
 
 .book-cover.cover-olive {
-    background: #4d594b;
+    background-color: #4d594b;
     color: #f7f5f0;
 }
 .book-cover.cover-olive .book-cover-title {
@@ -825,7 +833,7 @@ input, textarea {
 }
 
 .book-cover.cover-navy {
-    background: #2e3b4e;
+    background-color: #2e3b4e;
     color: #f0f3f7;
 }
 .book-cover.cover-navy .book-cover-title {
