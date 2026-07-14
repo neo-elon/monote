@@ -408,15 +408,6 @@
                 </div>
 
                 <div class="dialog-field">
-                    <label>표지 스타일</label>
-                    <div class="cover-style-tabs">
-                        <button type="button" class="cover-tab-btn active" id="new-book-tab-color">단색 표지</button>
-                        <button type="button" class="cover-tab-btn" id="new-book-tab-image">이미지 표지</button>
-                    </div>
-                </div>
-
-                <!-- Color picker container (shown when Solid Color tab is active) -->
-                <div class="dialog-field" id="new-book-color-section">
                     <label>표지 색상</label>
                     <div class="cover-color-picker">
                         <label class="color-option charcoal active"><input type="radio" name="cover-color" value="charcoal"
@@ -433,44 +424,11 @@
                                 value="olive"><span></span></label>
                         <label class="color-option navy"><input type="radio" name="cover-color"
                                 value="navy"><span></span></label>
-                    </div>
-                </div>
-
-                <!-- Image options container (shown when Image Cover tab is active) -->
-                <div class="dialog-field" id="new-book-image-section" style="display: none;">
-                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
-                        <div>
-                            <label for="new-book-image-url" style="font-size: 0.8rem;">이미지 주소 (URL)</label>
-                            <input type="text" id="new-book-image-url" class="input-flat" placeholder="https://example.com/image.jpg" autocomplete="off" style="font-size: 0.8rem; margin-top: 0.25rem;">
-                        </div>
-                        <div>
-                            <label style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">직접 업로드</label>
-                            <div class="image-upload-wrapper">
-                                <label class="image-upload-btn-label" for="new-book-image-file">파일 선택</label>
-                                <input type="file" id="new-book-image-file" accept="image/*" style="display: none;">
-                                <span id="new-book-image-filename" style="font-size: 0.75rem; color: var(--text-secondary); align-self: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">선택된 파일 없음</span>
-                            </div>
-                        </div>
-                        
-                        <div class="image-recommend-section">
-                            <label style="font-size: 0.8rem; font-weight: 600;">무료 이미지 추천</label>
-                            
-                            <div style="display: flex; gap: 0.4rem;">
-                                <input type="text" id="new-book-image-search" class="input-flat" placeholder="키워드 검색 (예: 숲, 책, 밤...)" style="font-size: 0.75rem; padding: 0.3rem 0.5rem; flex: 1;">
-                                <button type="button" id="new-book-image-search-btn" class="btn-flat btn-sm" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">검색</button>
-                            </div>
-
-                            <div class="recommend-categories" id="new-book-image-categories">
-                                <span class="category-pill active" data-category="all">전체</span>
-                                <span class="category-pill" data-category="writing">문학/글</span>
-                                <span class="category-pill" data-category="nature">자연/풍경</span>
-                                <span class="category-pill" data-category="city">도시/감성</span>
-                                <span class="category-pill" data-category="abstract">추상/패턴</span>
-                            </div>
-                            <div class="recommend-grid" id="new-book-recommend-grid">
-                                <!-- Recommended thumbnails will be added by JS -->
-                            </div>
-                        </div>
+                        <label class="color-option custom-picker" id="new-book-custom-color-label" title="커스텀 색상 선택">
+                            <input type="radio" name="cover-color" value="custom" id="new-book-color-radio-custom">
+                            <input type="color" id="new-book-custom-color" value="#707070">
+                            <span></span>
+                        </label>
                     </div>
                 </div>
 
@@ -523,15 +481,6 @@
                 </div>
 
                 <div class="dialog-field">
-                    <label>표지 스타일</label>
-                    <div class="cover-style-tabs">
-                        <button type="button" class="cover-tab-btn active" id="edit-book-tab-color">단색 표지</button>
-                        <button type="button" class="cover-tab-btn" id="edit-book-tab-image">이미지 표지</button>
-                    </div>
-                </div>
-
-                <!-- Color picker container (shown when Solid Color tab is active) -->
-                <div class="dialog-field" id="edit-book-color-section">
                     <label>표지 색상</label>
                     <div class="cover-color-picker">
                         <label class="color-option charcoal"><input type="radio" name="edit-cover-color"
@@ -548,44 +497,11 @@
                                 value="olive"><span></span></label>
                         <label class="color-option navy"><input type="radio" name="edit-cover-color"
                                 value="navy"><span></span></label>
-                    </div>
-                </div>
-
-                <!-- Image options container (shown when Image Cover tab is active) -->
-                <div class="dialog-field" id="edit-book-image-section" style="display: none;">
-                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
-                        <div>
-                            <label for="edit-book-image-url" style="font-size: 0.8rem;">이미지 주소 (URL)</label>
-                            <input type="text" id="edit-book-image-url" class="input-flat" placeholder="https://example.com/image.jpg" autocomplete="off" style="font-size: 0.8rem; margin-top: 0.25rem;">
-                        </div>
-                        <div>
-                            <label style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">직접 업로드</label>
-                            <div class="image-upload-wrapper">
-                                <label class="image-upload-btn-label" for="edit-book-image-file">파일 선택</label>
-                                <input type="file" id="edit-book-image-file" accept="image/*" style="display: none;">
-                                <span id="edit-book-image-filename" style="font-size: 0.75rem; color: var(--text-secondary); align-self: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">선택된 파일 없음</span>
-                            </div>
-                        </div>
-                        
-                        <div class="image-recommend-section">
-                            <label style="font-size: 0.8rem; font-weight: 600;">무료 이미지 추천</label>
-                            
-                            <div style="display: flex; gap: 0.4rem;">
-                                <input type="text" id="edit-book-image-search" class="input-flat" placeholder="키워드 검색 (예: 숲, 책, 밤...)" style="font-size: 0.75rem; padding: 0.3rem 0.5rem; flex: 1;">
-                                <button type="button" id="edit-book-image-search-btn" class="btn-flat btn-sm" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">검색</button>
-                            </div>
-
-                            <div class="recommend-categories" id="edit-book-image-categories">
-                                <span class="category-pill active" data-category="all">전체</span>
-                                <span class="category-pill" data-category="writing">문학/글</span>
-                                <span class="category-pill" data-category="nature">자연/풍경</span>
-                                <span class="category-pill" data-category="city">도시/감성</span>
-                                <span class="category-pill" data-category="abstract">추상/패턴</span>
-                            </div>
-                            <div class="recommend-grid" id="edit-book-recommend-grid">
-                                <!-- Recommended thumbnails will be added by JS -->
-                            </div>
-                        </div>
+                        <label class="color-option custom-picker" id="edit-book-custom-color-label" title="커스텀 색상 선택">
+                            <input type="radio" name="edit-cover-color" value="custom" id="edit-book-color-radio-custom">
+                            <input type="color" id="edit-book-custom-color" value="#707070">
+                            <span></span>
+                        </label>
                     </div>
                 </div>
 
