@@ -918,6 +918,10 @@ function setupEventListeners() {
     // Project Info Listeners
     projectTitleInput.addEventListener('input', (e) => {
         project.title = e.target.value;
+        const editorProjectTitle = document.getElementById('editor-project-title');
+        if (editorProjectTitle) {
+            editorProjectTitle.textContent = e.target.value || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+        }
         triggerSave();
     });
 
@@ -1608,6 +1612,10 @@ function openChapterEditor(chapterId) {
     storage.setItem('monote-active-chapter-id', chapterId);
     
     // Set UI Values
+    const editorProjectTitle = document.getElementById('editor-project-title');
+    if (editorProjectTitle) {
+        editorProjectTitle.textContent = project.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+    }
     chapterNumberBadge.textContent = getChapterPrefix(chapterId);
     chapterTitleInput.value = chapter.title || '';
     chapterContentTextarea.value = chapter.content || '';
@@ -4037,6 +4045,10 @@ function restoreActiveState() {
                     activeChapterId = savedChapterId;
                     
                     // Directly load values
+                    const editorProjectTitle = document.getElementById('editor-project-title');
+                    if (editorProjectTitle) {
+                        editorProjectTitle.textContent = project.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+                    }
                     chapterNumberBadge.textContent = getChapterPrefix(savedChapterId);
                     chapterTitleInput.value = chapter.title || '';
                     chapterContentTextarea.value = chapter.content || '';
@@ -5015,6 +5027,10 @@ async function saveEditBookSettings() {
 
     // Update Overview screen inputs
     projectTitleInput.value = title;
+    const editorProjectTitle = document.getElementById('editor-project-title');
+    if (editorProjectTitle) {
+        editorProjectTitle.textContent = title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+    }
 
     hideEditBookDialog();
     renderOverview();
