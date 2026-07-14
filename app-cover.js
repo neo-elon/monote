@@ -872,6 +872,12 @@ function setupEventListeners() {
         closeArchiveBtn.addEventListener('click', hideArchiveDialog);
     }
 
+    // Back to Bookshelf Listener
+    const backToBookshelfBtn = document.getElementById('back-to-bookshelf');
+    if (backToBookshelfBtn) {
+        backToBookshelfBtn.addEventListener('click', showBookshelfScreen);
+    }
+
     // Font Size Adjustments
     const fontDecBtn = document.getElementById('font-size-dec');
     const fontIncBtn = document.getElementById('font-size-inc');
@@ -4638,6 +4644,18 @@ function updateLanguageUI() {
         addChapterBtn.innerHTML = `<span class="plus-icon">+</span>${t.overviewAddChapter}`;
     }
 
+    const backToBookshelfBtn = document.getElementById('back-to-bookshelf');
+    if (backToBookshelfBtn) {
+        backToBookshelfBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>${t.overviewBackToBookshelf}</span>
+        `;
+    }
+
     // Writing Screen
     const backBtn = document.getElementById('back-to-overview');
     if (backBtn) {
@@ -4813,6 +4831,7 @@ const i18n = {
         overviewChaptersTitle: "목차 및 챕터",
         overviewAddChapter: " 챕터 추가",
         overviewEmptyChapters: "아직 생성된 챕터가 없습니다. 오른쪽 상단의 '+ 챕터 추가' 버튼을 눌러 첫 글을 시작해 보세요.",
+        overviewBackToBookshelf: " 책장으로 돌아가기",
         editorBack: " 개요",
         editorCopy: " 복사",
         editorCopyTitle: "제목과 본문 복사",
@@ -4886,6 +4905,7 @@ const i18n = {
         overviewChaptersTitle: "Table of Contents",
         overviewAddChapter: " Add Chapter",
         overviewEmptyChapters: "No chapters created yet. Click '+ Add Chapter' in the top right to start your first writing.",
+        overviewBackToBookshelf: " Back to Bookshelf",
         editorBack: " Overview",
         editorCopy: " Copy",
         editorCopyTitle: "Copy Title and Content",
