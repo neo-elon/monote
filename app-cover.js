@@ -3508,7 +3508,6 @@ function updateDialogPreview(prefix) {
 }
 
 function initBookDialogController(prefix) {
-    const state = dialogStates[prefix];
     const titleInput = document.getElementById(`${prefix}-title`);
     
     // Title Input Event
@@ -3528,7 +3527,7 @@ function initBookDialogController(prefix) {
                 });
                 label.classList.add('active');
                 
-                state.color = e.target.value;
+                dialogStates[prefix].color = e.target.value;
                 updateDialogPreview(prefix);
             });
         }
@@ -3544,7 +3543,7 @@ const editBookTitleInput = document.getElementById('edit-book-title');
 function showNewBookDialog() {
     newBookTitleInput.value = '';
     
-    dialogStates['new-book'] = { color: 'charcoal' };
+    dialogStates['new-book'].color = 'charcoal';
     
     // Reset color option active class
     document.querySelectorAll('#new-book-dialog .cover-color-picker .color-option').forEach(opt => {
@@ -4767,9 +4766,7 @@ function showEditBookDialog() {
         activeColor = 'charcoal';
     }
     
-    dialogStates['edit-book'] = {
-        color: activeColor
-    };
+    dialogStates['edit-book'].color = activeColor;
 
     // Reset color option active class in edit color picker
     document.querySelectorAll('#edit-book-dialog .cover-color-picker .color-option').forEach(opt => {
