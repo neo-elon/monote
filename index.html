@@ -193,18 +193,31 @@
             <section id="bookshelf-screen" class="view-section active">
                 <div class="bookshelf-header">
                     <h2 class="bookshelf-title" id="bookshelf-title">내 책장</h2>
-                    <button id="bookshelf-community-btn" class="btn-flat btn-sm"
-                        style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: flex; align-items: center; gap: 0.25rem; font-weight: 500;"
-                        title="커뮤니티 이동">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        커뮤니티
-                    </button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="bookshelf-archive-btn" class="btn-flat btn-sm"
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: flex; align-items: center; gap: 0.25rem; font-weight: 500;"
+                            title="보관함 열기">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                                <rect x="1" y="3" width="22" height="5"></rect>
+                                <line x1="10" y1="12" x2="14" y2="12"></line>
+                            </svg>
+                            보관함
+                        </button>
+                        <button id="bookshelf-community-btn" class="btn-flat btn-sm"
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: flex; align-items: center; gap: 0.25rem; font-weight: 500;"
+                            title="커뮤니티 이동">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            커뮤니티
+                        </button>
+                    </div>
                 </div>
 
                 <div id="books-grid" class="books-grid">
@@ -610,6 +623,19 @@
             <div class="dialog-actions">
                 <button id="cancel-new-post" class="btn-flat btn-sm btn-danger">취소</button>
                 <button id="confirm-new-post" class="btn-flat btn-sm">작성 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Dialog (Hidden by default) -->
+    <div id="archive-dialog" class="book-dialog" style="display: none;">
+        <div class="dialog-content" style="max-width: 500px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; gap: 1.25rem;">
+            <h3 id="archive-dialog-title" style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700;">보관함</h3>
+            <div id="archive-list-container" style="flex-grow: 1; overflow-y: auto; max-height: 50vh; display: flex; flex-direction: column; gap: 0.75rem; min-height: 150px; padding-right: 0.25rem;">
+                <!-- Archived projects will be rendered dynamically here -->
+            </div>
+            <div class="dialog-actions">
+                <button id="close-archive-btn" class="btn-flat btn-sm">닫기</button>
             </div>
         </div>
     </div>

@@ -473,7 +473,7 @@ async function saveProjectToCloud(proj) {
             synopsis: proj.synopsis || '',
             ideas: proj.ideas || '',
             chapters: proj.chapters || [],
-            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}:${proj.coverImage || ''}`,
+            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}:${proj.coverImage || ''}:${proj.isArchived ? 'archived' : 'active'}`,
             updated_at: proj.updatedAt || new Date().toISOString(),
             created_at: proj.createdAt || new Date().toISOString(),
             user_id: projectUserId
@@ -730,7 +730,16 @@ async function loadProjects() {
                 const colorParts = dbColor.split(':');
                 const coverColor = colorParts[0];
                 const isPrivate = colorParts[1] === 'private';
-                const coverImage = colorParts.slice(2).join(':') || '';
+                
+                let coverImage = '';
+                let isArchived = false;
+                if (colorParts.length >= 4) {
+                    coverImage = colorParts[2];
+                    isArchived = colorParts[3] === 'archived';
+                } else {
+                    coverImage = colorParts.slice(2).join(':') || '';
+                }
+                
                 return {
                     id: dbProj.id,
                     title: dbProj.title,
@@ -740,6 +749,7 @@ async function loadProjects() {
                     coverColor: coverColor,
                     isPrivate: isPrivate,
                     coverImage: coverImage,
+                    isArchived: isArchived,
                     createdAt: dbProj.created_at,
                     updatedAt: dbProj.updated_at,
                     user_id: dbProj.user_id
@@ -850,6 +860,16 @@ function setupEventListeners() {
                 menuDropdown.classList.remove('show');
             });
         });
+    }
+
+    // Archive Box Listeners
+    const archiveBtn = document.getElementById('bookshelf-archive-btn');
+    if (archiveBtn) {
+        archiveBtn.addEventListener('click', showArchiveDialog);
+    }
+    const closeArchiveBtn = document.getElementById('close-archive-btn');
+    if (closeArchiveBtn) {
+        closeArchiveBtn.addEventListener('click', hideArchiveDialog);
     }
 
     // Font Size Adjustments
@@ -2370,8 +2390,10 @@ function renderRanking() {
                         publicBooks = bookData.filter(p => {
                             if (p.id === 'monote-manual-guide' || p.id.startsWith('user-profile-')) return false;
                             const coverColor = p.cover_color || 'charcoal';
-                            const isPrivate = coverColor.split(':')[1] === 'private';
-                            return !isPrivate;
+                            const parts = coverColor.split(':');
+                            const isPrivate = parts[1] === 'private';
+                            const isArchived = parts[3] === 'archived';
+                            return !isPrivate && !isArchived;
                         });
                     }
                 }
@@ -3218,7 +3240,7 @@ function renderBookshelf() {
     
     const authorName = currentUser?.user_metadata?.pen_name || 'Monote';
     
-    projects.forEach((proj) => {
+    projects.filter(p => !p.isArchived).forEach((proj) => {
         const bookCard = document.createElement('div');
         bookCard.className = 'book-card';
         bookCard.dataset.id = proj.id;
@@ -3228,7 +3250,7 @@ function renderBookshelf() {
         
         const deleteBtnHtml = (proj.id === "monote-manual-guide" && !isAdmin())
             ? ""
-            : `<button class="delete-book-btn" title="작품 삭제">×</button>`;
+            : `<button class="delete-book-btn" title="${currentLang === 'en' ? 'Archive Book' : '작품 보관'}">×</button>`;
 
         const visibilityIconHtml = proj.id === "monote-manual-guide"
             ? ""
@@ -3270,11 +3292,14 @@ function renderBookshelf() {
         // Open project on click
         bookCard.addEventListener('click', (e) => {
             if (isDragging) return;
-            // If click was on delete button, do not open
+            // If click was on delete (now archive) button, do not open
             if (e.target.classList.contains('delete-book-btn')) {
                 e.stopPropagation();
-                if (confirm(`"${proj.title || '제목 없음'}" 작품을 완전히 삭제하시겠습니까?\n작성한 원고가 모두 삭제되며 되돌릴 수 없습니다.`)) {
-                    deleteProject(proj.id);
+                const confirmMsg = currentLang === 'en'
+                    ? `Are you sure you want to archive "${proj.title || 'Untitled'}"?`
+                    : `"${proj.title || '제목 없음'}" 작품을 보관함으로 이동하시겠습니까?`;
+                if (confirm(confirmMsg)) {
+                    archiveProject(proj.id);
                 }
                 return;
             }
@@ -3676,6 +3701,121 @@ async function deleteProject(projectId) {
             updateSyncStatus('error', '동기화 실패');
         }
     }
+}
+
+async function archiveProject(projectId) {
+    const proj = projects.find(p => p.id === projectId);
+    if (!proj) return;
+
+    proj.isArchived = true;
+    proj.updatedAt = new Date().toISOString();
+    
+    storage.setItem('monote-projects', JSON.stringify(projects));
+
+    if (activeProjectId === projectId) {
+        activeProjectId = null;
+        project = null;
+        showBookshelfScreen();
+    } else {
+        renderBookshelf();
+    }
+
+    // Sync to Supabase
+    if (supabaseClient && currentUser) {
+        updateSyncStatus('syncing', '동기화 중...');
+        try {
+            await saveProjectToCloud(proj);
+            updateSyncStatus('success', '동기화 완료');
+        } catch (err) {
+            console.error('Failed to sync archived status to cloud:', err);
+            updateSyncStatus('error', '동기화 실패');
+        }
+    }
+}
+
+async function restoreProject(projectId) {
+    const proj = projects.find(p => p.id === projectId);
+    if (!proj) return;
+
+    proj.isArchived = false;
+    proj.updatedAt = new Date().toISOString();
+    
+    storage.setItem('monote-projects', JSON.stringify(projects));
+    
+    renderBookshelf();
+    renderArchiveList();
+
+    // Sync to Supabase
+    if (supabaseClient && currentUser) {
+        updateSyncStatus('syncing', '동기화 중...');
+        try {
+            await saveProjectToCloud(proj);
+            updateSyncStatus('success', '동기화 완료');
+        } catch (err) {
+            console.error('Failed to sync restored status to cloud:', err);
+            updateSyncStatus('error', '동기화 실패');
+        }
+    }
+}
+
+function showArchiveDialog() {
+    const dialog = document.getElementById('archive-dialog');
+    if (dialog) {
+        renderArchiveList();
+        dialog.style.display = 'flex';
+    }
+}
+
+function hideArchiveDialog() {
+    const dialog = document.getElementById('archive-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+    }
+}
+
+function renderArchiveList() {
+    const container = document.getElementById('archive-list-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const archivedProjects = projects.filter(p => p.isArchived);
+
+    if (archivedProjects.length === 0) {
+        container.innerHTML = `<div class="empty-archive-msg">${currentLang === 'en' ? 'No archived books.' : '보관된 작품이 없습니다.'}</div>`;
+        return;
+    }
+
+    archivedProjects.forEach(proj => {
+        const item = document.createElement('div');
+        item.className = 'archive-item';
+        
+        const title = proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+        
+        item.innerHTML = `
+            <div class="archive-item-title" title="${title}">${title}</div>
+            <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                <button class="btn-flat btn-sm restore-btn" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">${currentLang === 'en' ? 'Restore' : '되살리기'}</button>
+                <button class="btn-flat btn-sm btn-danger delete-permanent-btn" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">${currentLang === 'en' ? 'Delete Permanently' : '영구 삭제'}</button>
+            </div>
+        `;
+
+        item.querySelector('.restore-btn').addEventListener('click', () => {
+            restoreProject(proj.id);
+        });
+
+        item.querySelector('.delete-permanent-btn').addEventListener('click', () => {
+            const confirmMsg = currentLang === 'en'
+                ? `Are you sure you want to permanently delete "${title}"?\nThis action cannot be undone.`
+                : `"${title}" 작품을 영구 삭제하시겠습니까?\n모든 원고가 사라지며 되돌릴 수 없습니다.`;
+            if (confirm(confirmMsg)) {
+                deleteProject(proj.id);
+                // Refresh list
+                setTimeout(renderArchiveList, 100);
+            }
+        });
+
+        container.appendChild(item);
+    });
 }
 
 // Export Chapter to text file
@@ -4370,6 +4510,19 @@ function updateLanguageUI() {
         if (textNode) textNode.textContent = ' ' + t.bookshelfCommunity;
     }
 
+    const bookshelfArchiveBtn = document.getElementById('bookshelf-archive-btn');
+    if (bookshelfArchiveBtn) {
+        bookshelfArchiveBtn.setAttribute('title', currentLang === 'en' ? 'Open Archive' : '보관함 열기');
+        const textNode = Array.from(bookshelfArchiveBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0);
+        if (textNode) textNode.textContent = ' ' + t.bookshelfArchive;
+    }
+
+    const archiveDialogTitle = document.getElementById('archive-dialog-title');
+    if (archiveDialogTitle) archiveDialogTitle.textContent = t.archiveDialogTitle;
+
+    const closeArchiveBtn = document.getElementById('close-archive-btn');
+    if (closeArchiveBtn) closeArchiveBtn.textContent = t.archiveClose;
+
     // Add Book Modal
     const addDialog = document.getElementById('new-book-dialog');
     if (addDialog) {
@@ -4683,9 +4836,14 @@ const i18n = {
         syncSynced: "동기화 완료",
         syncSyncing: "동기화 중...",
         syncLoading: "불러오는 중...",
-        syncFailed: "동기화 실패",
         syncLocalMode: "로컬 모드",
-        syncUpdated: "동기화 완료"
+        syncUpdated: "동기화 완료",
+        bookshelfArchive: "보관함",
+        archiveDialogTitle: "작품 보관함",
+        archiveEmpty: "보관된 작품이 없습니다.",
+        archiveRestore: "되살리기",
+        archiveDeletePermanent: "영구 삭제",
+        archiveClose: "닫기"
     },
     en: {
         bookshelfTitle: "My Bookshelf",
@@ -4751,9 +4909,14 @@ const i18n = {
         syncSynced: "Synced",
         syncSyncing: "Syncing...",
         syncLoading: "Loading...",
-        syncFailed: "Sync Failed",
         syncLocalMode: "Local Mode",
-        syncUpdated: "Synced"
+        syncUpdated: "Synced",
+        bookshelfArchive: "Archive",
+        archiveDialogTitle: "Archived Books",
+        archiveEmpty: "No archived books.",
+        archiveRestore: "Restore",
+        archiveDeletePermanent: "Delete Permanently",
+        archiveClose: "Close"
     }
 };
 
