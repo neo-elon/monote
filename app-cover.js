@@ -473,7 +473,7 @@ async function saveProjectToCloud(proj) {
             synopsis: proj.synopsis || '',
             ideas: proj.ideas || '',
             chapters: proj.chapters || [],
-            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}`,
+            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}:${proj.coverImage || ''}`,
             updated_at: proj.updatedAt || new Date().toISOString(),
             created_at: proj.createdAt || new Date().toISOString(),
             user_id: projectUserId
@@ -557,6 +557,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         await checkAuthState();
     }
     await loadProjects();
+    initBookDialogController('new-book');
+    initBookDialogController('edit-book');
     setupEventListeners();
     renderBookshelf();
     
@@ -728,6 +730,7 @@ async function loadProjects() {
                 const colorParts = dbColor.split(':');
                 const coverColor = colorParts[0];
                 const isPrivate = colorParts[1] === 'private';
+                const coverImage = colorParts.slice(2).join(':') || '';
                 return {
                     id: dbProj.id,
                     title: dbProj.title,
@@ -736,6 +739,7 @@ async function loadProjects() {
                     chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || []),
                     coverColor: coverColor,
                     isPrivate: isPrivate,
+                    coverImage: coverImage,
                     createdAt: dbProj.created_at,
                     updatedAt: dbProj.updated_at,
                     user_id: dbProj.user_id
@@ -3236,14 +3240,17 @@ function renderBookshelf() {
         const dateObj = new Date(proj.updatedAt || proj.createdAt || Date.now());
         const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')}`;
 
+        const hasImageClass = proj.coverImage ? 'has-image' : '';
+        const imageStyle = proj.coverImage ? `background-image: url('${proj.coverImage}');` : '';
+
         bookCard.innerHTML = `
             ${deleteBtnHtml}
-            <div class="book-cover cover-${coverColor}">
+            <div class="book-cover cover-${coverColor} ${hasImageClass}" style="${imageStyle}">
                 ${visibilityIconHtml}
-                <div class="book-cover-title">${proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</div>
-                <div class="book-cover-footer-group">
-                    <div class="book-cover-charcount">${totalCharCount.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</div>
-                    <div class="book-cover-author">${authorName}</div>
+                <div class="book-cover-title" style="z-index: 2;">${proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</div>
+                <div class="book-cover-footer-group" style="z-index: 2;">
+                    <div class="book-cover-charcount" style="z-index: 2;">${totalCharCount.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</div>
+                    <div class="book-cover-author" style="z-index: 2;">${authorName}</div>
                 </div>
             </div>
             <div class="book-card-title-under">${proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</div>
@@ -3439,28 +3446,410 @@ function sortProjectsByOrder() {
     }
 }
 
+// Curated list of recommended free images
+const CURATED_FREE_IMAGES = [
+    // Literature / Writing
+    {
+        id: "img-writing-1",
+        url: "https://images.unsplash.com/photo-1519682577862-22b62b24e493?w=500&auto=format&fit=crop&q=60",
+        category: "writing",
+        keywords: ["책", "독서", "도서관", "book", "library", "reading", "literature", "문학", "소설"]
+    },
+    {
+        id: "img-writing-2",
+        url: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60",
+        category: "writing",
+        keywords: ["책", "원고", "독서", "book", "manuscript", "reading", "소설"]
+    },
+    {
+        id: "img-writing-3",
+        url: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=500&auto=format&fit=crop&q=60",
+        category: "writing",
+        keywords: ["커피", "책", "독서", "coffee", "book", "reading", "시작", "생각"]
+    },
+    {
+        id: "img-writing-4",
+        url: "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=500&auto=format&fit=crop&q=60",
+        category: "writing",
+        keywords: ["만년필", "글쓰기", "펜", "pen", "fountain pen", "writing", "잉크", "ink"]
+    },
+    {
+        id: "img-writing-5",
+        url: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=500&auto=format&fit=crop&q=60",
+        category: "writing",
+        keywords: ["손", "펜", "노트", "글쓰기", "write", "writing", "hand", "note", "paper", "종이"]
+    },
+    {
+        id: "img-writing-6",
+        url: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&auto=format&fit=crop&q=60",
+        category: "writing",
+        keywords: ["도서관", "책", "책장", "library", "books", "bookshelf", "study", "서재"]
+    },
+    // Nature / Landscape
+    {
+        id: "img-nature-1",
+        url: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&auto=format&fit=crop&q=60",
+        category: "nature",
+        keywords: ["숲", "나무", "안개", "forest", "fog", "mist", "trees", "nature", "자연", "초록"]
+    },
+    {
+        id: "img-nature-2",
+        url: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=500&auto=format&fit=crop&q=60",
+        category: "nature",
+        keywords: ["바다", "파도", "물", "ocean", "sea", "waves", "water", "beach", "해변"]
+    },
+    {
+        id: "img-nature-3",
+        url: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=500&auto=format&fit=crop&q=60",
+        category: "nature",
+        keywords: ["우주", "별", "밤하늘", "stars", "space", "night sky", "galaxy", "은하수"]
+    },
+    {
+        id: "img-nature-4",
+        url: "https://images.unsplash.com/photo-1428908728789-d2de25dbd4e2?w=500&auto=format&fit=crop&q=60",
+        category: "nature",
+        keywords: ["비", "창문", "빗방울", "rain", "window", "raindrops", "weather", "날씨"]
+    },
+    {
+        id: "img-nature-5",
+        url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&auto=format&fit=crop&q=60",
+        category: "nature",
+        keywords: ["산", "구름", "하늘", "mountain", "clouds", "sky", "peaks", "풍경"]
+    },
+    {
+        id: "img-nature-6",
+        url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500&auto=format&fit=crop&q=60",
+        category: "nature",
+        keywords: ["호수", "물안개", "풍경", "lake", "mist", "landscape", "sunrise", "일출"]
+    },
+    // City / Emotion
+    {
+        id: "img-city-1",
+        url: "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?w=500&auto=format&fit=crop&q=60",
+        category: "city",
+        keywords: ["가로등", "밤", "도시", "street lamp", "night", "city", "rainy night", "비"]
+    },
+    {
+        id: "img-city-2",
+        url: "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?w=500&auto=format&fit=crop&q=60",
+        category: "city",
+        keywords: ["골목길", "유럽", "길", "alley", "street", "old town", "travel", "여행"]
+    },
+    {
+        id: "img-city-3",
+        url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&auto=format&fit=crop&q=60",
+        category: "city",
+        keywords: ["커피", "찻잔", "카페", "coffee", "cup", "cafe", "warm", "따뜻함"]
+    },
+    {
+        id: "img-city-4",
+        url: "https://images.unsplash.com/photo-1539628399213-d6aa89c93074?w=500&auto=format&fit=crop&q=60",
+        category: "city",
+        keywords: ["레코드", "음악", "턴테이블", "vinyl", "music", "record player", "vintage", "빈티지"]
+    },
+    {
+        id: "img-city-5",
+        url: "https://images.unsplash.com/photo-1517479149777-5f3b1511d5ad?w=500&auto=format&fit=crop&q=60",
+        category: "city",
+        keywords: ["기차", "창문", "여행", "train", "window", "travel", "journey", "여정"]
+    },
+    {
+        id: "img-city-6",
+        url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&auto=format&fit=crop&q=60",
+        category: "city",
+        keywords: ["파리", "에펠탑", "도시", "paris", "eiffel tower", "city", "travel", "흑백"]
+    },
+    // Abstract / Minimalist
+    {
+        id: "img-abstract-1",
+        url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=60",
+        category: "abstract",
+        keywords: ["그림자", "빛", "미니멀", "shadow", "light", "minimal", "wall", "벽"]
+    },
+    {
+        id: "img-abstract-2",
+        url: "https://images.unsplash.com/photo-1533158326339-7f3cf2404354?w=500&auto=format&fit=crop&q=60",
+        category: "abstract",
+        keywords: ["질감", "콘크리트", "배경", "texture", "concrete", "gray", "background"]
+    },
+    {
+        id: "img-abstract-3",
+        url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format&fit=crop&q=60",
+        category: "abstract",
+        keywords: ["대리석", "패턴", "마블", "marble", "pattern", "lines", "배경"]
+    },
+    {
+        id: "img-abstract-4",
+        url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=500&auto=format&fit=crop&q=60",
+        category: "abstract",
+        keywords: ["도형", "추상", "블랙", "geometry", "abstract", "black", "dark"]
+    },
+    {
+        id: "img-abstract-5",
+        url: "https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=500&auto=format&fit=crop&q=60",
+        category: "abstract",
+        keywords: ["모래", "물결", "사막", "sand", "ripples", "desert", "waves"]
+    }
+];
+
+// Map of dialog states
+const dialogStates = {
+    'new-book': { style: 'color', color: 'charcoal', imageUrl: '' },
+    'edit-book': { style: 'color', color: 'charcoal', imageUrl: '' }
+};
+
+function updateDialogPreview(prefix) {
+    const state = dialogStates[prefix];
+    const previewCover = document.getElementById(`${prefix}-preview-cover`);
+    const previewTitle = document.getElementById(`${prefix}-preview-title`);
+    const previewAuthor = document.getElementById(`${prefix}-preview-author`);
+    const titleInput = document.getElementById(`${prefix}-title`);
+    
+    if (!previewCover) return;
+    
+    // Update title and author
+    const defaultTitle = prefix === 'new-book' 
+        ? (currentLang === 'en' ? 'New Book' : '새 작품')
+        : (currentLang === 'en' ? 'Untitled' : '제목 없음');
+    previewTitle.textContent = titleInput.value.trim() || defaultTitle;
+    previewAuthor.textContent = currentUser?.user_metadata?.pen_name || 'Monote';
+    
+    // Reset classes
+    previewCover.className = 'book-cover';
+    
+    if (state.style === 'color') {
+        previewCover.classList.add(`cover-${state.color}`);
+        previewCover.style.backgroundImage = '';
+    } else {
+        previewCover.classList.add('has-image');
+        if (state.imageUrl) {
+            previewCover.style.backgroundImage = `url('${state.imageUrl}')`;
+        } else {
+            // Default placeholder when image is selected but url is empty
+            previewCover.style.backgroundImage = "linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7))";
+        }
+    }
+}
+
+function initBookDialogController(prefix) {
+    const state = dialogStates[prefix];
+    const tabColor = document.getElementById(`${prefix}-tab-color`);
+    const tabImage = document.getElementById(`${prefix}-tab-image`);
+    const colorSection = document.getElementById(`${prefix}-color-section`);
+    const imageSection = document.getElementById(`${prefix}-image-section`);
+    
+    const titleInput = document.getElementById(`${prefix}-title`);
+    const urlInput = document.getElementById(`${prefix}-image-url`);
+    const fileInput = document.getElementById(`${prefix}-image-file`);
+    const filenameLabel = document.getElementById(`${prefix}-image-filename`);
+    const searchInput = document.getElementById(`${prefix}-image-search`);
+    const searchBtn = document.getElementById(`${prefix}-image-search-btn`);
+    const categoriesContainer = document.getElementById(`${prefix}-image-categories`);
+    const gridContainer = document.getElementById(`${prefix}-recommend-grid`);
+    
+    // Toggle cover style tabs
+    tabColor.addEventListener('click', () => {
+        tabColor.classList.add('active');
+        tabImage.classList.remove('active');
+        colorSection.style.display = 'block';
+        imageSection.style.display = 'none';
+        state.style = 'color';
+        updateDialogPreview(prefix);
+    });
+    
+    tabImage.addEventListener('click', () => {
+        tabImage.classList.add('active');
+        tabColor.classList.remove('active');
+        imageSection.style.display = 'block';
+        colorSection.style.display = 'none';
+        state.style = 'image';
+        updateDialogPreview(prefix);
+    });
+    
+    // Title Input Event
+    titleInput.addEventListener('input', () => {
+        updateDialogPreview(prefix);
+    });
+    
+    // Color radios event listeners
+    const colorRadios = document.querySelectorAll(`input[name="${prefix === 'new-book' ? 'cover-color' : 'edit-cover-color'}"]`);
+    colorRadios.forEach(radio => {
+        // Find the color-option wrapper label
+        const label = radio.closest('.color-option');
+        if (label) {
+            radio.addEventListener('change', (e) => {
+                // Update active class
+                document.querySelectorAll(`#${prefix}-dialog .cover-color-picker .color-option`).forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                label.classList.add('active');
+                state.color = e.target.value;
+                updateDialogPreview(prefix);
+            });
+        }
+    });
+    
+    // Direct URL input event listener
+    urlInput.addEventListener('input', () => {
+        state.imageUrl = urlInput.value.trim();
+        // Clear active recommend thumbnails when user types custom URL
+        gridContainer.querySelectorAll('.recommend-thumb').forEach(t => t.classList.remove('active'));
+        updateDialogPreview(prefix);
+    });
+    
+    // File upload event listener
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            filenameLabel.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                state.imageUrl = event.target.result;
+                urlInput.value = ''; // Clear URL input to avoid confusion
+                gridContainer.querySelectorAll('.recommend-thumb').forEach(t => t.classList.remove('active'));
+                updateDialogPreview(prefix);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            filenameLabel.textContent = currentLang === 'en' ? 'No file selected' : '선택된 파일 없음';
+        }
+    });
+    
+    // Render Free Image Gallery Recommendations
+    function renderGallery(filterCategory = 'all', filterQuery = '') {
+        gridContainer.innerHTML = '';
+        
+        let filtered = CURATED_FREE_IMAGES;
+        
+        // Filter by category
+        if (filterCategory !== 'all') {
+            filtered = filtered.filter(img => img.category === filterCategory);
+        }
+        
+        // Filter by search query keyword
+        if (filterQuery) {
+            const query = filterQuery.toLowerCase().trim();
+            filtered = filtered.filter(img => 
+                img.keywords.some(k => k.includes(query)) || img.category.includes(query)
+            );
+        }
+        
+        filtered.forEach(img => {
+            const thumb = document.createElement('div');
+            thumb.className = 'recommend-thumb';
+            thumb.style.backgroundImage = `url('${img.url}')`;
+            if (state.imageUrl === img.url) {
+                thumb.classList.add('active');
+            }
+            
+            thumb.addEventListener('click', () => {
+                // Remove active class from other thumbnails
+                gridContainer.querySelectorAll('.recommend-thumb').forEach(t => t.classList.remove('active'));
+                thumb.classList.add('active');
+                
+                state.imageUrl = img.url;
+                urlInput.value = img.url; // sync back to URL input field
+                fileInput.value = ''; // clear file input
+                filenameLabel.textContent = currentLang === 'en' ? 'No file selected' : '선택된 파일 없음';
+                updateDialogPreview(prefix);
+            });
+            gridContainer.appendChild(thumb);
+        });
+        
+        if (filtered.length === 0) {
+            gridContainer.innerHTML = `<div style="grid-column: span 4; font-size: 0.8rem; color: var(--text-secondary); text-align: center; padding: 1.5rem 0;">${currentLang === 'en' ? 'No matching images found' : '검색 결과가 없습니다'}</div>`;
+        }
+    }
+    
+    // Category click handler
+    if (categoriesContainer) {
+        categoriesContainer.querySelectorAll('.category-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                categoriesContainer.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                
+                // Clear search input on category switch
+                searchInput.value = '';
+                
+                renderGallery(pill.dataset.category);
+            });
+        });
+    }
+    
+    // Keyword Search Handler
+    searchBtn.addEventListener('click', () => {
+        const query = searchInput.value.trim();
+        // Reset category pills
+        if (categoriesContainer) {
+            categoriesContainer.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+            const allPill = categoriesContainer.querySelector('[data-category="all"]');
+            if (allPill) allPill.classList.add('active');
+        }
+        renderGallery('all', query);
+    });
+    
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchBtn.click();
+        }
+    });
+    
+    // Initial gallery render
+    renderGallery();
+}
+
 // Dialog elements references helper
 const newBookDialog = document.getElementById('new-book-dialog');
 const newBookTitleInput = document.getElementById('new-book-title');
 const editBookDialog = document.getElementById('edit-book-dialog');
 const editBookTitleInput = document.getElementById('edit-book-title');
 
-// Show dialog
 function showNewBookDialog() {
     newBookTitleInput.value = '';
     
+    dialogStates['new-book'] = { style: 'color', color: 'charcoal', imageUrl: '' };
+    
+    // Reset tabs
+    document.getElementById('new-book-tab-color').classList.add('active');
+    document.getElementById('new-book-tab-image').classList.remove('active');
+    document.getElementById('new-book-color-section').style.display = 'block';
+    document.getElementById('new-book-image-section').style.display = 'none';
+    
     // Reset color option active class
-    document.querySelectorAll('.cover-color-picker .color-option').forEach(opt => {
+    document.querySelectorAll('#new-book-dialog .cover-color-picker .color-option').forEach(opt => {
         opt.classList.remove('active');
     });
-    const charcoalOpt = document.querySelector('.cover-color-picker .color-option.charcoal');
+    const charcoalOpt = document.querySelector('#new-book-dialog .cover-color-picker .color-option.charcoal');
     if (charcoalOpt) charcoalOpt.classList.add('active');
     
-    const defaultRadio = document.querySelector('input[name="cover-color"][value="charcoal"]');
+    const defaultRadio = document.querySelector('#new-book-dialog input[name="cover-color"][value="charcoal"]');
     if (defaultRadio) defaultRadio.checked = true;
 
-    const defaultVisibilityRadio = document.querySelector('input[name="book-visibility"][value="public"]');
+    const defaultVisibilityRadio = document.querySelector('#new-book-dialog input[name="book-visibility"][value="public"]');
     if (defaultVisibilityRadio) defaultVisibilityRadio.checked = true;
+
+    // Reset Image fields
+    document.getElementById('new-book-image-url').value = '';
+    document.getElementById('new-book-image-file').value = '';
+    document.getElementById('new-book-image-filename').textContent = currentLang === 'en' ? 'No file selected' : '선택된 파일 없음';
+    document.getElementById('new-book-image-search').value = '';
+    
+    // Reset category pills
+    const categoriesContainer = document.getElementById('new-book-image-categories');
+    if (categoriesContainer) {
+        categoriesContainer.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+        const allPill = categoriesContainer.querySelector('[data-category="all"]');
+        if (allPill) allPill.classList.add('active');
+    }
+    
+    // Refresh Gallery active highlight
+    const gridContainer = document.getElementById('new-book-recommend-grid');
+    if (gridContainer) {
+        gridContainer.querySelectorAll('.recommend-thumb').forEach(t => t.classList.remove('active'));
+    }
+    
+    updateDialogPreview('new-book');
 
     newBookDialog.style.display = 'flex';
     setTimeout(() => {
@@ -3482,8 +3871,9 @@ async function createNewProject() {
         return;
     }
     
-    const selectedColorRadio = document.querySelector('input[name="cover-color"]:checked');
-    const coverColor = selectedColorRadio ? selectedColorRadio.value : 'charcoal';
+    const state = dialogStates['new-book'];
+    const coverColor = state.style === 'color' ? state.color : 'charcoal';
+    const coverImage = state.style === 'image' ? state.imageUrl : '';
     
     const visibilityRadio = document.querySelector('input[name="book-visibility"]:checked');
     const isPrivate = visibilityRadio ? (visibilityRadio.value === 'private') : false;
@@ -3495,6 +3885,7 @@ async function createNewProject() {
         ideas: '',
         chapters: [],
         coverColor: coverColor,
+        coverImage: coverImage,
         isPrivate: isPrivate,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -4659,17 +5050,43 @@ const i18n = {
     }
 };
 
-// Show edit book dialog
 function showEditBookDialog() {
     if (!project) return;
     editBookTitleInput.value = project.title || '';
+
+    // Initialize Dialog State from current project settings
+    const activeColor = project.coverColor || 'charcoal';
+    const activeImage = project.coverImage || '';
+    const hasImage = !!activeImage;
+    
+    dialogStates['edit-book'] = {
+        style: hasImage ? 'image' : 'color',
+        color: activeColor,
+        imageUrl: activeImage
+    };
+    
+    // Toggle active tab UI
+    if (hasImage) {
+        document.getElementById('edit-book-tab-image').classList.add('active');
+        document.getElementById('edit-book-tab-color').classList.remove('active');
+        document.getElementById('edit-book-image-section').style.display = 'block';
+        document.getElementById('edit-book-color-section').style.display = 'none';
+        
+        document.getElementById('edit-book-image-url').value = activeImage;
+    } else {
+        document.getElementById('edit-book-tab-color').classList.add('active');
+        document.getElementById('edit-book-tab-image').classList.remove('active');
+        document.getElementById('edit-book-color-section').style.display = 'block';
+        document.getElementById('edit-book-image-section').style.display = 'none';
+        
+        document.getElementById('edit-book-image-url').value = '';
+    }
 
     // Reset color option active class in edit color picker
     document.querySelectorAll('#edit-book-dialog .cover-color-picker .color-option').forEach(opt => {
         opt.classList.remove('active');
     });
 
-    const activeColor = project.coverColor || 'charcoal';
     const targetOpt = document.querySelector(`#edit-book-dialog .cover-color-picker .color-option.${activeColor}`);
     if (targetOpt) targetOpt.classList.add('active');
 
@@ -4679,6 +5096,35 @@ function showEditBookDialog() {
     const activeVisibility = project.isPrivate ? 'private' : 'public';
     const visibilityRadio = document.querySelector(`#edit-book-dialog input[name="edit-book-visibility"][value="${activeVisibility}"]`);
     if (visibilityRadio) visibilityRadio.checked = true;
+
+    // Reset files/search in edit dialog
+    document.getElementById('edit-book-image-file').value = '';
+    document.getElementById('edit-book-image-filename').textContent = currentLang === 'en' ? 'No file selected' : '선택된 파일 없음';
+    document.getElementById('edit-book-image-search').value = '';
+    
+    // Reset category pills
+    const categoriesContainer = document.getElementById('edit-book-image-categories');
+    if (categoriesContainer) {
+        categoriesContainer.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+        const allPill = categoriesContainer.querySelector('[data-category="all"]');
+        if (allPill) allPill.classList.add('active');
+    }
+    
+    // Refresh Gallery active highlight
+    const gridContainer = document.getElementById('edit-book-recommend-grid');
+    if (gridContainer) {
+        gridContainer.querySelectorAll('.recommend-thumb').forEach(t => {
+            // Check if thumb background url matches activeImage
+            const bgUrl = t.style.backgroundImage.slice(5, -2);
+            if (activeImage && bgUrl === activeImage) {
+                t.classList.add('active');
+            } else {
+                t.classList.remove('active');
+            }
+        });
+    }
+
+    updateDialogPreview('edit-book');
 
     editBookDialog.style.display = 'flex';
     setTimeout(() => {
@@ -4700,8 +5146,9 @@ async function saveEditBookSettings() {
         return;
     }
 
-    const selectedColorRadio = document.querySelector('#edit-book-dialog input[name="edit-cover-color"]:checked');
-    const coverColor = selectedColorRadio ? selectedColorRadio.value : 'charcoal';
+    const state = dialogStates['edit-book'];
+    const coverColor = state.style === 'color' ? state.color : 'charcoal';
+    const coverImage = state.style === 'image' ? state.imageUrl : '';
 
     const visibilityRadio = document.querySelector('#edit-book-dialog input[name="edit-book-visibility"]:checked');
     const isPrivate = visibilityRadio ? (visibilityRadio.value === 'private') : false;
@@ -4709,6 +5156,7 @@ async function saveEditBookSettings() {
     // Update active project copy
     project.title = title;
     project.coverColor = coverColor;
+    project.coverImage = coverImage;
     project.isPrivate = isPrivate;
     project.updatedAt = new Date().toISOString();
 
@@ -4717,6 +5165,7 @@ async function saveEditBookSettings() {
     if (idx !== -1) {
         projects[idx].title = title;
         projects[idx].coverColor = coverColor;
+        projects[idx].coverImage = coverImage;
         projects[idx].isPrivate = isPrivate;
         projects[idx].updatedAt = project.updatedAt;
         if (currentUser) {

@@ -1340,3 +1340,242 @@ input, textarea {
     color: var(--bg-primary) !important;
     border-color: var(--text-primary) !important;
 }
+
+/* Book Dialog Split Layout */
+.book-dialog .dialog-content.dialog-split {
+    max-width: 680px;
+    width: 90%;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+}
+
+.dialog-preview-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--border-color);
+    padding-right: 1.5rem;
+}
+
+.dialog-preview-col .preview-title-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.dialog-preview-col .book-card {
+    width: 160px;
+    cursor: default;
+}
+
+.dialog-preview-col .book-card:hover .book-cover {
+    transform: none;
+    box-shadow: 4px 6px 15px rgba(0, 0, 0, 0.15), inset 6px 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.dialog-form-col {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-height: 75vh;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+/* Scrollbar styling for form column */
+.dialog-form-col::-webkit-scrollbar {
+    width: 4px;
+}
+.dialog-form-col::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+/* Image Cover styling */
+.book-cover.has-image {
+    background-size: cover;
+    background-position: center;
+    color: #ffffff !important;
+}
+
+.book-cover.has-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.65));
+    z-index: 1;
+}
+
+.book-cover.has-image .book-cover-title,
+.book-cover.has-image .book-cover-author,
+.book-cover.has-image .book-cover-charcount {
+    color: #ffffff !important;
+    z-index: 2;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Cover Image Tabs */
+.cover-style-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+
+.cover-tab-btn {
+    background: none;
+    border: none;
+    padding: 0.4rem 0.2rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition-speed);
+}
+
+.cover-tab-btn.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Recommended Image Section */
+.image-recommend-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.recommend-categories {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.recommend-categories::-webkit-scrollbar {
+    height: 3px;
+}
+.recommend-categories::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+}
+
+.category-pill {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-speed);
+    color: var(--text-secondary);
+}
+
+.category-pill.active {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border-color: var(--text-primary);
+}
+
+.recommend-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 0.2rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.recommend-grid::-webkit-scrollbar {
+    width: 4px;
+}
+.recommend-grid::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.recommend-thumb {
+    aspect-ratio: 3 / 4;
+    border-radius: 2px;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all var(--transition-speed);
+}
+
+.recommend-thumb:hover {
+    transform: scale(1.05);
+}
+
+.recommend-thumb.active {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
+}
+
+.image-upload-wrapper {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.image-upload-btn-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-speed);
+}
+
+.image-upload-btn-label:hover {
+    background: var(--border-color);
+}
+
+/* Mobile dialog split override */
+@media (max-width: 600px) {
+    .book-dialog .dialog-content.dialog-split {
+        flex-direction: column;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 1.25rem;
+    }
+    
+    .dialog-preview-col {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding-right: 0;
+        padding-bottom: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .dialog-preview-col .book-card {
+        width: 130px;
+    }
+    
+    .dialog-form-col {
+        max-height: none;
+        overflow-y: visible;
+    }
+}

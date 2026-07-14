@@ -384,99 +384,230 @@
 
     <!-- Book Cover Creation Modal / Form Dialog (Hidden by default) -->
     <div id="new-book-dialog" class="book-dialog" style="display: none;">
-        <div class="dialog-content">
-            <h3>새 작품 추가</h3>
-            <div class="dialog-field">
-                <label for="new-book-title">작품 제목</label>
-                <input type="text" id="new-book-title" class="input-flat" placeholder="제목을 입력하세요..." autocomplete="off">
-            </div>
-            <div class="dialog-field">
-                <label>표지 색상</label>
-                <div class="cover-color-picker">
-                    <label class="color-option charcoal active"><input type="radio" name="cover-color" value="charcoal"
-                            checked><span></span></label>
-                    <label class="color-option linen"><input type="radio" name="cover-color"
-                            value="linen"><span></span></label>
-                    <label class="color-option ivory"><input type="radio" name="cover-color"
-                            value="ivory"><span></span></label>
-                    <label class="color-option slate"><input type="radio" name="cover-color"
-                            value="slate"><span></span></label>
-                    <label class="color-option terracotta"><input type="radio" name="cover-color"
-                            value="terracotta"><span></span></label>
-                    <label class="color-option olive"><input type="radio" name="cover-color"
-                            value="olive"><span></span></label>
-                    <label class="color-option navy"><input type="radio" name="cover-color"
-                            value="navy"><span></span></label>
+        <div class="dialog-content dialog-split">
+            <!-- Left Live Preview Column -->
+            <div class="dialog-preview-col">
+                <span class="preview-title-label">표지 미리보기</span>
+                <div class="book-card" id="new-book-preview-card">
+                    <div class="book-cover cover-charcoal" id="new-book-preview-cover">
+                        <div class="book-cover-title" id="new-book-preview-title">새 작품</div>
+                        <div class="book-cover-footer-group">
+                            <div class="book-cover-charcount" id="new-book-preview-charcount">0자</div>
+                            <div class="book-cover-author" id="new-book-preview-author">Monote</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="dialog-field">
-                <label>공개 설정</label>
-                <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.5rem;">
-                    <label
-                        style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
-                        <input type="radio" name="book-visibility" value="public" checked style="cursor: pointer;">
-                        <span>공개</span>
-                    </label>
-                    <label
-                        style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
-                        <input type="radio" name="book-visibility" value="private" style="cursor: pointer;">
-                        <span>비공개</span>
-                    </label>
+
+            <!-- Right Form Column -->
+            <div class="dialog-form-col">
+                <h3>새 작품 추가</h3>
+                <div class="dialog-field">
+                    <label for="new-book-title">작품 제목</label>
+                    <input type="text" id="new-book-title" class="input-flat" placeholder="제목을 입력하세요..." autocomplete="off">
                 </div>
-            </div>
-            <div class="dialog-actions">
-                <button id="cancel-new-book" class="btn-flat btn-sm btn-danger">취소</button>
-                <button id="confirm-new-book" class="btn-flat btn-sm">생성</button>
+
+                <div class="dialog-field">
+                    <label>표지 스타일</label>
+                    <div class="cover-style-tabs">
+                        <button type="button" class="cover-tab-btn active" id="new-book-tab-color">단색 표지</button>
+                        <button type="button" class="cover-tab-btn" id="new-book-tab-image">이미지 표지</button>
+                    </div>
+                </div>
+
+                <!-- Color picker container (shown when Solid Color tab is active) -->
+                <div class="dialog-field" id="new-book-color-section">
+                    <label>표지 색상</label>
+                    <div class="cover-color-picker">
+                        <label class="color-option charcoal active"><input type="radio" name="cover-color" value="charcoal"
+                                checked><span></span></label>
+                        <label class="color-option linen"><input type="radio" name="cover-color"
+                                value="linen"><span></span></label>
+                        <label class="color-option ivory"><input type="radio" name="cover-color"
+                                value="ivory"><span></span></label>
+                        <label class="color-option slate"><input type="radio" name="cover-color"
+                                value="slate"><span></span></label>
+                        <label class="color-option terracotta"><input type="radio" name="cover-color"
+                                value="terracotta"><span></span></label>
+                        <label class="color-option olive"><input type="radio" name="cover-color"
+                                value="olive"><span></span></label>
+                        <label class="color-option navy"><input type="radio" name="cover-color"
+                                value="navy"><span></span></label>
+                    </div>
+                </div>
+
+                <!-- Image options container (shown when Image Cover tab is active) -->
+                <div class="dialog-field" id="new-book-image-section" style="display: none;">
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <div>
+                            <label for="new-book-image-url" style="font-size: 0.8rem;">이미지 주소 (URL)</label>
+                            <input type="text" id="new-book-image-url" class="input-flat" placeholder="https://example.com/image.jpg" autocomplete="off" style="font-size: 0.8rem; margin-top: 0.25rem;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">직접 업로드</label>
+                            <div class="image-upload-wrapper">
+                                <label class="image-upload-btn-label" for="new-book-image-file">파일 선택</label>
+                                <input type="file" id="new-book-image-file" accept="image/*" style="display: none;">
+                                <span id="new-book-image-filename" style="font-size: 0.75rem; color: var(--text-secondary); align-self: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">선택된 파일 없음</span>
+                            </div>
+                        </div>
+                        
+                        <div class="image-recommend-section">
+                            <label style="font-size: 0.8rem; font-weight: 600;">무료 이미지 추천</label>
+                            
+                            <div style="display: flex; gap: 0.4rem;">
+                                <input type="text" id="new-book-image-search" class="input-flat" placeholder="키워드 검색 (예: 숲, 책, 밤...)" style="font-size: 0.75rem; padding: 0.3rem 0.5rem; flex: 1;">
+                                <button type="button" id="new-book-image-search-btn" class="btn-flat btn-sm" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">검색</button>
+                            </div>
+
+                            <div class="recommend-categories" id="new-book-image-categories">
+                                <span class="category-pill active" data-category="all">전체</span>
+                                <span class="category-pill" data-category="writing">문학/글</span>
+                                <span class="category-pill" data-category="nature">자연/풍경</span>
+                                <span class="category-pill" data-category="city">도시/감성</span>
+                                <span class="category-pill" data-category="abstract">추상/패턴</span>
+                            </div>
+                            <div class="recommend-grid" id="new-book-recommend-grid">
+                                <!-- Recommended thumbnails will be added by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dialog-field">
+                    <label>공개 설정</label>
+                    <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.2rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                            <input type="radio" name="book-visibility" value="public" checked style="cursor: pointer;">
+                            <span>공개</span>
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                            <input type="radio" name="book-visibility" value="private" style="cursor: pointer;">
+                            <span>비공개</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="dialog-actions" style="margin-top: 0.5rem;">
+                    <button id="cancel-new-book" class="btn-flat btn-sm btn-danger">취소</button>
+                    <button id="confirm-new-book" class="btn-flat btn-sm">생성</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Book Settings Edit Modal (Hidden by default) -->
     <div id="edit-book-dialog" class="book-dialog" style="display: none;">
-        <div class="dialog-content">
-            <h3>작품 설정 수정</h3>
-            <div class="dialog-field">
-                <label for="edit-book-title">작품 제목</label>
-                <input type="text" id="edit-book-title" class="input-flat" placeholder="제목을 입력하세요..."
-                    autocomplete="off">
-            </div>
-            <div class="dialog-field">
-                <label>표지 색상</label>
-                <div class="cover-color-picker">
-                    <label class="color-option charcoal"><input type="radio" name="edit-cover-color"
-                            value="charcoal"><span></span></label>
-                    <label class="color-option linen"><input type="radio" name="edit-cover-color"
-                            value="linen"><span></span></label>
-                    <label class="color-option ivory"><input type="radio" name="edit-cover-color"
-                            value="ivory"><span></span></label>
-                    <label class="color-option slate"><input type="radio" name="edit-cover-color"
-                            value="slate"><span></span></label>
-                    <label class="color-option terracotta"><input type="radio" name="edit-cover-color"
-                            value="terracotta"><span></span></label>
-                    <label class="color-option olive"><input type="radio" name="edit-cover-color"
-                            value="olive"><span></span></label>
-                    <label class="color-option navy"><input type="radio" name="edit-cover-color"
-                            value="navy"><span></span></label>
+        <div class="dialog-content dialog-split">
+            <!-- Left Live Preview Column -->
+            <div class="dialog-preview-col">
+                <span class="preview-title-label">표지 미리보기</span>
+                <div class="book-card" id="edit-book-preview-card">
+                    <div class="book-cover cover-charcoal" id="edit-book-preview-cover">
+                        <div class="book-cover-title" id="edit-book-preview-title">작품 제목</div>
+                        <div class="book-cover-footer-group">
+                            <div class="book-cover-charcount" id="edit-book-preview-charcount">0자</div>
+                            <div class="book-cover-author" id="edit-book-preview-author">Monote</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="dialog-field">
-                <label>공개 설정</label>
-                <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.5rem;">
-                    <label
-                        style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
-                        <input type="radio" name="edit-book-visibility" value="public" style="cursor: pointer;">
-                        <span>공개</span>
-                    </label>
-                    <label
-                        style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
-                        <input type="radio" name="edit-book-visibility" value="private" style="cursor: pointer;">
-                        <span>비공개</span>
-                    </label>
+
+            <!-- Right Form Column -->
+            <div class="dialog-form-col">
+                <h3>작품 설정 수정</h3>
+                <div class="dialog-field">
+                    <label for="edit-book-title">작품 제목</label>
+                    <input type="text" id="edit-book-title" class="input-flat" placeholder="제목을 입력하세요..." autocomplete="off">
                 </div>
-            </div>
-            <div class="dialog-actions">
-                <button id="cancel-edit-book" class="btn-flat btn-sm btn-danger">취소</button>
-                <button id="confirm-edit-book" class="btn-flat btn-sm">저장</button>
+
+                <div class="dialog-field">
+                    <label>표지 스타일</label>
+                    <div class="cover-style-tabs">
+                        <button type="button" class="cover-tab-btn active" id="edit-book-tab-color">단색 표지</button>
+                        <button type="button" class="cover-tab-btn" id="edit-book-tab-image">이미지 표지</button>
+                    </div>
+                </div>
+
+                <!-- Color picker container (shown when Solid Color tab is active) -->
+                <div class="dialog-field" id="edit-book-color-section">
+                    <label>표지 색상</label>
+                    <div class="cover-color-picker">
+                        <label class="color-option charcoal"><input type="radio" name="edit-cover-color"
+                                value="charcoal"><span></span></label>
+                        <label class="color-option linen"><input type="radio" name="edit-cover-color"
+                                value="linen"><span></span></label>
+                        <label class="color-option ivory"><input type="radio" name="edit-cover-color"
+                                value="ivory"><span></span></label>
+                        <label class="color-option slate"><input type="radio" name="edit-cover-color"
+                                value="slate"><span></span></label>
+                        <label class="color-option terracotta"><input type="radio" name="edit-cover-color"
+                                value="terracotta"><span></span></label>
+                        <label class="color-option olive"><input type="radio" name="edit-cover-color"
+                                value="olive"><span></span></label>
+                        <label class="color-option navy"><input type="radio" name="edit-cover-color"
+                                value="navy"><span></span></label>
+                    </div>
+                </div>
+
+                <!-- Image options container (shown when Image Cover tab is active) -->
+                <div class="dialog-field" id="edit-book-image-section" style="display: none;">
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <div>
+                            <label for="edit-book-image-url" style="font-size: 0.8rem;">이미지 주소 (URL)</label>
+                            <input type="text" id="edit-book-image-url" class="input-flat" placeholder="https://example.com/image.jpg" autocomplete="off" style="font-size: 0.8rem; margin-top: 0.25rem;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">직접 업로드</label>
+                            <div class="image-upload-wrapper">
+                                <label class="image-upload-btn-label" for="edit-book-image-file">파일 선택</label>
+                                <input type="file" id="edit-book-image-file" accept="image/*" style="display: none;">
+                                <span id="edit-book-image-filename" style="font-size: 0.75rem; color: var(--text-secondary); align-self: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">선택된 파일 없음</span>
+                            </div>
+                        </div>
+                        
+                        <div class="image-recommend-section">
+                            <label style="font-size: 0.8rem; font-weight: 600;">무료 이미지 추천</label>
+                            
+                            <div style="display: flex; gap: 0.4rem;">
+                                <input type="text" id="edit-book-image-search" class="input-flat" placeholder="키워드 검색 (예: 숲, 책, 밤...)" style="font-size: 0.75rem; padding: 0.3rem 0.5rem; flex: 1;">
+                                <button type="button" id="edit-book-image-search-btn" class="btn-flat btn-sm" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">검색</button>
+                            </div>
+
+                            <div class="recommend-categories" id="edit-book-image-categories">
+                                <span class="category-pill active" data-category="all">전체</span>
+                                <span class="category-pill" data-category="writing">문학/글</span>
+                                <span class="category-pill" data-category="nature">자연/풍경</span>
+                                <span class="category-pill" data-category="city">도시/감성</span>
+                                <span class="category-pill" data-category="abstract">추상/패턴</span>
+                            </div>
+                            <div class="recommend-grid" id="edit-book-recommend-grid">
+                                <!-- Recommended thumbnails will be added by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dialog-field">
+                    <label>공개 설정</label>
+                    <div class="visibility-picker" style="display: flex; gap: 1.2rem; margin-top: 0.2rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                            <input type="radio" name="edit-book-visibility" value="public" style="cursor: pointer;">
+                            <span>공개</span>
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; color: var(--text-secondary);">
+                            <input type="radio" name="edit-book-visibility" value="private" style="cursor: pointer;">
+                            <span>비공개</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="dialog-actions" style="margin-top: 0.5rem;">
+                    <button id="cancel-edit-book" class="btn-flat btn-sm btn-danger">취소</button>
+                    <button id="confirm-edit-book" class="btn-flat btn-sm">저장</button>
+                </div>
             </div>
         </div>
     </div>
@@ -578,7 +709,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+    <script src="app-cover.js"></script>
 </body>
 
 </html>
