@@ -853,11 +853,15 @@ input, textarea {
     display: none;
 }
 
-/* Delete Book Button on Hover */
-.delete-book-btn {
+/* Book Card Menu Button & Dropdown */
+.book-menu-container {
     position: absolute;
     top: 8px;
     right: 8px;
+    z-index: 10;
+}
+
+.book-menu-trigger {
     background: rgba(0, 0, 0, 0.4);
     color: #ffffff;
     border: none;
@@ -867,26 +871,57 @@ input, textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.2s, background-color 0.2s;
-    z-index: 10;
+    padding: 0;
+}
+
+.book-menu-trigger svg {
+    width: 14px;
+    height: 14px;
+    stroke: #ffffff;
 }
 
 @media (hover: hover) {
-    .book-card:hover .delete-book-btn {
+    .book-card:hover .book-menu-trigger {
         opacity: 1;
     }
-    .delete-book-btn:hover {
-        background: #ff4d4d;
+    .book-menu-trigger:hover {
+        background: rgba(0, 0, 0, 0.7);
     }
 }
 
 @media (hover: none) {
-    .delete-book-btn {
+    .book-menu-trigger {
         opacity: 0.8;
     }
+}
+
+.book-card-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+    min-width: 110px;
+    padding: 0.25rem 0;
+    animation: fadeInDropdown 0.15s ease-out;
+}
+
+.book-card-dropdown.show {
+    display: block;
+}
+
+.book-card-dropdown .dropdown-item {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+    gap: 0.5rem;
 }
 
 /* Book Creation Dialog */
@@ -936,11 +971,33 @@ input, textarea {
     letter-spacing: 0.05em;
 }
 
+/* Cover Color Schemes Additional Presets */
+.book-cover.cover-burgundy { background-color: #6b2d3d; color: #fbfbf9; }
+.book-cover.cover-burgundy .book-cover-title { color: #fbfbf9; }
+
+.book-cover.cover-forest { background-color: #274737; color: #f7f5f0; }
+.book-cover.cover-forest .book-cover-title { color: #f7f5f0; }
+
+.book-cover.cover-mustard { background-color: #d4a341; color: #2b2b2a; }
+.book-cover.cover-mustard .book-cover-title { color: #2b2b2a; }
+
+.book-cover.cover-lavender { background-color: #7b6d8d; color: #fbfbf9; }
+.book-cover.cover-lavender .book-cover-title { color: #fbfbf9; }
+
+.book-cover.cover-rose { background-color: #c47b89; color: #fbfbf9; }
+.book-cover.cover-rose .book-cover-title { color: #fbfbf9; }
+
+.book-cover.cover-teal { background-color: #3b7a77; color: #fbfbf9; }
+.book-cover.cover-teal .book-cover-title { color: #fbfbf9; }
+
+.book-cover.cover-mocha { background-color: #5c4335; color: #fbfbf9; }
+.book-cover.cover-mocha .book-cover-title { color: #fbfbf9; }
+
 .cover-color-picker {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 6px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem 0.25rem;
+    padding: 0.5rem 2px;
 }
 
 .color-option {
@@ -959,8 +1016,8 @@ input, textarea {
 
 .color-option span {
     display: block;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: 2px solid transparent;
     transition: border-color 0.2s, transform 0.2s;
@@ -974,9 +1031,17 @@ input, textarea {
 .color-option.olive span { background-color: #4d594b; }
 .color-option.navy span { background-color: #2e3b4e; }
 
+.color-option.burgundy span { background-color: #6b2d3d; }
+.color-option.forest span { background-color: #274737; }
+.color-option.mustard span { background-color: #d4a341; }
+.color-option.lavender span { background-color: #7b6d8d; }
+.color-option.rose span { background-color: #c47b89; }
+.color-option.teal span { background-color: #3b7a77; }
+.color-option.mocha span { background-color: #5c4335; }
+
 .color-option.active span,
 .color-option:hover span {
-    transform: scale(1.1);
+    transform: scale(1.15);
     border-color: var(--accent-color);
 }
 

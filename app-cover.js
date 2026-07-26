@@ -3262,9 +3262,39 @@ function renderBookshelf() {
         
         const coverColor = proj.coverColor || 'charcoal';
         
-        const deleteBtnHtml = (proj.id === "monote-manual-guide" && !isAdmin())
+        const menuBtnHtml = (proj.id === "monote-manual-guide" && !isAdmin())
             ? ""
-            : `<button class="delete-book-btn" title="${currentLang === 'en' ? 'Archive Book' : '작품 보관'}">×</button>`;
+            : `
+            <div class="book-menu-container">
+                <button class="book-menu-trigger" title="${currentLang === 'en' ? 'Menu' : '메뉴'}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="12" cy="5" r="1"></circle>
+                        <circle cx="12" cy="19" r="1"></circle>
+                    </svg>
+                </button>
+                <div class="book-card-dropdown">
+                    <button class="dropdown-item edit-book-card-btn">
+                        <span class="dropdown-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </span>
+                        ${currentLang === 'en' ? 'Edit' : '수정'}
+                    </button>
+                    <button class="dropdown-item archive-book-card-btn" style="color: #ff4d4d;">
+                        <span class="dropdown-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                                <rect x="1" y="3" width="22" height="5"></rect>
+                                <line x1="10" y1="12" x2="14" y2="12"></line>
+                            </svg>
+                        </span>
+                        ${currentLang === 'en' ? 'Archive' : '보관'}
+                    </button>
+                </div>
+            </div>`;
 
         const visibilityIconHtml = proj.id === "monote-manual-guide"
             ? ""
@@ -3288,7 +3318,7 @@ function renderBookshelf() {
         }
 
         bookCard.innerHTML = `
-            ${deleteBtnHtml}
+            ${menuBtnHtml}
             <div class="book-cover ${coverClass}" style="${coverStyle}">
                 ${visibilityIconHtml}
                 <div class="book-cover-title" style="z-index: 2; ${textColorStyle}">${proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</div>
@@ -3303,12 +3333,41 @@ function renderBookshelf() {
         
         let isDragging = false;
 
-        // Open project on click
+        // Open project or menu dropdown on click
         bookCard.addEventListener('click', (e) => {
             if (isDragging) return;
-            // If click was on delete (now archive) button, do not open
-            if (e.target.classList.contains('delete-book-btn')) {
+            
+            // Handle menu trigger click
+            const menuTrigger = e.target.closest('.book-menu-trigger');
+            if (menuTrigger) {
                 e.stopPropagation();
+                const dropdown = bookCard.querySelector('.book-card-dropdown');
+                if (dropdown) {
+                    // Close all other open card dropdowns first
+                    document.querySelectorAll('.book-card-dropdown.show').forEach(d => {
+                        if (d !== dropdown) d.classList.remove('show');
+                    });
+                    dropdown.classList.toggle('show');
+                }
+                return;
+            }
+
+            // Handle edit button click inside dropdown
+            const editBtn = e.target.closest('.edit-book-card-btn');
+            if (editBtn) {
+                e.stopPropagation();
+                const dropdown = bookCard.querySelector('.book-card-dropdown');
+                if (dropdown) dropdown.classList.remove('show');
+                showEditBookDialogForProject(proj.id);
+                return;
+            }
+
+            // Handle archive button click inside dropdown
+            const archiveBtn = e.target.closest('.archive-book-card-btn');
+            if (archiveBtn) {
+                e.stopPropagation();
+                const dropdown = bookCard.querySelector('.book-card-dropdown');
+                if (dropdown) dropdown.classList.remove('show');
                 const confirmMsg = currentLang === 'en'
                     ? `Are you sure you want to archive "${proj.title || 'Untitled'}"?`
                     : `"${proj.title || '제목 없음'}" 작품을 보관함으로 이동하시겠습니까?`;
@@ -3317,6 +3376,14 @@ function renderBookshelf() {
                 }
                 return;
             }
+
+            // Close dropdown if clicking elsewhere inside bookCard
+            const dropdown = bookCard.querySelector('.book-card-dropdown');
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+                return;
+            }
+
             openProject(proj.id);
         });
 
@@ -4952,11 +5019,16 @@ const i18n = {
     }
 };
 
-function showEditBookDialog() {
-    if (!project) return;
-    editBookTitleInput.value = project.title || '';
+let editingTargetProjectId = null;
 
-    let activeColor = project.coverColor || 'charcoal';
+function showEditBookDialogForProject(projectId) {
+    const targetProj = projects.find(p => p.id === projectId);
+    if (!targetProj) return;
+
+    editingTargetProjectId = projectId;
+    editBookTitleInput.value = targetProj.title || '';
+
+    let activeColor = targetProj.coverColor || 'charcoal';
     if (activeColor.startsWith('#')) {
         activeColor = 'charcoal';
     }
@@ -4974,7 +5046,7 @@ function showEditBookDialog() {
     const colorRadio = document.querySelector(`#edit-book-dialog input[name="edit-cover-color"][value="${activeColor}"]`);
     if (colorRadio) colorRadio.checked = true;
 
-    const activeVisibility = project.isPrivate ? 'private' : 'public';
+    const activeVisibility = targetProj.isPrivate ? 'private' : 'public';
     const visibilityRadio = document.querySelector(`#edit-book-dialog input[name="edit-book-visibility"][value="${activeVisibility}"]`);
     if (visibilityRadio) visibilityRadio.checked = true;
 
@@ -4986,9 +5058,15 @@ function showEditBookDialog() {
     }, 100);
 }
 
+function showEditBookDialog() {
+    if (!project) return;
+    showEditBookDialogForProject(project.id);
+}
+
 // Hide edit book dialog
 function hideEditBookDialog() {
     editBookDialog.style.display = 'none';
+    editingTargetProjectId = null;
 }
 
 // Save edited project settings
@@ -5000,47 +5078,58 @@ async function saveEditBookSettings() {
         return;
     }
 
+    const targetId = editingTargetProjectId || activeProjectId;
+    const targetProj = projects.find(p => p.id === targetId);
+
     const state = dialogStates['edit-book'];
     const coverColor = state.color;
 
     const visibilityRadio = document.querySelector('#edit-book-dialog input[name="edit-book-visibility"]:checked');
     const isPrivate = visibilityRadio ? (visibilityRadio.value === 'private') : false;
 
-    // Update active project copy
-    project.title = title;
-    project.coverColor = coverColor;
-    project.isPrivate = isPrivate;
-    project.updatedAt = new Date().toISOString();
-
-    // Sync back to projects list
-    const idx = projects.findIndex(p => p.id === activeProjectId);
-    if (idx !== -1) {
-        projects[idx].title = title;
-        projects[idx].coverColor = coverColor;
-        projects[idx].isPrivate = isPrivate;
-        projects[idx].updatedAt = project.updatedAt;
+    // Update target project copy
+    if (targetProj) {
+        targetProj.title = title;
+        targetProj.coverColor = coverColor;
+        targetProj.isPrivate = isPrivate;
+        targetProj.updatedAt = new Date().toISOString();
         if (currentUser) {
-            projects[idx].user_id = currentUser.id;
+            targetProj.user_id = currentUser.id;
         }
-        storage.setItem('monote-projects', JSON.stringify(projects));
     }
 
-    // Update Overview screen inputs
-    projectTitleInput.value = title;
-    const editorProjectTitle = document.getElementById('editor-sidebar-project-title');
-    if (editorProjectTitle) {
-        editorProjectTitle.textContent = title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+    if (project && project.id === targetId) {
+        project.title = title;
+        project.coverColor = coverColor;
+        project.isPrivate = isPrivate;
+        project.updatedAt = targetProj ? targetProj.updatedAt : new Date().toISOString();
+    }
+
+    storage.setItem('monote-projects', JSON.stringify(projects));
+
+    // Update Overview screen inputs if editing current active project
+    if (project && project.id === targetId) {
+        projectTitleInput.value = title;
+        const editorProjectTitle = document.getElementById('editor-sidebar-project-title');
+        if (editorProjectTitle) {
+            editorProjectTitle.textContent = title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+        }
     }
 
     hideEditBookDialog();
-    renderOverview();
-    renderBookshelf();
+
+    if (bookshelfScreen && bookshelfScreen.classList.contains('active')) {
+        renderBookshelf();
+    } else if (overviewScreen && overviewScreen.classList.contains('active')) {
+        renderOverview();
+        renderBookshelf();
+    }
 
     // Sync to Supabase
-    if (supabaseClient && currentUser) {
+    if (supabaseClient && currentUser && targetProj) {
         updateSyncStatus('syncing', '동기화 중...');
         try {
-            await saveProjectToCloud(project);
+            await saveProjectToCloud(targetProj);
             updateSyncStatus('success', '동기화 완료');
         } catch (err) {
             console.error('Failed to sync project settings to cloud:', err);
