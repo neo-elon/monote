@@ -473,7 +473,7 @@ async function saveProjectToCloud(proj) {
             synopsis: proj.synopsis || '',
             ideas: proj.ideas || '',
             chapters: proj.chapters || [],
-            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}:${proj.coverImage || ''}:${proj.isArchived ? 'archived' : 'active'}:${proj.sticker || ''}`,
+            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}:${proj.coverImage || ''}:${proj.isArchived ? 'archived' : 'active'}`,
             updated_at: proj.updatedAt || new Date().toISOString(),
             created_at: proj.createdAt || new Date().toISOString(),
             user_id: projectUserId
@@ -733,11 +733,9 @@ async function loadProjects() {
                 
                 let coverImage = '';
                 let isArchived = false;
-                let sticker = '';
                 if (colorParts.length >= 4) {
                     coverImage = colorParts[2];
                     isArchived = colorParts[3] === 'archived';
-                    sticker = colorParts[4] || '';
                 } else {
                     coverImage = colorParts.slice(2).join(':') || '';
                 }
@@ -749,7 +747,6 @@ async function loadProjects() {
                     ideas: dbProj.ideas || '',
                     chapters: typeof dbProj.chapters === 'string' ? JSON.parse(dbProj.chapters) : (dbProj.chapters || []),
                     coverColor: coverColor,
-                    sticker: sticker,
                     isPrivate: isPrivate,
                     coverImage: coverImage,
                     isArchived: isArchived,
@@ -3320,12 +3317,9 @@ function renderBookshelf() {
             textColorStyle = `color: ${contrastColor} !important;`;
         }
 
-        const stickerHtml = proj.sticker ? `<div class="book-cover-sticker">${proj.sticker}</div>` : '';
-
         bookCard.innerHTML = `
             ${menuBtnHtml}
             <div class="book-cover ${coverClass}" style="${coverStyle}">
-                ${stickerHtml}
                 ${visibilityIconHtml}
                 <div class="book-cover-title" style="z-index: 2; ${textColorStyle}">${proj.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</div>
                 <div class="book-cover-footer-group" style="z-index: 2;">
@@ -3578,8 +3572,8 @@ function getContrastColor(hexColor) {
 
 // Map of dialog states
 const dialogStates = {
-    'new-book': { color: 'charcoal', sticker: '' },
-    'edit-book': { color: 'charcoal', sticker: '' }
+    'new-book': { color: 'charcoal' },
+    'edit-book': { color: 'charcoal' }
 };
 
 function updateDialogPreview(prefix) {
@@ -3597,19 +3591,6 @@ function updateDialogPreview(prefix) {
         : (currentLang === 'en' ? 'Untitled' : '제목 없음');
     previewTitle.textContent = titleInput.value.trim() || defaultTitle;
     previewAuthor.textContent = currentUser?.user_metadata?.pen_name || 'Monote';
-
-    // Update sticker element
-    let stickerEl = previewCover.querySelector('.book-cover-sticker');
-    if (state.sticker) {
-        if (!stickerEl) {
-            stickerEl = document.createElement('div');
-            stickerEl.className = 'book-cover-sticker';
-            previewCover.appendChild(stickerEl);
-        }
-        stickerEl.textContent = state.sticker;
-    } else if (stickerEl) {
-        stickerEl.remove();
-    }
     
     // Reset styles
     previewCover.className = 'book-cover';
@@ -3659,22 +3640,6 @@ function initBookDialogController(prefix) {
             });
         }
     });
-
-    // Sticker picker event listeners
-    const stickerPicker = document.getElementById(`${prefix}-sticker-picker`);
-    if (stickerPicker) {
-        stickerPicker.addEventListener('click', (e) => {
-            const stickerBtn = e.target.closest('.sticker-option');
-            if (!stickerBtn) return;
-            
-            stickerPicker.querySelectorAll('.sticker-option').forEach(btn => btn.classList.remove('active'));
-            stickerBtn.classList.add('active');
-            
-            const selectedSticker = stickerBtn.dataset.sticker || '';
-            dialogStates[prefix].sticker = selectedSticker;
-            updateDialogPreview(prefix);
-        });
-    }
 }
 
 // Dialog elements references helper
@@ -3687,7 +3652,6 @@ function showNewBookDialog() {
     newBookTitleInput.value = '';
     
     dialogStates['new-book'].color = 'charcoal';
-    dialogStates['new-book'].sticker = '';
     
     // Reset color option active class
     document.querySelectorAll('#new-book-dialog .cover-color-picker .color-option').forEach(opt => {
@@ -3696,14 +3660,6 @@ function showNewBookDialog() {
     const charcoalOpt = document.querySelector('#new-book-dialog .cover-color-picker .color-option.charcoal');
     if (charcoalOpt) charcoalOpt.classList.add('active');
 
-    // Reset sticker active class
-    const stickerPicker = document.getElementById('new-book-sticker-picker');
-    if (stickerPicker) {
-        stickerPicker.querySelectorAll('.sticker-option').forEach(btn => btn.classList.remove('active'));
-        const noneStickerBtn = stickerPicker.querySelector('.sticker-option[data-sticker=""]');
-        if (noneStickerBtn) noneStickerBtn.classList.add('active');
-    }
-    
     const defaultRadio = document.querySelector('#new-book-dialog input[name="cover-color"][value="charcoal"]');
     if (defaultRadio) defaultRadio.checked = true;
 
@@ -3734,7 +3690,6 @@ async function createNewProject() {
     
     const state = dialogStates['new-book'];
     const coverColor = state.color;
-    const sticker = state.sticker || '';
     
     const visibilityRadio = document.querySelector('input[name="book-visibility"]:checked');
     const isPrivate = visibilityRadio ? (visibilityRadio.value === 'private') : false;
@@ -3746,7 +3701,6 @@ async function createNewProject() {
         ideas: '',
         chapters: [],
         coverColor: coverColor,
-        sticker: sticker,
         isPrivate: isPrivate,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -5080,11 +5034,8 @@ function showEditBookDialogForProject(projectId) {
     if (activeColor.startsWith('#')) {
         activeColor = 'charcoal';
     }
-    
-    const activeSticker = targetProj.sticker || '';
 
     dialogStates['edit-book'].color = activeColor;
-    dialogStates['edit-book'].sticker = activeSticker;
 
     // Reset color option active class in edit color picker
     document.querySelectorAll('#edit-book-dialog .cover-color-picker .color-option').forEach(opt => {
@@ -5096,14 +5047,6 @@ function showEditBookDialogForProject(projectId) {
 
     const colorRadio = document.querySelector(`#edit-book-dialog input[name="edit-cover-color"][value="${activeColor}"]`);
     if (colorRadio) colorRadio.checked = true;
-
-    // Reset sticker option active class in edit sticker picker
-    const stickerPicker = document.getElementById('edit-book-sticker-picker');
-    if (stickerPicker) {
-        stickerPicker.querySelectorAll('.sticker-option').forEach(btn => btn.classList.remove('active'));
-        const targetStickerBtn = stickerPicker.querySelector(`.sticker-option[data-sticker="${activeSticker}"]`);
-        if (targetStickerBtn) targetStickerBtn.classList.add('active');
-    }
 
     const activeVisibility = targetProj.isPrivate ? 'private' : 'public';
     const visibilityRadio = document.querySelector(`#edit-book-dialog input[name="edit-book-visibility"][value="${activeVisibility}"]`);
@@ -5142,7 +5085,6 @@ async function saveEditBookSettings() {
 
     const state = dialogStates['edit-book'];
     const coverColor = state.color;
-    const sticker = state.sticker || '';
 
     const visibilityRadio = document.querySelector('#edit-book-dialog input[name="edit-book-visibility"]:checked');
     const isPrivate = visibilityRadio ? (visibilityRadio.value === 'private') : false;
@@ -5151,7 +5093,6 @@ async function saveEditBookSettings() {
     if (targetProj) {
         targetProj.title = title;
         targetProj.coverColor = coverColor;
-        targetProj.sticker = sticker;
         targetProj.isPrivate = isPrivate;
         targetProj.updatedAt = new Date().toISOString();
         if (currentUser) {
@@ -5162,7 +5103,6 @@ async function saveEditBookSettings() {
     if (project && project.id === targetId) {
         project.title = title;
         project.coverColor = coverColor;
-        project.sticker = sticker;
         project.isPrivate = isPrivate;
         project.updatedAt = targetProj ? targetProj.updatedAt : new Date().toISOString();
     }
