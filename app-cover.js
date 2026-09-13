@@ -797,6 +797,8 @@ async function loadProjects() {
 
             // Merge local and server projects by comparing updatedAt timestamps
             const finalProjectsMap = new Map();
+            const newerOnServer = []; // Projects where server version is newer than local
+
             for (const dbProj of filteredDbProjects) {
                 finalProjectsMap.set(dbProj.id, dbProj);
             }
@@ -804,13 +806,19 @@ async function loadProjects() {
             for (const localProj of projects) {
                 if (localProj.id === "monote-manual-guide") continue;
                 
-                const existing = finalProjectsMap.get(localProj.id);
-                if (existing) {
+                const serverProj = finalProjectsMap.get(localProj.id);
+                if (serverProj) {
                     const localTime = new Date(localProj.updatedAt || 0).getTime();
-                    const serverTime = new Date(existing.updatedAt || 0).getTime();
+                    const serverTime = new Date(serverProj.updatedAt || 0).getTime();
                     if (localTime > serverTime) {
+                        // Local is newer — keep local, push to cloud
                         finalProjectsMap.set(localProj.id, localProj);
+                    } else if (serverTime > localTime + 5000) {
+                        // Server is meaningfully newer (>5s) — flag for user prompt
+                        newerOnServer.push({ local: localProj, server: serverProj });
+                        // For now keep server version in map; user can reject
                     }
+                    // else: same time or tiny diff — silently use server
                 } else {
                     if (currentUser && !localProj.user_id) {
                         localProj.user_id = currentUser.id;
@@ -826,6 +834,10 @@ async function loadProjects() {
             storage.setItem('monote-projects', JSON.stringify(projects));
             renderBookshelf();
             updateSyncStatus('success', '동기화 완료');
+
+            // Prompt user if server has newer versions
+            if (newerOnServer.length > 0) {
+                showSyncConflictDialog(newerOnServer);
         } catch (err) {
             console.error('Failed to sync with Supabase:', err);
             updateSyncStatus('error', '동기화 실패');
