@@ -477,7 +477,7 @@ async function saveProjectToCloud(proj) {
             synopsis: proj.synopsis || '',
             ideas: proj.ideas || '',
             chapters: proj.chapters || [],
-            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}:${proj.coverImage || ''}:${proj.isArchived ? 'archived' : 'active'}`,
+            cover_color: `${proj.coverColor || 'charcoal'}:${proj.isPrivate ? 'private' : 'public'}:${proj.coverImage || ''}:${proj.isArchived ? 'archived' : 'active'}:${typeof proj.sortOrder === 'number' ? proj.sortOrder : ''}`,
             updated_at: proj.updatedAt || new Date().toISOString(),
             created_at: proj.createdAt || new Date().toISOString(),
             user_id: projectUserId
@@ -754,13 +754,26 @@ async function loadProjects() {
                 const coverColor = colorParts[0];
                 const isPrivate = colorParts[1] === 'private';
                 
+                // cover_color format: "color:private/public:coverImage:active/archived[:sortOrder]"
+                // sortOrder is always the last numeric segment (if present)
+                let sortOrder = undefined;
+                let parseableParts = [...colorParts];
+                const lastPart = parseableParts[parseableParts.length - 1];
+                if (parseableParts.length >= 5 || (parseableParts.length >= 4 && /^\d+$/.test(lastPart))) {
+                    const parsed = parseInt(lastPart, 10);
+                    if (!isNaN(parsed)) {
+                        sortOrder = parsed;
+                        parseableParts = parseableParts.slice(0, -1);
+                    }
+                }
+                
                 let coverImage = '';
                 let isArchived = false;
-                if (colorParts.length >= 4) {
-                    coverImage = colorParts[2];
-                    isArchived = colorParts[3] === 'archived';
+                if (parseableParts.length >= 4) {
+                    coverImage = parseableParts[2];
+                    isArchived = parseableParts[3] === 'archived';
                 } else {
-                    coverImage = colorParts.slice(2).join(':') || '';
+                    coverImage = parseableParts.slice(2).join(':') || '';
                 }
                 
                 return {
@@ -773,6 +786,7 @@ async function loadProjects() {
                     isPrivate: isPrivate,
                     coverImage: coverImage,
                     isArchived: isArchived,
+                    sortOrder: sortOrder,
                     createdAt: dbProj.created_at,
                     updatedAt: dbProj.updated_at,
                     user_id: dbProj.user_id
@@ -3633,7 +3647,7 @@ function renderBookshelf() {
     });
 }
 
-// Save order of books in localStorage
+// Save order of books — persists to each project's sortOrder field and syncs to cloud
 function saveAndRefreshBooksOrder() {
     const booksGrid = document.getElementById('books-grid');
     if (!booksGrid) return;
@@ -3653,15 +3667,42 @@ function saveAndRefreshBooksOrder() {
     });
 
     projects = newProjectsOrder;
+
+    // Assign sortOrder index to each project
+    projects.forEach((proj, idx) => {
+        proj.sortOrder = idx;
+    });
+
     storage.setItem('monote-projects', JSON.stringify(projects));
 
-    // Save order IDs list
+    // Save order IDs list locally
     const orderList = projects.map(p => p.id);
     storage.setItem('monote-books-order', JSON.stringify(orderList));
+
+    // Sync sortOrder to cloud for all reordered projects
+    if (supabaseClient && currentUser) {
+        projects.forEach(proj => {
+            if (!proj.isPrivate && proj.id !== 'monote-manual-guide') {
+                saveProjectToCloud(proj).catch(console.error);
+            }
+        });
+    }
 }
 
 // Sort projects globally using custom order list
 function sortProjectsByOrder() {
+    // Primary: sort by sortOrder field (synced to cloud across devices)
+    const hasSortOrder = projects.some(p => typeof p.sortOrder === 'number');
+    if (hasSortOrder) {
+        projects.sort((a, b) => {
+            const oA = typeof a.sortOrder === 'number' ? a.sortOrder : 9999;
+            const oB = typeof b.sortOrder === 'number' ? b.sortOrder : 9999;
+            return oA - oB;
+        });
+        return;
+    }
+
+    // Fallback: sort by localStorage order list (local-only devices)
     const orderList = JSON.parse(storage.getItem('monote-books-order') || '[]');
     if (orderList.length > 0) {
         projects.sort((a, b) => {
