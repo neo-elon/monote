@@ -264,6 +264,9 @@ function mergeProjects(localProj, serverProj) {
             if (localCh.title !== serverCh.title) {
                 mergedCh.title = `[충돌] ${localCh.title} vs ${serverCh.title}`;
             }
+            if (localCh.subtitle !== serverCh.subtitle) {
+                mergedCh.subtitle = localCh.subtitle || serverCh.subtitle || '';
+            }
             if (localCh.content !== serverCh.content) {
                 mergedCh.content = mergeText(localCh.content, serverCh.content);
             }
@@ -350,6 +353,7 @@ async function processOfflineQueue() {
                                         const ch = project.chapters.find(c => c.id === activeChapterId);
                                         if (ch) {
                                             chapterTitleInput.value = ch.title || '';
+                                            if (chapterSubtitleInput) chapterSubtitleInput.value = ch.subtitle || '';
                                             chapterContentTextarea.value = ch.content || '';
                                             updateEditorCounts();
                                         }
@@ -515,6 +519,7 @@ const spellCheckBtn = document.getElementById('spell-check-btn');
 const exportChapterBtn = document.getElementById('export-chapter');
 const deleteChapterBtn = document.getElementById('delete-chapter');
 const chapterTitleInput = document.getElementById('chapter-title');
+const chapterSubtitleInput = document.getElementById('chapter-subtitle');
 const chapterNumberBadge = document.getElementById('chapter-number-badge');
 const chapterContentTextarea = document.getElementById('chapter-content');
 const charCountWithSpaces = document.getElementById('char-count-with-spaces');
@@ -954,6 +959,19 @@ function setupEventListeners() {
         adjustTitleHeight();
     });
 
+    if (chapterSubtitleInput) {
+        chapterSubtitleInput.addEventListener('input', (e) => {
+            if (activeChapterId !== null) {
+                const ch = project.chapters.find(c => c.id === activeChapterId);
+                if (ch) {
+                    ch.subtitle = e.target.value;
+                    updateEditorCounts();
+                    triggerSave();
+                }
+            }
+        });
+    }
+
     chapterContentTextarea.addEventListener('input', (e) => {
         if (activeChapterId !== null) {
             const ch = project.chapters.find(c => c.id === activeChapterId);
@@ -980,8 +998,11 @@ function setupEventListeners() {
                 const ch = project.chapters.find(c => c.id === activeChapterId);
                 if (ch) {
                     const titleText = ch.title || '';
+                    const subtitleText = ch.subtitle ? ch.subtitle.trim() : '';
                     const contentText = ch.content || '';
-                    const fullText = `${titleText}\n\n${contentText}`;
+                    let headerText = titleText;
+                    if (subtitleText) headerText += (headerText ? `\n${subtitleText}` : subtitleText);
+                    const fullText = headerText ? `${headerText}\n\n${contentText}` : contentText;
                     try {
                         await navigator.clipboard.writeText(fullText);
                         const labelSpan = copyChapterBtn.querySelector('span');
@@ -1210,8 +1231,9 @@ function renderChapterList() {
         card.setAttribute('draggable', 'true');
         
         // Calculate length details
-        const charCount = (chapter.title ? chapter.title.length : 0) + (chapter.content ? chapter.content.length : 0);
+        const charCount = (chapter.title ? chapter.title.length : 0) + (chapter.subtitle ? chapter.subtitle.length : 0) + (chapter.content ? chapter.content.length : 0);
         const prefix = getChapterPrefix(chapter.id);
+        const subtitleHtml = (chapter.subtitle && chapter.subtitle.trim()) ? `<span class="chapter-card-subtitle">: ${chapter.subtitle.trim()}</span>` : '';
         
         // Generate tree dotted guide lines
         let treeLinesHtml = '<div class="tree-lines">';
@@ -1259,7 +1281,7 @@ function renderChapterList() {
             <div class="tree-indent-wrapper">
                 ${treeLinesHtml}
                 <span class="chapter-num-badge">${prefix}</span>
-                <span class="chapter-card-title">${chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</span>
+                <span class="chapter-card-title">${chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}${subtitleHtml}</span>
                 <div class="tree-controls">
                     <button class="btn-tree-lvl rename-btn" title="${currentLang === 'en' ? 'Rename' : '이름 변경'}">✎</button>
                 </div>
@@ -1502,7 +1524,7 @@ function renderChapterList() {
     // Calculate total character count (including titles) only if it is public
     const isPublic = !project.isPrivate && project.id !== "monote-manual-guide";
     const rankingChars = isPublic 
-        ? project.chapters.reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0)
+        ? project.chapters.reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.subtitle ? ch.subtitle.length : 0) + (ch.content ? ch.content.length : 0), 0)
         : 0;
     
     const totalRow = document.createElement('div');
@@ -1588,6 +1610,7 @@ function addNewChapter() {
     const newChapter = {
         id: newId,
         title: title.trim() || (currentLang === 'en' ? 'Untitled' : '제목 없음'),
+        subtitle: '',
         content: '',
         level: 0
     };
@@ -1618,6 +1641,9 @@ function openChapterEditor(chapterId) {
     }
     chapterNumberBadge.textContent = getChapterPrefix(chapterId);
     chapterTitleInput.value = chapter.title || '';
+    if (chapterSubtitleInput) {
+        chapterSubtitleInput.value = chapter.subtitle || '';
+    }
     chapterContentTextarea.value = chapter.content || '';
     
     // Update Character & Word Counts
@@ -1637,8 +1663,11 @@ function openChapterEditor(chapterId) {
 // Update Editor Counts (With Space, No Space, Word Count)
 function updateEditorCounts() {
     const titleText = chapterTitleInput.value || '';
+    const subtitleText = (chapterSubtitleInput && chapterSubtitleInput.value) || '';
     const contentText = chapterContentTextarea.value || '';
-    const combinedText = titleText + (titleText && contentText ? '\n' : '') + contentText;
+    let combinedText = titleText;
+    if (subtitleText) combinedText += (combinedText ? '\n' : '') + subtitleText;
+    if (contentText) combinedText += (combinedText ? '\n' : '') + contentText;
 
     const lenWithSpaces = combinedText.length;
     const lenNoSpaces = combinedText.replace(/\s/g, '').length;
@@ -2049,7 +2078,7 @@ function renderRanking() {
     
     const userTotalCumulative = projects.reduce((total, proj) => {
         if (proj.id === "monote-manual-guide") return total;
-        return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+        return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.subtitle ? ch.subtitle.length : 0) + (ch.content ? ch.content.length : 0), 0);
     }, 0);
 
     const tier = getUserWritingTier(userTotalCumulative);
@@ -2476,7 +2505,7 @@ function renderRanking() {
                 processedBookIds.add(b.id);
 
                 const chapters = typeof b.chapters === 'string' ? JSON.parse(b.chapters) : (b.chapters || []);
-                const charCount = chapters.reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+                const charCount = chapters.reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.subtitle ? ch.subtitle.length : 0) + (ch.content ? ch.content.length : 0), 0);
                 
                 if (charCount > 0) {
                     const isMe = currentUser && b.user_id === currentUser.id;
@@ -2497,7 +2526,7 @@ function renderRanking() {
             projects
                 .filter(proj => !proj.isPrivate && proj.id !== "monote-manual-guide" && !proj.id.startsWith("user-profile-"))
                 .forEach(proj => {
-                    const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+                    const charCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.subtitle ? ch.subtitle.length : 0) + (ch.content ? ch.content.length : 0), 0);
                     if (charCount > 0) {
                         const existingIdx = bookList.findIndex(b => b.id === proj.id);
                         const bookItem = {
@@ -3162,9 +3191,11 @@ function showPreviewBookDialog(book) {
                     cursor: pointer;
                     transition: all var(--transition-speed);
                 `;
+                const chSub = (ch.subtitle && ch.subtitle.trim()) ? `<span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary); margin-left: 0.35rem;">: ${ch.subtitle.trim()}</span>` : '';
+                const chLen = ((ch.title || '').length + (ch.subtitle || '').length + (ch.content || '').length);
                 item.innerHTML = `
-                    <span style="font-size: 0.85rem; font-family: var(--font-serif); color: var(--text-primary); font-weight: 500;">${ch.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">${((ch.title || '').length + (ch.content || '').length).toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</span>
+                    <span style="font-size: 0.85rem; font-family: var(--font-serif); color: var(--text-primary); font-weight: 500;">${ch.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}${chSub}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">${chLen.toLocaleString()}${currentLang === 'en' ? ' chars' : '자'}</span>
                 `;
                 item.addEventListener('click', () => {
                     showPreviewChapterDialog(ch);
@@ -3195,7 +3226,14 @@ function showPreviewChapterDialog(chapter) {
     const titleEl = document.getElementById('preview-chapter-title');
     const contentEl = document.getElementById('preview-chapter-content');
     
-    if (titleEl) titleEl.textContent = chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+    if (titleEl) {
+        const mainTitle = chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음');
+        if (chapter.subtitle && chapter.subtitle.trim()) {
+            titleEl.innerHTML = `${mainTitle} <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-secondary); margin-left: 0.5rem;">: ${chapter.subtitle.trim()}</span>`;
+        } else {
+            titleEl.textContent = mainTitle;
+        }
+    }
     if (contentEl) contentEl.textContent = chapter.content || (currentLang === 'en' ? 'No content.' : '내용이 없습니다.');
     
     previewChapterDialog.style.display = 'flex';
@@ -3302,7 +3340,7 @@ function renderBookshelf() {
                 ? `<div class="book-visibility-icon private" title="비공개 (로컬 저장)">🔒</div>`
                 : "");
 
-        const totalCharCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+        const totalCharCount = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.subtitle ? ch.subtitle.length : 0) + (ch.content ? ch.content.length : 0), 0);
         const dateObj = new Date(proj.updatedAt || proj.createdAt || Date.now());
         const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')}`;
 
@@ -3752,7 +3790,7 @@ function openProject(projectId) {
 async function deleteProject(projectId) {
     const proj = projects.find(p => p.id === projectId);
     if (proj && !proj.isPrivate && proj.id !== "monote-manual-guide") {
-        const totalChars = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+        const totalChars = (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.subtitle ? ch.subtitle.length : 0) + (ch.content ? ch.content.length : 0), 0);
         adjustDailyStats(-totalChars);
     }
     projects = projects.filter(p => p.id !== projectId);
@@ -3906,13 +3944,17 @@ function exportChapter(chapterId) {
     const chapter = project.chapters.find(c => c.id === chapterId);
     if (!chapter) return;
     
-    const fileContent = `${chapter.title || '제목 없음'}\n\n${chapter.content || ''}`;
+    const titleText = chapter.title || '제목 없음';
+    const subtitleText = chapter.subtitle ? chapter.subtitle.trim() : '';
+    const headerText = subtitleText ? `${titleText}\n${subtitleText}` : titleText;
+    const fileContent = `${headerText}\n\n${chapter.content || ''}`;
     const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${chapter.title || 'untitled-chapter'}.txt`;
+    const safeFilename = subtitleText ? `${titleText} - ${subtitleText}` : titleText;
+    link.download = `${safeFilename || 'untitled-chapter'}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -3925,7 +3967,7 @@ function deleteChapter(chapterId) {
     if (isPublic) {
         const ch = project.chapters.find(c => c.id === chapterId);
         if (ch) {
-            const charCount = (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0);
+            const charCount = (ch.title ? ch.title.length : 0) + (ch.subtitle ? ch.subtitle.length : 0) + (ch.content ? ch.content.length : 0);
             adjustDailyStats(-charCount);
         }
     }
@@ -3975,9 +4017,11 @@ function exportProjectTxt() {
     project.chapters.forEach((chapter) => {
         const prefix = getChapterPrefix(chapter.id);
         const titleText = chapter.title || '제목 없음';
+        const subtitleText = chapter.subtitle ? chapter.subtitle.trim() : '';
+        const chapterHeader = subtitleText ? `${prefix} ${titleText} : ${subtitleText}` : `${prefix} ${titleText}`;
         
         // Add chapter header without decorators
-        fullText += `${prefix} ${titleText}\n\n`;
+        fullText += `${chapterHeader}\n\n`;
         fullText += `${chapter.content || ''}\n\n\n`;
     });
     
@@ -4120,6 +4164,7 @@ function restoreActiveState() {
                     }
                     chapterNumberBadge.textContent = getChapterPrefix(savedChapterId);
                     chapterTitleInput.value = chapter.title || '';
+                    if (chapterSubtitleInput) chapterSubtitleInput.value = chapter.subtitle || '';
                     chapterContentTextarea.value = chapter.content || '';
                     updateEditorCounts(chapter.content || '');
                     
@@ -4214,7 +4259,7 @@ async function saveProfileToCloud(user) {
         const userStreak = getUserStreak();
         const userTotalCumulative = projects.reduce((total, proj) => {
             if (proj.id === "monote-manual-guide" || proj.id.startsWith("user-profile-")) return total;
-            return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.content ? ch.content.length : 0), 0);
+            return total + (proj.chapters || []).reduce((sum, ch) => sum + (ch.title ? ch.title.length : 0) + (ch.subtitle ? ch.subtitle.length : 0) + (ch.content ? ch.content.length : 0), 0);
         }, 0);
 
         const stats = {
@@ -4770,6 +4815,7 @@ function updateLanguageUI() {
         deleteBtn.setAttribute('title', t.editorDeleteTitle);
     }
     if (chapterTitleInput) chapterTitleInput.setAttribute('placeholder', t.editorTitlePlaceholder);
+    if (chapterSubtitleInput) chapterSubtitleInput.setAttribute('placeholder', t.editorSubtitlePlaceholder);
     if (chapterContentTextarea) chapterContentTextarea.setAttribute('placeholder', t.editorContentPlaceholder);
 
     const saveStatusEl = document.getElementById('save-status');
@@ -4923,6 +4969,7 @@ const i18n = {
         editorDelete: "삭제",
         editorDeleteTitle: "챕터 삭제",
         editorTitlePlaceholder: "챕터 제목을 입력하세요...",
+        editorSubtitlePlaceholder: "부제를 입력하세요 (선택 사항)...",
         editorContentPlaceholder: "이곳에 이야기를 펼쳐나가세요...",
         editorStatIncl: "공백 포함:",
         editorStatExcl: "공백 제외:",
@@ -4997,6 +5044,7 @@ const i18n = {
         editorDelete: "Delete",
         editorDeleteTitle: "Delete Chapter",
         editorTitlePlaceholder: "Enter chapter title...",
+        editorSubtitlePlaceholder: "Enter subtitle (optional)...",
         editorContentPlaceholder: "Unfold your story here...",
         editorStatIncl: "Chars (incl. spaces):",
         editorStatExcl: "Chars (excl. spaces):",
