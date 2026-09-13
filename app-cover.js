@@ -580,6 +580,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Restore previous active project/chapter state
     restoreActiveState();
     
+    // Seed initial history state so browser back is interceptable
+    history.replaceState({ screen: storage.getItem('monote-active-screen') || 'bookshelf' }, '');
+
+    // Handle browser back/forward navigation — keep user inside the app
+    window.addEventListener('popstate', (e) => {
+        const screen = storage.getItem('monote-active-screen') || 'bookshelf';
+        if (screen === 'writing') {
+            // Back from writing → overview (without pushState to avoid double-stacking)
+            showOverviewScreenSilent();
+        } else if (screen === 'overview') {
+            // Back from overview → bookshelf
+            showBookshelfScreenSilent();
+        } else {
+            // Already at bookshelf — re-push so next back press still stays
+            history.pushState({ screen: 'bookshelf' }, '');
+        }
+    });
+    
     // Start Lounge post simulation
     // initLoungeSimulation();
 });
@@ -1696,6 +1714,7 @@ function adjustTitleHeight() {
 // View Switches
 function showWritingScreen() {
     storage.setItem('monote-active-screen', 'writing');
+    history.pushState({ screen: 'writing' }, '');
     // Hide JSON import/export in project screens, show TXT export
     if (importProjectTrigger) importProjectTrigger.style.display = 'none';
     if (exportProjectBtn) exportProjectBtn.style.display = 'none';
@@ -1728,6 +1747,7 @@ function showWritingScreen() {
 
 function showOverviewScreen() {
     storage.setItem('monote-active-screen', 'overview');
+    history.pushState({ screen: 'overview' }, '');
     // Hide JSON import/export in project screens, show TXT export
     if (importProjectTrigger) importProjectTrigger.style.display = 'none';
     if (exportProjectBtn) exportProjectBtn.style.display = 'none';
@@ -1760,6 +1780,7 @@ function showOverviewScreen() {
 
 function showBookshelfScreen() {
     storage.setItem('monote-active-screen', 'bookshelf');
+    history.pushState({ screen: 'bookshelf' }, '');
     activeProjectId = null;
     project = null;
     storage.removeItem('monote-active-project-id');
@@ -1770,6 +1791,59 @@ function showBookshelfScreen() {
     if (exportProjectBtn) exportProjectBtn.style.display = '';
     if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
     
+    overviewScreen.classList.remove('active');
+    writingScreen.classList.remove('active');
+    if (communityScreen) communityScreen.classList.remove('active');
+    setTimeout(() => {
+        overviewScreen.style.display = 'none';
+        writingScreen.style.display = 'none';
+        if (communityScreen) communityScreen.style.display = 'none';
+        bookshelfScreen.style.display = 'block';
+        setTimeout(() => {
+            bookshelfScreen.classList.add('active');
+            renderBookshelf();
+        }, 50);
+    }, 300);
+}
+
+// Silent versions (called by popstate handler — no pushState to avoid history double-stacking)
+function showOverviewScreenSilent() {
+    storage.setItem('monote-active-screen', 'overview');
+    if (importProjectTrigger) importProjectTrigger.style.display = 'none';
+    if (exportProjectBtn) exportProjectBtn.style.display = 'none';
+    if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = '';
+
+    const chaptersPanel = document.getElementById('chapters-panel');
+    const overviewGrid = document.querySelector('.overview-grid');
+    if (chaptersPanel && overviewGrid) overviewGrid.appendChild(chaptersPanel);
+
+    activeChapterId = null;
+    storage.removeItem('monote-active-chapter-id');
+    renderOverview();
+
+    writingScreen.classList.remove('active');
+    bookshelfScreen.classList.remove('active');
+    if (communityScreen) communityScreen.classList.remove('active');
+    setTimeout(() => {
+        writingScreen.style.display = 'none';
+        bookshelfScreen.style.display = 'none';
+        if (communityScreen) communityScreen.style.display = 'none';
+        overviewScreen.style.display = 'block';
+        setTimeout(() => { overviewScreen.classList.add('active'); }, 50);
+    }, 300);
+}
+
+function showBookshelfScreenSilent() {
+    storage.setItem('monote-active-screen', 'bookshelf');
+    activeProjectId = null;
+    project = null;
+    storage.removeItem('monote-active-project-id');
+    storage.removeItem('monote-active-chapter-id');
+
+    if (importProjectTrigger) importProjectTrigger.style.display = '';
+    if (exportProjectBtn) exportProjectBtn.style.display = '';
+    if (exportProjectTxtBtn) exportProjectTxtBtn.style.display = 'none';
+
     overviewScreen.classList.remove('active');
     writingScreen.classList.remove('active');
     if (communityScreen) communityScreen.classList.remove('active');
