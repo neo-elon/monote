@@ -1233,7 +1233,7 @@ function renderChapterList() {
         // Calculate length details
         const charCount = (chapter.title ? chapter.title.length : 0) + (chapter.subtitle ? chapter.subtitle.length : 0) + (chapter.content ? chapter.content.length : 0);
         const prefix = getChapterPrefix(chapter.id);
-        const subtitleHtml = (chapter.subtitle && chapter.subtitle.trim()) ? `<span class="chapter-card-subtitle">: ${chapter.subtitle.trim()}</span>` : '';
+        const subtitleHtml = (chapter.subtitle && chapter.subtitle.trim()) ? `<div class="chapter-card-subtitle">${chapter.subtitle.trim()}</div>` : '';
         
         // Generate tree dotted guide lines
         let treeLinesHtml = '<div class="tree-lines">';
@@ -1281,7 +1281,10 @@ function renderChapterList() {
             <div class="tree-indent-wrapper">
                 ${treeLinesHtml}
                 <span class="chapter-num-badge">${prefix}</span>
-                <span class="chapter-card-title">${chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}${subtitleHtml}</span>
+                <div class="chapter-title-info">
+                    <span class="chapter-card-title">${chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</span>
+                    ${subtitleHtml}
+                </div>
                 <div class="tree-controls">
                     <button class="btn-tree-lvl rename-btn" title="${currentLang === 'en' ? 'Rename' : '이름 변경'}">✎</button>
                 </div>
