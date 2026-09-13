@@ -838,6 +838,7 @@ async function loadProjects() {
             // Prompt user if server has newer versions
             if (newerOnServer.length > 0) {
                 showSyncConflictDialog(newerOnServer);
+            }
         } catch (err) {
             console.error('Failed to sync with Supabase:', err);
             updateSyncStatus('error', '동기화 실패');
@@ -1883,6 +1884,113 @@ function showBookshelfScreenSilent() {
             renderBookshelf();
         }, 50);
     }, 300);
+}
+
+// Show a dialog when the server has a newer version of one or more projects
+function showSyncConflictDialog(conflicts) {
+    const dialog = document.getElementById('sync-conflict-dialog');
+    const titleEl = document.getElementById('sync-conflict-title');
+    const bodyEl = document.getElementById('sync-conflict-body');
+    const listEl = document.getElementById('sync-conflict-list');
+    const acceptBtn = document.getElementById('sync-conflict-accept-btn');
+    const dismissBtn = document.getElementById('sync-conflict-dismiss-btn');
+    if (!dialog || !titleEl || !bodyEl || !listEl || !acceptBtn || !dismissBtn) return;
+
+    const isKo = currentLang !== 'en';
+
+    titleEl.textContent = isKo
+        ? '다른 기기에서 작성한 내용이 있어요'
+        : 'Changes from another device found';
+
+    bodyEl.textContent = isKo
+        ? '다음 작품이 다른 기기에서 더 최근에 수정되었습니다. 최신 버전을 불러올까요?'
+        : 'The following projects were updated more recently on another device. Would you like to load the latest version?';
+
+    acceptBtn.textContent = isKo ? '✓ 최신 버전 불러오기' : '✓ Load latest version';
+    dismissBtn.textContent = isKo ? '현재 버전 유지' : 'Keep current version';
+
+    // Build conflict list
+    listEl.innerHTML = '';
+    conflicts.forEach(({ local, server }) => {
+        const localDate = local.updatedAt ? new Date(local.updatedAt) : null;
+        const serverDate = server.updatedAt ? new Date(server.updatedAt) : null;
+        const fmtDate = (d) => d ? d.toLocaleString(isKo ? 'ko-KR' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
+        const item = document.createElement('div');
+        item.style.cssText = `
+            border: 1px solid var(--border-color);
+            padding: 0.65rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            background: var(--bg-secondary);
+        `;
+        item.innerHTML = `
+            <span style="font-family: var(--font-serif); font-weight: 600; font-size: 0.9rem;">
+                ${server.title || (isKo ? '제목 없음' : 'Untitled')}
+            </span>
+            <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-secondary);">
+                <span>💻 ${isKo ? '이 기기' : 'This device'}: ${fmtDate(localDate)}</span>
+                <span>☁️ ${isKo ? '다른 기기' : 'Other device'}: <strong style="color: var(--text-primary);">${fmtDate(serverDate)}</strong></span>
+            </div>
+        `;
+        listEl.appendChild(item);
+    });
+
+    dialog.style.display = 'flex';
+
+    // Accept: keep server versions (already in projects map), refresh UI and editor if needed
+    const handleAccept = () => {
+        dialog.style.display = 'none';
+        acceptBtn.removeEventListener('click', handleAccept);
+        dismissBtn.removeEventListener('click', handleDismiss);
+
+        // Server versions are already loaded into `projects` — just refresh UI
+        storage.setItem('monote-projects', JSON.stringify(projects));
+        renderBookshelf();
+
+        // If user is currently editing one of the conflicted projects, reload editor
+        const activeConflict = conflicts.find(c => c.server.id === activeProjectId);
+        if (activeConflict) {
+            project = activeConflict.server;
+            const idx = projects.findIndex(p => p.id === project.id);
+            if (idx !== -1) projects[idx] = project;
+
+            // Restore the chapter they were editing (or pick first chapter)
+            const savedChId = storage.getItem('monote-active-chapter-id');
+            const ch = project.chapters.find(c => c.id === savedChId) || project.chapters[0];
+            if (ch) {
+                activeChapterId = ch.id;
+                storage.setItem('monote-active-chapter-id', ch.id);
+                chapterNumberBadge.textContent = getChapterPrefix(ch.id);
+                chapterTitleInput.value = ch.title || '';
+                if (chapterSubtitleInput) chapterSubtitleInput.value = ch.subtitle || '';
+                chapterContentTextarea.value = ch.content || '';
+                updateEditorCounts(ch.content || '');
+                adjustTitleHeight();
+            }
+            renderChapterList();
+            renderOverview();
+        }
+    };
+
+    // Dismiss: revert to local versions for conflicted projects
+    const handleDismiss = () => {
+        dialog.style.display = 'none';
+        acceptBtn.removeEventListener('click', handleAccept);
+        dismissBtn.removeEventListener('click', handleDismiss);
+
+        // Restore local versions in projects array and localStorage
+        conflicts.forEach(({ local }) => {
+            const idx = projects.findIndex(p => p.id === local.id);
+            if (idx !== -1) projects[idx] = local;
+        });
+        storage.setItem('monote-projects', JSON.stringify(projects));
+        renderBookshelf();
+    };
+
+    acceptBtn.addEventListener('click', handleAccept);
+    dismissBtn.addEventListener('click', handleDismiss);
 }
 
 function showCommunityScreen() {
