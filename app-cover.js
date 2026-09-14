@@ -1297,35 +1297,50 @@ function getHiddenChapterIds() {
     return hidden;
 }
 
-// Helper to move all descendant cards right after parentCard in DOM during reordering
-function moveDescendantsWithParent(parentCard) {
-    if (!parentCard || !project || !project.chapters) return;
-    const parentId = parentCard.dataset.id;
-    const chapters = project.chapters;
-    const parentIndex = chapters.findIndex(c => c.id === parentId);
-    if (parentIndex === -1) return;
-    const parentLvl = chapters[parentIndex].level || 0;
-    
-    const descendantIds = [];
-    for (let j = parentIndex + 1; j < chapters.length; j++) {
-        if ((chapters[j].level || 0) > parentLvl) {
-            descendantIds.push(chapters[j].id);
+// Helper to get all elements in a chapter's group (the card itself plus all descendant cards in DOM)
+function getChapterGroupElements(cardEl) {
+    if (!cardEl) return [];
+    const elements = [cardEl];
+    const lvl = parseInt(cardEl.dataset.level !== undefined ? cardEl.dataset.level : 0, 10);
+    let next = cardEl.nextElementSibling;
+    while (next && next.classList.contains('chapter-card')) {
+        const nextLvl = parseInt(next.dataset.level !== undefined ? next.dataset.level : 0, 10);
+        if (nextLvl > lvl) {
+            elements.push(next);
+            next = next.nextElementSibling;
         } else {
             break;
         }
     }
+    return elements;
+}
+
+// Move an entire chapter group atomically relative to targetCard
+function moveChapterGroup(sourceCard, targetCard, isAfter) {
+    if (!sourceCard || !targetCard || sourceCard === targetCard) return;
     
-    if (descendantIds.length === 0) return;
+    const sourceGroup = getChapterGroupElements(sourceCard);
+    // Disallow dropping into any element within the dragged group
+    if (sourceGroup.includes(targetCard)) return;
     
-    let insertRef = parentCard;
-    descendantIds.forEach(id => {
-        const childEl = chaptersList.querySelector(`.chapter-card[data-id="${id}"]`);
-        if (childEl && childEl !== insertRef.nextSibling) {
-            chaptersList.insertBefore(childEl, insertRef.nextSibling);
-        }
-        if (childEl) {
-            insertRef = childEl;
-        }
+    let insertBeforeRef;
+    if (isAfter) {
+        const targetGroup = getChapterGroupElements(targetCard);
+        const lastTargetEl = targetGroup[targetGroup.length - 1];
+        insertBeforeRef = lastTargetEl.nextElementSibling;
+    } else {
+        insertBeforeRef = targetCard;
+    }
+    
+    // Check if the source group is already in this exact position
+    const lastSourceEl = sourceGroup[sourceGroup.length - 1];
+    if (lastSourceEl.nextElementSibling === insertBeforeRef && sourceGroup[0] === (isAfter ? targetCard.nextElementSibling : targetCard)) {
+        return;
+    }
+    
+    // Sequentially insert all members of sourceGroup before insertBeforeRef
+    sourceGroup.forEach(node => {
+        chaptersList.insertBefore(node, insertBeforeRef);
     });
 }
 
@@ -1432,6 +1447,7 @@ function renderChapterList() {
         }
         card.className = cardClasses;
         card.dataset.id = chapter.id;
+        card.dataset.level = chapter.level !== undefined ? chapter.level : 0;
         card.setAttribute('draggable', 'true');
         
         // Calculate length details
@@ -1587,7 +1603,14 @@ function renderChapterList() {
             isDragging = true;
             dragStartX = e.clientX;
             dragStartLevel = chapter.level || 0;
-            card.classList.add('dragging');
+            
+            // Mark entire group as dragging
+            const groupElements = getChapterGroupElements(card);
+            groupElements.forEach((el, i) => {
+                el.classList.add('dragging');
+                if (i > 0) el.classList.add('dragging-child');
+            });
+            
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', chapter.id);
         });
@@ -1598,9 +1621,18 @@ function renderChapterList() {
             let levelShift = Math.round(deltaX / 24);
             if (levelShift > 1) levelShift = 1;
             if (levelShift < -1) levelShift = -1;
-            const tempLevel = Math.max(0, Math.min(2, dragStartLevel + levelShift));
             
-            // Instantly update UI class to show dynamic indent and numbering styling
+            const groupElements = getChapterGroupElements(card);
+            let maxLvl = 0;
+            groupElements.forEach(el => {
+                const l = parseInt(el.dataset.level !== undefined ? el.dataset.level : 0, 10);
+                if (l > maxLvl) maxLvl = l;
+            });
+            const maxShift = Math.max(0, 2 - maxLvl);
+            const minShift = -dragStartLevel;
+            levelShift = Math.max(minShift, Math.min(maxShift, levelShift));
+            
+            const tempLevel = dragStartLevel + levelShift;
             card.className = `chapter-card level-${tempLevel} dragging`;
             const tempPrefix = getChapterPrefixForLvl(chapter.id, tempLevel);
             const badge = card.querySelector('.chapter-num-badge');
@@ -1608,18 +1640,39 @@ function renderChapterList() {
         });
 
         card.addEventListener('dragend', (e) => {
-            card.classList.remove('dragging');
-            
             // Save final level shift based on end coordinate
             if (e.clientX !== 0) {
                 const deltaX = e.clientX - dragStartX;
                 let levelShift = Math.round(deltaX / 24);
                 if (levelShift > 1) levelShift = 1;
                 if (levelShift < -1) levelShift = -1;
-                chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
+                
+                const groupElements = getChapterGroupElements(card);
+                let maxLvl = 0;
+                groupElements.forEach(el => {
+                    const l = parseInt(el.dataset.level !== undefined ? el.dataset.level : 0, 10);
+                    if (l > maxLvl) maxLvl = l;
+                });
+                const maxShift = Math.max(0, 2 - maxLvl);
+                const minShift = -dragStartLevel;
+                levelShift = Math.max(minShift, Math.min(maxShift, levelShift));
+                
+                if (levelShift !== 0) {
+                    groupElements.forEach(el => {
+                        const chId = el.dataset.id;
+                        const ch = (project.chapters || []).find(c => c.id === chId);
+                        if (ch) {
+                            ch.level = Math.max(0, Math.min(2, (ch.level || 0) + levelShift));
+                            el.dataset.level = ch.level;
+                        }
+                    });
+                }
             }
             
-            moveDescendantsWithParent(card);
+            chaptersList.querySelectorAll('.dragging, .dragging-child').forEach(el => {
+                el.classList.remove('dragging', 'dragging-child');
+            });
+            
             saveAndRefreshOrder();
             
             setTimeout(() => {
@@ -1629,16 +1682,14 @@ function renderChapterList() {
 
         card.addEventListener('dragover', (e) => {
             e.preventDefault();
-            const draggingCard = document.querySelector('.dragging');
+            const draggingCard = chaptersList.querySelector('.dragging:not(.dragging-child)');
             if (!draggingCard || draggingCard === card) return;
             
             // Determine vertical position
             const rect = card.getBoundingClientRect();
-            const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+            const isAfter = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
             
-            // Insert visual preview
-            chaptersList.insertBefore(draggingCard, next ? card.nextSibling : card);
-            moveDescendantsWithParent(draggingCard);
+            moveChapterGroup(draggingCard, card, isAfter);
         });
 
         card.addEventListener('drop', (e) => {
@@ -1673,7 +1724,11 @@ function renderChapterList() {
             touchTimeout = setTimeout(() => {
                 isLongPress = true;
                 isDragging = true;
-                card.classList.add('dragging');
+                const groupElements = getChapterGroupElements(card);
+                groupElements.forEach((el, i) => {
+                    el.classList.add('dragging');
+                    if (i > 0) el.classList.add('dragging-child');
+                });
                 if (navigator.vibrate) {
                     navigator.vibrate(40); // Subtle haptic feedback
                 }
@@ -1711,7 +1766,18 @@ function renderChapterList() {
                 let levelShift = Math.round(deltaX / 24);
                 if (levelShift > 1) levelShift = 1;
                 if (levelShift < -1) levelShift = -1;
-                const tempLevel = Math.max(0, Math.min(2, dragStartLevel + levelShift));
+                
+                const groupElements = getChapterGroupElements(card);
+                let maxLvl = 0;
+                groupElements.forEach(el => {
+                    const l = parseInt(el.dataset.level !== undefined ? el.dataset.level : 0, 10);
+                    if (l > maxLvl) maxLvl = l;
+                });
+                const maxShift = Math.max(0, 2 - maxLvl);
+                const minShift = -dragStartLevel;
+                levelShift = Math.max(minShift, Math.min(maxShift, levelShift));
+                
+                const tempLevel = dragStartLevel + levelShift;
                 card.className = `chapter-card level-${tempLevel} dragging`;
                 
                 // Find element under current finger position
@@ -1720,10 +1786,8 @@ function renderChapterList() {
                     const targetCard = elementUnder.closest('.chapter-card');
                     if (targetCard && targetCard !== card) {
                         const rect = targetCard.getBoundingClientRect();
-                        const next = (currentY - rect.top) / (rect.bottom - rect.top) > 0.5;
-                        
-                        chaptersList.insertBefore(card, next ? targetCard.nextSibling : targetCard);
-                        moveDescendantsWithParent(card);
+                        const isAfter = (currentY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                        moveChapterGroup(card, targetCard, isAfter);
                     }
                 }
             }
@@ -1737,11 +1801,13 @@ function renderChapterList() {
             
             if (!touchStartCard) return;
             
-            card.classList.remove('dragging');
             touchStartCard = null;
             
             // Check if the user tapped inside the card controls
             if (e.target.closest('.tree-controls') || e.target.closest('.btn-chapter-collapse') || e.target.closest('.chapter-child-count-badge')) {
+                chaptersList.querySelectorAll('.dragging, .dragging-child').forEach(el => {
+                    el.classList.remove('dragging', 'dragging-child');
+                });
                 isDragging = false;
                 isLongPress = false;
                 return;
@@ -1755,9 +1821,32 @@ function renderChapterList() {
                 let levelShift = Math.round(deltaX / 24);
                 if (levelShift > 1) levelShift = 1;
                 if (levelShift < -1) levelShift = -1;
-                chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
                 
-                moveDescendantsWithParent(card);
+                const groupElements = getChapterGroupElements(card);
+                let maxLvl = 0;
+                groupElements.forEach(el => {
+                    const l = parseInt(el.dataset.level !== undefined ? el.dataset.level : 0, 10);
+                    if (l > maxLvl) maxLvl = l;
+                });
+                const maxShift = Math.max(0, 2 - maxLvl);
+                const minShift = -dragStartLevel;
+                levelShift = Math.max(minShift, Math.min(maxShift, levelShift));
+                
+                if (levelShift !== 0) {
+                    groupElements.forEach(el => {
+                        const chId = el.dataset.id;
+                        const ch = (project.chapters || []).find(c => c.id === chId);
+                        if (ch) {
+                            ch.level = Math.max(0, Math.min(2, (ch.level || 0) + levelShift));
+                            el.dataset.level = ch.level;
+                        }
+                    });
+                }
+                
+                chaptersList.querySelectorAll('.dragging, .dragging-child').forEach(el => {
+                    el.classList.remove('dragging', 'dragging-child');
+                });
+                
                 saveAndRefreshOrder();
                 
                 setTimeout(() => {
@@ -1765,17 +1854,22 @@ function renderChapterList() {
                     isLongPress = false;
                 }, 100);
             } else if (!hasMovedThreshold) {
+                chaptersList.querySelectorAll('.dragging, .dragging-child').forEach(el => {
+                    el.classList.remove('dragging', 'dragging-child');
+                });
                 // It was a simple tap, open the editor immediately
                 openChapterEditor(chapter.id);
             }
         });
 
         card.addEventListener('touchcancel', (e) => {
+            chaptersList.querySelectorAll('.dragging, .dragging-child').forEach(el => {
+                el.classList.remove('dragging', 'dragging-child');
+            });
             if (touchTimeout) {
                 clearTimeout(touchTimeout);
                 touchTimeout = null;
             }
-            card.classList.remove('dragging');
             touchStartCard = null;
             isDragging = false;
             isLongPress = false;
