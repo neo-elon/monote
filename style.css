@@ -324,6 +324,38 @@ input, textarea {
     letter-spacing: -0.02em;
 }
 
+.panel-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+#toggle-collapse-all-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    padding: 0.35rem 0.6rem;
+    font-size: 0.78rem;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    border-radius: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all var(--transition-speed);
+}
+
+#toggle-collapse-all-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.toggle-collapse-icon {
+    flex-shrink: 0;
+    transition: transform var(--transition-speed);
+}
+
 .chapters-list {
     display: flex;
     flex-direction: column;
@@ -348,6 +380,21 @@ input, textarea {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+}
+
+.chapter-card.chapter-collapsed-hidden {
+    display: none !important;
+}
+
+.chapter-card.active {
+    background-color: var(--bg-secondary);
+    border-left: 3px solid var(--accent-color);
+    padding-left: 0.5rem;
+}
+
+.chapter-card.active .chapter-card-title {
+    color: var(--accent-color);
+    font-weight: 600;
 }
 
 .chapter-card.dragging {
@@ -660,11 +707,81 @@ input, textarea {
     background-color: var(--bg-secondary);
 }
 
+/* Chapter Collapse / Fold Button & Elements */
+.btn-chapter-collapse {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    transition: all var(--transition-speed);
+}
+
+.btn-chapter-collapse:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.btn-chapter-collapse svg {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-chapter-collapse.collapsed svg {
+    transform: rotate(-90deg);
+}
+
+.chapter-collapse-spacer {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: inline-block;
+    margin-top: 0.1rem;
+}
+
+.chapter-child-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.05rem 0.45rem;
+    margin-left: 0.45rem;
+    vertical-align: middle;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: all var(--transition-speed);
+}
+
+.chapter-child-count-badge:hover {
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+    background-color: var(--bg-primary);
+}
+
 /* Indentation levels & Tree Lines */
 .tree-lines {
     display: flex;
     align-self: stretch;
     margin-right: 0.5rem;
+}
+
+.tree-lines:empty {
+    display: none;
+    margin: 0;
 }
 
 .tree-line {

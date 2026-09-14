@@ -271,9 +271,18 @@
                     <div id="chapters-panel" class="chapters-panel">
                         <div class="panel-header">
                             <h2 class="panel-title">목차 및 챕터</h2>
-                            <button id="add-chapter-btn" class="btn-flat btn-sm">
-                                <span class="plus-icon">+</span> 챕터 추가
-                            </button>
+                            <div class="panel-header-actions">
+                                <button id="toggle-collapse-all-btn" class="btn-flat btn-sm" title="하위 챕터 모두 접기" style="display: none;">
+                                    <svg class="toggle-collapse-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="7 13 12 18 17 13"></polyline>
+                                        <polyline points="7 6 12 11 17 6"></polyline>
+                                    </svg>
+                                    <span class="toggle-collapse-text">모두 접기</span>
+                                </button>
+                                <button id="add-chapter-btn" class="btn-flat btn-sm">
+                                    <span class="plus-icon">+</span> 챕터 추가
+                                </button>
+                            </div>
                         </div>
                         <div id="chapters-list" class="chapters-list">
                             <!-- Chapter cards will be generated dynamically -->

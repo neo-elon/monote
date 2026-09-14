@@ -510,6 +510,7 @@ const synopsisWordCount = document.getElementById('synopsis-word-count');
 const projectIdeasTextarea = document.getElementById('project-ideas');
 const ideasWordCount = document.getElementById('ideas-word-count');
 const addChapterBtn = document.getElementById('add-chapter-btn');
+const toggleCollapseAllBtn = document.getElementById('toggle-collapse-all-btn');
 const chaptersList = document.getElementById('chapters-list');
 
 // Editor Elements
@@ -989,6 +990,9 @@ function setupEventListeners() {
 
     // Chapter Management Listeners
     addChapterBtn.addEventListener('click', addNewChapter);
+    if (toggleCollapseAllBtn) {
+        toggleCollapseAllBtn.addEventListener('click', toggleCollapseAll);
+    }
     backToOverviewBtn.addEventListener('click', showOverviewScreen);
     
     // Editor Listeners
@@ -1247,6 +1251,147 @@ function getChapterPrefix(chapterId) {
     return '';
 }
 
+// Helper to get subchapter info for a chapter at index
+function getSubchapterInfo(index) {
+    if (!project || !project.chapters) return { hasChildren: false, count: 0 };
+    const chapters = project.chapters;
+    if (index >= chapters.length) return { hasChildren: false, count: 0 };
+    const currentLvl = chapters[index].level || 0;
+    let count = 0;
+    for (let j = index + 1; j < chapters.length; j++) {
+        if ((chapters[j].level || 0) > currentLvl) {
+            count++;
+        } else {
+            break;
+        }
+    }
+    return { hasChildren: count > 0, count };
+}
+
+// Helper to determine which chapter IDs are hidden by a collapsed ancestor
+function getHiddenChapterIds() {
+    const hidden = new Set();
+    if (!project || !project.chapters) return hidden;
+    const chapters = project.chapters;
+    let collapsedLevelLimit = -1;
+    
+    for (let i = 0; i < chapters.length; i++) {
+        const ch = chapters[i];
+        const lvl = ch.level || 0;
+        
+        if (collapsedLevelLimit !== -1) {
+            if (lvl > collapsedLevelLimit) {
+                hidden.add(ch.id);
+                continue;
+            } else {
+                collapsedLevelLimit = -1;
+            }
+        }
+        
+        if (ch.collapsed) {
+            if (i + 1 < chapters.length && (chapters[i + 1].level || 0) > lvl) {
+                collapsedLevelLimit = lvl;
+            }
+        }
+    }
+    return hidden;
+}
+
+// Helper to move all descendant cards right after parentCard in DOM during reordering
+function moveDescendantsWithParent(parentCard) {
+    if (!parentCard || !project || !project.chapters) return;
+    const parentId = parentCard.dataset.id;
+    const chapters = project.chapters;
+    const parentIndex = chapters.findIndex(c => c.id === parentId);
+    if (parentIndex === -1) return;
+    const parentLvl = chapters[parentIndex].level || 0;
+    
+    const descendantIds = [];
+    for (let j = parentIndex + 1; j < chapters.length; j++) {
+        if ((chapters[j].level || 0) > parentLvl) {
+            descendantIds.push(chapters[j].id);
+        } else {
+            break;
+        }
+    }
+    
+    if (descendantIds.length === 0) return;
+    
+    let insertRef = parentCard;
+    descendantIds.forEach(id => {
+        const childEl = chaptersList.querySelector(`.chapter-card[data-id="${id}"]`);
+        if (childEl && childEl !== insertRef.nextSibling) {
+            chaptersList.insertBefore(childEl, insertRef.nextSibling);
+        }
+        if (childEl) {
+            insertRef = childEl;
+        }
+    });
+}
+
+// Toggle collapse all / expand all for all chapters with subchapters
+function toggleCollapseAll() {
+    if (!project || !project.chapters) return;
+    const chapters = project.chapters;
+    const parentIndices = [];
+    for (let i = 0; i < chapters.length; i++) {
+        const info = getSubchapterInfo(i);
+        if (info.hasChildren) {
+            parentIndices.push(i);
+        }
+    }
+    if (parentIndices.length === 0) return;
+    
+    const anyExpanded = parentIndices.some(idx => !chapters[idx].collapsed);
+    parentIndices.forEach(idx => {
+        chapters[idx].collapsed = anyExpanded;
+    });
+    
+    triggerSave();
+    renderChapterList();
+}
+
+// Update the state & visibility of the collapse all button in panel header
+function updateCollapseAllBtnState() {
+    if (!toggleCollapseAllBtn) return;
+    if (!project || !project.chapters) {
+        toggleCollapseAllBtn.style.display = 'none';
+        return;
+    }
+    const chapters = project.chapters;
+    const parentIndices = [];
+    for (let i = 0; i < chapters.length; i++) {
+        const info = getSubchapterInfo(i);
+        if (info.hasChildren) {
+            parentIndices.push(i);
+        }
+    }
+    
+    if (parentIndices.length === 0) {
+        toggleCollapseAllBtn.style.display = 'none';
+        return;
+    }
+    
+    toggleCollapseAllBtn.style.display = 'inline-flex';
+    const anyExpanded = parentIndices.some(idx => !chapters[idx].collapsed);
+    const textSpan = toggleCollapseAllBtn.querySelector('.toggle-collapse-text');
+    const icon = toggleCollapseAllBtn.querySelector('.toggle-collapse-icon');
+    
+    if (anyExpanded) {
+        if (textSpan) textSpan.textContent = currentLang === 'en' ? (i18n.en.overviewCollapseAll || 'Collapse All') : (i18n.ko.overviewCollapseAll || '모두 접기');
+        toggleCollapseAllBtn.title = currentLang === 'en' ? (i18n.en.overviewCollapseTooltip || 'Collapse all subchapters') : (i18n.ko.overviewCollapseTooltip || '하위 챕터 모두 접기');
+        if (icon) {
+            icon.innerHTML = `<polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline>`;
+        }
+    } else {
+        if (textSpan) textSpan.textContent = currentLang === 'en' ? (i18n.en.overviewExpandAll || 'Expand All') : (i18n.ko.overviewExpandAll || '모두 펼치기');
+        toggleCollapseAllBtn.title = currentLang === 'en' ? (i18n.en.overviewExpandTooltip || 'Expand all subchapters') : (i18n.ko.overviewExpandTooltip || '하위 챕터 모두 펼치기');
+        if (icon) {
+            icon.innerHTML = `<polyline points="7 11 12 6 17 11"></polyline><polyline points="7 18 12 13 17 18"></polyline>`;
+        }
+    }
+}
+
 // Render the Chapter List Cards
 function renderChapterList() {
     chaptersList.innerHTML = '';
@@ -1257,8 +1402,11 @@ function renderChapterList() {
                 ${i18n[currentLang].overviewEmptyChapters}
             </div>
         `;
+        updateCollapseAllBtnState();
         return;
     }
+
+    const hiddenChapterIds = getHiddenChapterIds();
 
     project.chapters.forEach((chapter, index) => {
         const card = document.createElement('div');
@@ -1271,7 +1419,18 @@ function renderChapterList() {
             chapter.level = 2;
         }
         
-        card.className = `chapter-card level-${chapter.level}`;
+        const subInfo = getSubchapterInfo(index);
+        const isHidden = hiddenChapterIds.has(chapter.id);
+        const isCollapsed = !!chapter.collapsed;
+        
+        let cardClasses = `chapter-card level-${chapter.level}`;
+        if (isHidden) {
+            cardClasses += ' chapter-collapsed-hidden';
+        }
+        if (activeChapterId === chapter.id) {
+            cardClasses += ' active';
+        }
+        card.className = cardClasses;
         card.dataset.id = chapter.id;
         card.setAttribute('draggable', 'true');
         
@@ -1321,13 +1480,39 @@ function renderChapterList() {
             }
         }
         treeLinesHtml += '</div>';
+
+        // Collapse Button or Spacer
+        let collapseControlHtml = '';
+        if (subInfo.hasChildren) {
+            const collapseTooltip = isCollapsed 
+                ? (currentLang === 'en' ? (i18n.en.chapterExpandTooltip || 'Expand subchapters') : (i18n.ko.chapterExpandTooltip || '하위 챕터 펼치기'))
+                : (currentLang === 'en' ? (i18n.en.chapterCollapseTooltip || 'Collapse subchapters') : (i18n.ko.chapterCollapseTooltip || '하위 챕터 접기'));
+            collapseControlHtml = `
+                <button type="button" class="btn-chapter-collapse ${isCollapsed ? 'collapsed' : ''}" title="${collapseTooltip}" aria-label="${collapseTooltip}">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            `;
+        } else {
+            collapseControlHtml = `<span class="chapter-collapse-spacer"></span>`;
+        }
+
+        // Child count badge when collapsed
+        const childBadgeHtml = (subInfo.hasChildren && isCollapsed)
+            ? `<span class="chapter-child-count-badge" title="${subInfo.count}${currentLang === 'en' ? ' subchapters (click to expand)' : '개 하위 챕터 숨김 (클릭하여 펼치기)'}">+${subInfo.count}</span>`
+            : '';
         
         card.innerHTML = `
             <div class="tree-indent-wrapper">
                 ${treeLinesHtml}
+                ${collapseControlHtml}
                 <span class="chapter-num-badge">${prefix}</span>
                 <div class="chapter-title-info">
-                    <span class="chapter-card-title">${chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</span>
+                    <div style="display: flex; align-items: center; min-width: 0;">
+                        <span class="chapter-card-title">${chapter.title || (currentLang === 'en' ? 'Untitled' : '제목 없음')}</span>
+                        ${childBadgeHtml}
+                    </div>
                     ${subtitleHtml}
                 </div>
                 <div class="tree-controls">
@@ -1344,15 +1529,38 @@ function renderChapterList() {
         let dragStartLevel = chapter.level || 0;
         let lastTouchX = 0;
 
-        // Click to open editor (only if not dragging)
+        // Collapse / Expand toggle event listeners
+        const collapseBtn = card.querySelector('.btn-chapter-collapse');
+        if (collapseBtn) {
+            collapseBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                chapter.collapsed = !chapter.collapsed;
+                triggerSave();
+                renderChapterList();
+            });
+        }
+
+        const childBadge = card.querySelector('.chapter-child-count-badge');
+        if (childBadge) {
+            childBadge.addEventListener('click', (e) => {
+                e.stopPropagation();
+                chapter.collapsed = false;
+                triggerSave();
+                renderChapterList();
+            });
+        }
+
+        // Click to open editor (only if not dragging and not clicking controls)
         card.addEventListener('click', (e) => {
             if (isDragging) return;
+            if (e.target.closest('.btn-chapter-collapse') || e.target.closest('.chapter-child-count-badge') || e.target.closest('.tree-controls')) {
+                return;
+            }
             openChapterEditor(chapter.id);
         });
 
         // Rename Button Event Listener
         const renameBtn = card.querySelector('.rename-btn');
-
         renameBtn.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent card click
             const promptMsg = currentLang === 'en' ? "Do you want to change the chapter title?" : "챕터 제목을 변경하시겠습니까?";
@@ -1411,6 +1619,7 @@ function renderChapterList() {
                 chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
             }
             
+            moveDescendantsWithParent(card);
             saveAndRefreshOrder();
             
             setTimeout(() => {
@@ -1429,6 +1638,7 @@ function renderChapterList() {
             
             // Insert visual preview
             chaptersList.insertBefore(draggingCard, next ? card.nextSibling : card);
+            moveDescendantsWithParent(draggingCard);
         });
 
         card.addEventListener('drop', (e) => {
@@ -1442,6 +1652,9 @@ function renderChapterList() {
 
         // Touch Drag & Drop event handlers (Mobile / Finger)
         card.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.btn-chapter-collapse') || e.target.closest('.chapter-child-count-badge') || e.target.closest('.tree-controls')) {
+                return;
+            }
             touchStartCard = card;
             dragStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
@@ -1510,6 +1723,7 @@ function renderChapterList() {
                         const next = (currentY - rect.top) / (rect.bottom - rect.top) > 0.5;
                         
                         chaptersList.insertBefore(card, next ? targetCard.nextSibling : targetCard);
+                        moveDescendantsWithParent(card);
                     }
                 }
             }
@@ -1526,8 +1740,8 @@ function renderChapterList() {
             card.classList.remove('dragging');
             touchStartCard = null;
             
-            // Check if the user tapped inside the card controls (like the rename button)
-            if (e.target.closest('.tree-controls')) {
+            // Check if the user tapped inside the card controls
+            if (e.target.closest('.tree-controls') || e.target.closest('.btn-chapter-collapse') || e.target.closest('.chapter-child-count-badge')) {
                 isDragging = false;
                 isLongPress = false;
                 return;
@@ -1543,6 +1757,7 @@ function renderChapterList() {
                 if (levelShift < -1) levelShift = -1;
                 chapter.level = Math.max(0, Math.min(2, dragStartLevel + levelShift));
                 
+                moveDescendantsWithParent(card);
                 saveAndRefreshOrder();
                 
                 setTimeout(() => {
@@ -1595,10 +1810,14 @@ function renderChapterList() {
         <span style="font-family: var(--font-sans); color: var(--text-primary); font-weight: 700;">${rankingChars.toLocaleString()}${unitText}${!isPublic ? `<span style="font-size: 0.7rem; font-weight: 400; color: var(--text-secondary); margin-left: 0.25rem;">${exclText}</span>` : ''}</span>
     `;
     chaptersList.appendChild(totalRow);
+
+    // Update panel header collapse all button state
+    updateCollapseAllBtnState();
 }
 
 // Helper to save order and refresh
 function saveAndRefreshOrder() {
+    if (!project || !project.chapters) return;
     const newChaptersOrder = [];
     const seenIds = new Set();
     const renderedCards = chaptersList.querySelectorAll('.chapter-card');
@@ -1610,6 +1829,13 @@ function saveAndRefreshOrder() {
                 newChaptersOrder.push(ch);
                 seenIds.add(id);
             }
+        }
+    });
+    // Failsafe: keep any chapters not present in rendered cards
+    (project.chapters || []).forEach(ch => {
+        if (!seenIds.has(ch.id)) {
+            newChaptersOrder.push(ch);
+            seenIds.add(ch.id);
         }
     });
     project.chapters = newChaptersOrder;
@@ -1679,8 +1905,33 @@ function openChapterEditor(chapterId) {
     const chapter = project.chapters.find(c => c.id === chapterId);
     if (!chapter) return;
     
+    // Auto-expand any collapsed ancestors so this chapter is visible in sidebar
+    let needsSave = false;
+    const chIndex = (project.chapters || []).findIndex(c => c.id === chapterId);
+    if (chIndex !== -1) {
+        let currentLvl = chapter.level || 0;
+        for (let i = chIndex - 1; i >= 0; i--) {
+            const prev = project.chapters[i];
+            const prevLvl = prev.level || 0;
+            if (prevLvl < currentLvl) {
+                if (prev.collapsed) {
+                    prev.collapsed = false;
+                    needsSave = true;
+                }
+                currentLvl = prevLvl;
+                if (currentLvl === 0) break;
+            }
+        }
+    }
+    if (needsSave) {
+        triggerSave();
+    }
+    
     activeChapterId = chapterId;
     storage.setItem('monote-active-chapter-id', chapterId);
+    
+    // Re-render sidebar chapter list to highlight active chapter and display expanded tree
+    renderChapterList();
     
     // Set UI Values
     const editorProjectTitle = document.getElementById('editor-sidebar-project-title');
@@ -5007,6 +5258,7 @@ function updateLanguageUI() {
     if (addChapterBtn) {
         addChapterBtn.innerHTML = `<span class="plus-icon">+</span>${t.overviewAddChapter}`;
     }
+    updateCollapseAllBtnState();
 
     const backToBookshelfBtn = document.getElementById('back-to-bookshelf');
     if (backToBookshelfBtn) {
@@ -5195,6 +5447,12 @@ const i18n = {
         overviewIdeasPlaceholder: "떠오르는 아이디어, 인물 설정, 배경 지식 등을 자유롭게 메모하세요...",
         overviewChaptersTitle: "목차 및 챕터",
         overviewAddChapter: " 챕터 추가",
+        overviewCollapseAll: "모두 접기",
+        overviewExpandAll: "모두 펼치기",
+        overviewCollapseTooltip: "하위 챕터 모두 접기",
+        overviewExpandTooltip: "하위 챕터 모두 펼치기",
+        chapterCollapseTooltip: "하위 챕터 접기",
+        chapterExpandTooltip: "하위 챕터 펼치기",
         overviewEmptyChapters: "아직 생성된 챕터가 없습니다. 오른쪽 상단의 '+ 챕터 추가' 버튼을 눌러 첫 글을 시작해 보세요.",
         overviewBackToBookshelf: " 책장으로 돌아가기",
         editorBack: " 개요",
@@ -5270,6 +5528,12 @@ const i18n = {
         overviewIdeasPlaceholder: "Jot down rising ideas, character settings, background lore, etc. freely...",
         overviewChaptersTitle: "Table of Contents",
         overviewAddChapter: " Add Chapter",
+        overviewCollapseAll: "Collapse All",
+        overviewExpandAll: "Expand All",
+        overviewCollapseTooltip: "Collapse all subchapters",
+        overviewExpandTooltip: "Expand all subchapters",
+        chapterCollapseTooltip: "Collapse subchapters",
+        chapterExpandTooltip: "Expand subchapters",
         overviewEmptyChapters: "No chapters created yet. Click '+ Add Chapter' in the top right to start your first writing.",
         overviewBackToBookshelf: " Back to Bookshelf",
         editorBack: " Overview",
