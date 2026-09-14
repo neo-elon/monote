@@ -405,10 +405,7 @@ input, textarea {
 }
 
 .chapter-card.dragging-child {
-    opacity: 0.35;
-    background-color: var(--bg-secondary);
-    border-left: 2px dashed var(--accent-color);
-    cursor: grabbing;
+    display: none !important;
 }
 
 .chapter-card::before {
