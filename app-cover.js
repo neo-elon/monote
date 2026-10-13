@@ -33,6 +33,7 @@ let activeProjectId = null;
 let project = null; // Active project reference
 let activeChapterId = null;
 let saveTimeout = null;
+let pendingSaveProject = null;
 let currentUser = null;
 let hideManual = false;
 let activeRankingTab = 'daily';
@@ -416,11 +417,16 @@ window.addEventListener('offline', () => {
 
 // Warn user before closing if sync queue is not empty
 window.addEventListener('beforeunload', (event) => {
+    flushPendingSave();
     if (window.pendingSyncCount && window.pendingSyncCount > 0) {
         event.preventDefault();
         event.returnValue = '서버에 저장되지 않은 변경사항이 있습니다. 정말 종료하시겠습니까?';
         return event.returnValue;
     }
+});
+window.addEventListener('pagehide', flushPendingSave);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushPendingSave();
 });
 // ----------------------------------------------------
 
@@ -849,44 +855,49 @@ async function loadProjects() {
     }
 }
 
-// Save Data to LocalStorage with Debounce
+// Persist every edit synchronously; only cloud queueing is debounced.
 function triggerSave() {
-    if (!activeProjectId) return;
+    if (!activeProjectId || !project) return;
+
+    const idx = projects.findIndex(p => p.id === project.id);
+    if (idx === -1) return;
+    project.updatedAt = new Date().toISOString();
+    if (currentUser) project.user_id = currentUser.id;
+    projects[idx] = project;
+    storage.setItem('monote-projects', JSON.stringify(projects));
+    pendingSaveProject = project;
     
     saveStatus.textContent = currentLang === 'en' ? "Saving..." : "저장 중...";
     saveStatus.style.opacity = "1";
     
     if (saveTimeout) clearTimeout(saveTimeout);
     
-    saveTimeout = setTimeout(async () => {
-        // Find index of current project
-        const idx = projects.findIndex(p => p.id === activeProjectId);
-        if (idx !== -1) {
-            project.updatedAt = new Date().toISOString();
-            if (currentUser) {
-                project.user_id = currentUser.id;
-            }
-            projects[idx] = project;
-            storage.setItem('monote-projects', JSON.stringify(projects));
-        }
-        saveStatus.textContent = currentLang === 'en' ? "Saved" : "저장 완료";
-        
-        // Enqueue sync operation to IndexedDB Outbox
-        if (supabaseClient && currentUser) {
-            updateSyncStatus('syncing', '동기화 중...');
-            try {
-                await addToOutbox('SAVE', activeProjectId, project);
-                processOfflineQueue();
-            } catch (err) {
-                console.error('Failed to enqueue project save:', err);
-                updateSyncStatus('error', '동기화 실패');
-            }
-        }
-        
-        setTimeout(() => {
-            saveStatus.style.opacity = "0.7";
-        }, 1000);
-    }, 500);
+    saveTimeout = setTimeout(flushPendingSave, 500);
+}
+
+function flushPendingSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = null;
+    const savedProject = pendingSaveProject;
+    pendingSaveProject = null;
+    if (!savedProject) return;
+
+    saveStatus.textContent = currentLang === 'en' ? "Saved" : "저장 완료";
+
+    // Capture the edited project before navigation can change the active one.
+    if (supabaseClient && currentUser) {
+        updateSyncStatus('syncing', '동기화 중...');
+        addToOutbox('SAVE', savedProject.id, savedProject).then(() => {
+            processOfflineQueue();
+        }).catch(err => {
+            console.error('Failed to enqueue project save:', err);
+            updateSyncStatus('error', '동기화 실패');
+        });
+    }
+
+    setTimeout(() => {
+        saveStatus.style.opacity = "0.7";
+    }, 1000);
 }
 
 // Set up UI Event Listeners
@@ -2126,6 +2137,7 @@ function adjustTitleHeight() {
 
 // View Switches
 function showWritingScreen() {
+    flushPendingSave();
     storage.setItem('monote-active-screen', 'writing');
     history.pushState({ screen: 'writing' }, '');
     // Hide JSON import/export in project screens, show TXT export
@@ -2159,6 +2171,7 @@ function showWritingScreen() {
 }
 
 function showOverviewScreen() {
+    flushPendingSave();
     storage.setItem('monote-active-screen', 'overview');
     history.pushState({ screen: 'overview' }, '');
     // Hide JSON import/export in project screens, show TXT export
@@ -2192,6 +2205,7 @@ function showOverviewScreen() {
 }
 
 function showBookshelfScreen() {
+    flushPendingSave();
     storage.setItem('monote-active-screen', 'bookshelf');
     history.pushState({ screen: 'bookshelf' }, '');
     activeProjectId = null;
@@ -2221,6 +2235,7 @@ function showBookshelfScreen() {
 
 // Silent versions (called by popstate handler — no pushState to avoid history double-stacking)
 function showOverviewScreenSilent() {
+    flushPendingSave();
     storage.setItem('monote-active-screen', 'overview');
     if (importProjectTrigger) importProjectTrigger.style.display = 'none';
     if (exportProjectBtn) exportProjectBtn.style.display = 'none';
@@ -2247,6 +2262,7 @@ function showOverviewScreenSilent() {
 }
 
 function showBookshelfScreenSilent() {
+    flushPendingSave();
     storage.setItem('monote-active-screen', 'bookshelf');
     activeProjectId = null;
     project = null;
@@ -2380,6 +2396,7 @@ function showSyncConflictDialog(conflicts) {
 }
 
 function showCommunityScreen() {
+    flushPendingSave();
     storage.setItem('monote-active-screen', 'community');
     activeProjectId = null;
     project = null;
@@ -4394,6 +4411,7 @@ async function createNewProject() {
 
 // Open selected project
 function openProject(projectId) {
+    flushPendingSave();
     const proj = projects.find(p => p.id === projectId);
     if (!proj) return;
     
@@ -5079,6 +5097,7 @@ async function handleGoogleLogin() {
 }
 
 async function handleLogout() {
+    flushPendingSave();
     if (!supabaseClient) return;
     try {
         // Try calling signOut. Even if it fails (e.g. 403 Forbidden due to session expiration), we proceed.
