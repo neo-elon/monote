@@ -1758,3 +1758,139 @@ input, textarea {
     font-style: italic;
     font-size: 0.85rem;
 }
+
+/* Only the writing screen occupies the visible viewport; other views retain page scrolling. */
+body.writing-viewport {
+    overflow: hidden;
+}
+
+.writing-viewport .app-container {
+    position: fixed;
+    top: var(--writing-viewport-top, 0px);
+    left: 0;
+    right: 0;
+    height: var(--writing-viewport-height, 100vh);
+    min-height: 0;
+}
+
+.writing-viewport .app-header {
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.writing-viewport .menu-dropdown {
+    max-height: calc(var(--writing-viewport-height, 100vh) - 5rem);
+    overflow-y: auto;
+}
+
+.writing-viewport .app-main {
+    flex: 1;
+    min-height: 0;
+}
+
+.writing-viewport #writing-screen {
+    height: 100%;
+    transform: none;
+}
+
+.writing-viewport .writing-container-layout {
+    height: 100%;
+    min-height: 0;
+    align-items: stretch;
+}
+
+.writing-viewport .editor-main-content {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    min-height: 0;
+}
+
+.writing-viewport .editor-header {
+    margin-bottom: 0;
+    transform: none;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.writing-viewport .editor-header > div {
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.writing-viewport .editor-header button {
+    white-space: nowrap;
+}
+
+.writing-viewport .editor-scroll-area {
+    width: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    overflow-anchor: none;
+}
+
+.writing-viewport .editor-meta {
+    flex-shrink: 0;
+}
+
+.writing-viewport .textarea-wrapper {
+    flex-shrink: 0;
+}
+
+.writing-viewport .editor-textarea {
+    min-height: 0;
+    overflow-y: hidden;
+}
+
+.writing-viewport .editor-footer {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding-bottom: 0.25rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.writing-viewport .editor-sidebar {
+    position: static;
+    align-self: stretch;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+}
+
+/* Includes short landscape viewports and the space remaining above an on-screen keyboard. */
+.writing-viewport.writing-compact .app-container {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+.writing-viewport.writing-compact .app-header {
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.35rem;
+}
+
+.writing-viewport.writing-compact .editor-main-content {
+    gap: 0.25rem;
+}
+
+.writing-viewport.writing-compact .editor-header .btn-sm {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+}
+
+.writing-viewport.writing-compact .editor-scroll-area {
+    gap: 0.5rem;
+}
+
+.writing-viewport.writing-compact .textarea-wrapper {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.writing-viewport.writing-compact .editor-footer {
+    padding-top: 0.25rem;
+    padding-bottom: 0;
+}

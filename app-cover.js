@@ -572,6 +572,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initBookDialogController('new-book');
     initBookDialogController('edit-book');
     setupEventListeners();
+    setupWritingViewport();
     renderBookshelf();
     
     // Auto-process queue on startup if online
@@ -652,6 +653,7 @@ function changeFontSize(amount) {
     storage.setItem('monote-font-scale', currentScale.toString());
     document.documentElement.style.setProperty('--font-scale', currentScale + '%');
     updateFontSizeUI(currentScale);
+    updateWritingViewport();
 }
 
 // Load Projects and handle Migration
@@ -2124,9 +2126,68 @@ function updateEditorCounts() {
     charCountWithSpaces.textContent = currentLang === 'en' ? `${lenWithSpaces.toLocaleString()} chars` : `${lenWithSpaces.toLocaleString()}자`;
     charCountNoSpaces.textContent = currentLang === 'en' ? `${lenNoSpaces.toLocaleString()} chars` : `${lenNoSpaces.toLocaleString()}자`;
     wordCountElement.textContent = words.toLocaleString();
+    updateWritingViewport();
 }
 
-// Adjust chapter title textarea height dynamically to prevent scrollbars
+// Writing-only viewport and shared editor scroll layout.
+let writingLayoutFrame = null;
+
+function setupWritingViewport() {
+    window.addEventListener('resize', updateWritingViewport);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', updateWritingViewport);
+        window.visualViewport.addEventListener('scroll', updateWritingViewport);
+    }
+    if (document.fonts) document.fonts.ready.then(updateWritingViewport);
+}
+
+function setWritingViewport(enabled) {
+    document.body.classList.toggle('writing-viewport', enabled);
+    if (enabled) {
+        window.scrollTo(0, 0);
+        updateWritingViewport();
+    } else {
+        document.body.classList.remove('writing-compact');
+        if (writingLayoutFrame !== null) cancelAnimationFrame(writingLayoutFrame);
+        writingLayoutFrame = null;
+    }
+}
+
+function updateWritingViewport() {
+    if (!document.body.classList.contains('writing-viewport')) return;
+    const viewport = window.visualViewport;
+    const height = viewport ? viewport.height : window.innerHeight;
+    const top = viewport ? viewport.offsetTop : 0;
+    document.documentElement.style.setProperty('--writing-viewport-height', height + 'px');
+    document.documentElement.style.setProperty('--writing-viewport-top', top + 'px');
+    document.body.classList.toggle('writing-compact', height <= 500);
+    if (writingLayoutFrame !== null) cancelAnimationFrame(writingLayoutFrame);
+    writingLayoutFrame = requestAnimationFrame(() => {
+        writingLayoutFrame = null;
+        resizeWritingContent();
+    });
+}
+
+function resizeWritingContent() {
+    if (!document.body.classList.contains('writing-viewport') || writingScreen.style.display === 'none') return;
+    const scrollArea = document.querySelector('.editor-scroll-area');
+    const meta = document.querySelector('.editor-meta');
+    const wrapper = chapterContentTextarea.parentElement;
+    const previousScroll = scrollArea.scrollTop;
+    adjustTitleHeight();
+    const wrapperStyle = getComputedStyle(wrapper);
+    const available = scrollArea.clientHeight - meta.offsetHeight
+        - parseFloat(getComputedStyle(scrollArea).rowGap)
+        - parseFloat(wrapperStyle.paddingTop) - parseFloat(wrapperStyle.paddingBottom);
+    // Grow the textarea to its content so the title, subtitle and body share one scrollbar.
+    chapterContentTextarea.style.height = '0px';
+    chapterContentTextarea.style.height = Math.max(80, available, chapterContentTextarea.scrollHeight) + 'px';
+    const caretAtEnd = document.activeElement === chapterContentTextarea
+        && chapterContentTextarea.selectionEnd === chapterContentTextarea.value.length;
+    scrollArea.scrollTop = caretAtEnd ? scrollArea.scrollHeight : previousScroll;
+}
+
+// Adjust chapter title textarea height dynamically to prevent scrollbars.
 function adjustTitleHeight() {
     if (chapterTitleInput) {
         chapterTitleInput.style.height = 'auto';
@@ -2138,6 +2199,7 @@ function adjustTitleHeight() {
 // View Switches
 function showWritingScreen() {
     flushPendingSave();
+    setWritingViewport(true);
     storage.setItem('monote-active-screen', 'writing');
     history.pushState({ screen: 'writing' }, '');
     // Hide JSON import/export in project screens, show TXT export
@@ -2163,6 +2225,7 @@ function showWritingScreen() {
         
         // Recalculate title height now that the editor view is visible
         adjustTitleHeight();
+        updateWritingViewport();
         
         setTimeout(() => {
             writingScreen.classList.add('active');
@@ -2172,6 +2235,7 @@ function showWritingScreen() {
 
 function showOverviewScreen() {
     flushPendingSave();
+    setWritingViewport(false);
     storage.setItem('monote-active-screen', 'overview');
     history.pushState({ screen: 'overview' }, '');
     // Hide JSON import/export in project screens, show TXT export
@@ -2206,6 +2270,7 @@ function showOverviewScreen() {
 
 function showBookshelfScreen() {
     flushPendingSave();
+    setWritingViewport(false);
     storage.setItem('monote-active-screen', 'bookshelf');
     history.pushState({ screen: 'bookshelf' }, '');
     activeProjectId = null;
@@ -2236,6 +2301,7 @@ function showBookshelfScreen() {
 // Silent versions (called by popstate handler — no pushState to avoid history double-stacking)
 function showOverviewScreenSilent() {
     flushPendingSave();
+    setWritingViewport(false);
     storage.setItem('monote-active-screen', 'overview');
     if (importProjectTrigger) importProjectTrigger.style.display = 'none';
     if (exportProjectBtn) exportProjectBtn.style.display = 'none';
@@ -2263,6 +2329,7 @@ function showOverviewScreenSilent() {
 
 function showBookshelfScreenSilent() {
     flushPendingSave();
+    setWritingViewport(false);
     storage.setItem('monote-active-screen', 'bookshelf');
     activeProjectId = null;
     project = null;
@@ -2397,6 +2464,7 @@ function showSyncConflictDialog(conflicts) {
 
 function showCommunityScreen() {
     flushPendingSave();
+    setWritingViewport(false);
     storage.setItem('monote-active-screen', 'community');
     activeProjectId = null;
     project = null;
@@ -4815,6 +4883,7 @@ function restoreActiveState() {
                     bookshelfScreen.style.display = 'none';
                     writingScreen.style.display = 'block';
                     writingScreen.classList.add('active');
+                    setWritingViewport(true);
                     
                     // Adjust title height
                     adjustTitleHeight();
