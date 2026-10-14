@@ -926,6 +926,15 @@ input, textarea {
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+/* Fallback for older browsers that do not support CSS aspect-ratio.
+   Keep every bookshelf cover, including the add card, at the same height. */
+@supports not (aspect-ratio: 3 / 4) {
+    .books-grid .book-cover {
+        height: 200px;
+        box-sizing: border-box;
+    }
+}
+
 /* Simulated spine edge */
 .book-cover::before {
     content: '';
