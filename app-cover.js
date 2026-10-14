@@ -434,9 +434,14 @@ document.addEventListener('visibilitychange', () => {
 const supabaseUrl = 'https://opucvfqiavvcujtzwzvz.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdWN2ZnFpYXZ2Y3VqdHp3enZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODE3NzksImV4cCI6MjA5Njg1Nzc3OX0.-zLSHjeHvaW5eHRTH9eC7CcFWnwlWBKbgzlc-9Fzceg';
 let supabaseClient = null;
+let authInitializationError = null;
 
-if (typeof window.supabase !== 'undefined') {
+try {
+    if (typeof window.supabase === 'undefined') throw new Error('Authentication SDK unavailable');
     supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+} catch (err) {
+    authInitializationError = err;
+    console.error('Authentication initialization failed:', err);
 }
 
 // Sync Status UI helper
@@ -549,7 +554,16 @@ const previewBookDialog = document.getElementById('preview-book-dialog');
 const previewChapterDialog = document.getElementById('preview-chapter-dialog');
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', async () => {
+async function initializeApp() {
+    // Register login before any asynchronous storage/network initialization.
+    updateAuthUI(null);
+    const syncBadge = document.getElementById('cloud-sync-status');
+    if (syncBadge) {
+        syncBadge.onclick = () => {
+            if (!currentUser) handleGoogleLogin();
+            else alert(currentLang === 'en' ? 'Google account connected. Check the sync status before switching devices.' : 'Google 계정으로 로그인되어 있습니다. 기기를 옮기기 전 동기화 상태를 확인해 주세요.');
+        };
+    }
     loadTheme();
     loadFontSize();
     loadLanguage();
@@ -608,7 +622,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Start Lounge post simulation
     // initLoungeSimulation();
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // Dynamic loader may finish after DOMContentLoaded; let all constants initialize.
+    setTimeout(initializeApp, 0);
+}
 
 // Load Theme from LocalStorage
 function loadTheme() {
@@ -4913,27 +4933,59 @@ function restoreActiveState() {
 async function checkAuthState() {
     if (!supabaseClient) return;
 
+    // Never call Supabase APIs inside its auth lock, including indirectly via UI.
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        setTimeout(() => {
+            const user = session ? session.user : null;
+            updateAuthUI(user);
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+                loadProjects().catch(err => console.error('Auth project reload failed:', err));
+            }
+        }, 0);
+    });
     try {
         // Get initial session
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        const { data: { session }, error } = await authWithTimeout(supabaseClient.auth.getSession());
         if (error) throw error;
         
         updateAuthUI(session ? session.user : null);
-
-        // Listen for auth changes
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
-            const user = session ? session.user : null;
-            updateAuthUI(user);
-            
-            if (event === 'SIGNED_IN') {
-                await loadProjects();
-            } else if (event === 'SIGNED_OUT') {
-                await loadProjects();
-            }
-        });
+        showOAuthReturnError();
     } catch (err) {
         console.error('Error checking auth state:', err);
+        showAuthError(err);
     }
+}
+
+function authWithTimeout(promise) {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('auth_timeout')), 15000);
+        promise.then(value => { clearTimeout(timer); resolve(value); }, err => { clearTimeout(timer); reject(err); });
+    });
+}
+
+function showAuthError(err) {
+    const reason = String((err && (err.code || err.message)) || err || '');
+    const en = currentLang === 'en';
+    let message;
+    if (/disallowed_useragent|unsupported.*browser|insecure.*browser/i.test(reason)) {
+        message = en ? 'Google does not allow sign-in in this browser. Open monote in an updated Chrome or another supported browser on this device. Signing in on another device does not sign this browser in.' : 'Google이 이 브라우저의 로그인을 허용하지 않습니다. 이 기기의 최신 Chrome 등 지원 브라우저에서 monote를 열어 주세요. 다른 기기에서 로그인해도 돌핀에 로그인 상태가 전달되지는 않습니다.';
+    } else if (/access_denied|cancel/i.test(reason)) {
+        message = en ? 'Google sign-in was cancelled or permission was denied. You can continue writing locally or try again.' : 'Google 로그인이 취소되었거나 권한이 허용되지 않았습니다. 로컬로 계속 집필하거나 다시 로그인해 주세요.';
+    } else {
+        message = en ? 'Could not connect to Google sign-in. Check your connection and reload. If this continues in Dolphin, use an updated supported browser. Local manuscripts are kept.' : 'Google 로그인에 연결하지 못했습니다. 인터넷 연결을 확인하고 새로고침해 주세요. 돌핀에서 계속 실패하면 최신 지원 브라우저를 이용해 주세요. 로컬 원고는 유지됩니다.';
+    }
+    alert(message);
+}
+
+function showOAuthReturnError() {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const query = new URLSearchParams(window.location.search);
+    const reason = hash.get('error_code') || query.get('error_code') || hash.get('error') || query.get('error');
+    if (!reason) return;
+    showAuthError({ code: reason });
+    // Remove only error fields; never log OAuth tokens or raw return URLs.
+    ['error', 'error_code', 'error_description'].forEach(key => { hash.delete(key); query.delete(key); });
+    history.replaceState(history.state, '', window.location.pathname + (query.toString() ? '?' + query : '') + (hash.toString() ? '#' + hash : ''));
 }
 
 async function saveProfileToCloud(user) {
@@ -5020,9 +5072,8 @@ function updateAuthUI(user) {
         // Sync profile to cloud database
         saveProfileToCloud(user);
 
-        // Remove the profile icon completely
-        authContainer.innerHTML = '';
-        authContainer.style.display = 'none';
+        authContainer.innerHTML = '<span title="Google 계정 로그인됨" aria-label="Google 계정 로그인됨">G</span>';
+        authContainer.style.display = '';
 
         if (googleLoginMenuItem) {
             googleLoginMenuItem.style.display = 'none';
@@ -5148,20 +5199,22 @@ function checkPenName(user) {
 
 async function handleGoogleLogin() {
     if (!supabaseClient) {
-        alert("Supabase Client가 초기화되지 않았습니다.");
+        showAuthError(authInitializationError);
         return;
     }
     try {
-        const { error } = await supabaseClient.auth.signInWithOAuth({
+        // Persist the last edits before leaving this tab for OAuth.
+        flushPendingSave();
+        const { error } = await authWithTimeout(supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
                 redirectTo: window.location.origin + window.location.pathname
             }
-        });
+        }));
         if (error) throw error;
     } catch (err) {
         console.error("Login failed:", err);
-        alert(`로그인에 실패했습니다: ${err.message || err}`);
+        showAuthError(err);
     }
 }
 

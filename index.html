@@ -27,10 +27,10 @@
             <div class="header-actions">
                 <div id="auth-container" class="auth-container"></div>
 
-                <div id="cloud-sync-status" class="sync-status" title="클라우드 동기화 상태">
+                <button type="button" id="cloud-sync-status" class="sync-status" title="Google 로그인 / 클라우드 동기화 상태">
                     <span class="sync-dot"></span>
                     <span class="sync-text">대기 중</span>
-                </div>
+                </button>
 
                 <div class="menu-dropdown-container">
                     <button id="menu-btn" class="btn-icon" title="메뉴" aria-label="Menu">
@@ -684,8 +684,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app-cover.js"></script>
+    <script src="browser-bootstrap.js"></script>
 </body>
 
 </html>
